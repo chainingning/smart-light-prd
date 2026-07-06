@@ -84,6 +84,12 @@
     }
     .sidebar.collapsed .brand { padding: 0; justify-content: center; }
     .sidebar.collapsed .brand .brand-txt { display: none; }
+    .version-tag {
+      display: inline-flex; align-items: center; font-size: 10px; font-weight: 500;
+      background: rgba(255,255,255,.15); color: rgba(255,255,255,.7);
+      padding: 1px 5px; border-radius: 4px; letter-spacing: 0; flex-shrink: 0; margin-left: 4px;
+    }
+    .sidebar.collapsed .version-tag { display: none; }
     .nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 10px; }
     .nav::-webkit-scrollbar { width: 6px; }
     .nav::-webkit-scrollbar-track { background: transparent; }
@@ -290,7 +296,7 @@
     <aside class="sidebar" :class="{ collapsed }">
       <div class="brand">
         <div class="logo">云</div>
-        <span class="brand-txt">云创智慧平台</span>
+        <span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.0</span>
       </div>
       <nav class="nav">
         <div class="nav-group" v-for="g in menuGroups" :key="g.title">
