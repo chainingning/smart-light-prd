@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>组织管理 · 云创智慧平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+  <style>
+    :root {
+      --brand: #2f6bff; --brand-deep: #1f4fd6; --brand-soft: #ebf1ff;
+      --ok: #16a36a; --off: #ef4d5e; --warn: #e6952c;
+      --bg: #f4f6fb; --surface: #ffffff; --surface-2: #f8fafc;
+      --line: #e6eaf2; --line-soft: #eef1f7;
+      --ink: #1b2533; --ink-2: #586273; --ink-3: #7c8696;
+      --side: #1b2330; --side-2: #12171f;
+      --r-sm: 8px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
+      --fs-cap: 12px; --fs-sm: 13px; --fs: 14px; --fs-md: 16px; --fs-lg: 20px; --fs-xl: 26px;
+      --sh-sm: 0 1px 2px rgba(16,24,40,.05); --sh-md: 0 6px 20px rgba(16,24,40,.07); --sh-lg: 0 14px 36px rgba(31,71,214,.14);
+      --sb-w: 226px; --sb-w-collapsed: 64px;
+      --el-color-primary: #2f6bff;
+      --el-color-primary-light-3: #5c8bff;
+      --el-color-primary-light-5: #84a7ff;
+      --el-color-primary-light-7: #adc5ff;
+      --el-color-primary-light-8: #c1d3ff;
+      --el-color-primary-light-9: #ebf1ff;
+      --el-color-primary-dark-2: #1f4fd6;
+      --el-border-radius-base: 8px;
+      --el-font-size-base: 14px;
+      --el-text-color-regular: #586273;
+      --el-border-color: #e6eaf2;
+      --el-border-color-lighter: #eef1f7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--ink); font-size: var(--fs);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    #app { height: 100vh; }
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+    :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+    .sidebar {
+      width: var(--sb-w); flex: 0 0 var(--sb-w);
+      background: linear-gradient(180deg, var(--side), var(--side-2));
+      color: #c3ccd9; display: flex; flex-direction: column;
+      transition: flex-basis .22s ease, width .22s ease, transform .25s ease;
+    }
+    .sidebar.collapsed { width: var(--sb-w-collapsed); flex-basis: var(--sb-w-collapsed); }
+    .brand {
+      height: 60px; display: flex; align-items: center; gap: 11px;
+      padding: 0 20px; color: #fff; font-weight: 700; font-size: var(--fs-md);
+      letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap;
+    }
+    .brand .logo {
+      width: 30px; height: 30px; border-radius: var(--r-md); flex: 0 0 auto;
+      background: linear-gradient(135deg, #5b8bff, #2f6bff);
+      display: grid; place-items: center; font-size: 15px;
+      box-shadow: 0 4px 14px rgba(47,107,255,.5);
+    }
+    .sidebar.collapsed .brand { padding: 0; justify-content: center; }
+    .sidebar.collapsed .brand .brand-txt { display: none; }
+    .nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 10px; }
+    .nav::-webkit-scrollbar { width: 6px; }
+    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: var(--r-pill); }
+    .nav-group { margin-bottom: 2px; }
+    .nav-group > .nav-title {
+      display: flex; align-items: center; gap: 11px;
+      padding: 11px 12px; border-radius: var(--r-md); font-size: var(--fs-sm);
+      color: #aab4c3; cursor: pointer; user-select: none;
+      transition: color .15s, background .15s; white-space: nowrap;
+    }
+    .nav-title .ng-ic { font-size: 16px; flex: 0 0 auto; display: inline-flex; }
+    .nav-title .ng-txt { flex: 1; }
+    .nav-title .caret { font-size: 13px; opacity: .55; transition: transform .2s; }
+    .nav-group.open > .nav-title .caret { transform: rotate(180deg); }
+    .nav-title:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-group.open > .nav-title,
+    .nav-group.has-active > .nav-title { color: #fff; }
+    .nav-children { overflow: hidden; padding: 2px 0 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px 9px 38px; font-size: var(--fs-sm); color: #aab4c3;
+      cursor: pointer; position: relative; border-radius: var(--r-md);
+      transition: all .15s; white-space: nowrap; margin: 1px 0;
+    }
+    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+    .nav-item.active .dot { opacity: 1; background: #6f9bff; }
+    .nav-item.active::before {
+      content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+      border-radius: var(--r-pill); background: var(--brand);
+    }
+    .sidebar.collapsed .nav-title { justify-content: center; padding: 13px 0; }
+    .sidebar.collapsed .nav-title .ng-txt,
+    .sidebar.collapsed .nav-title .caret { display: none; }
+    .sidebar.collapsed .nav-children { display: none !important; }
+    .sidebar.collapsed .nav-group.has-active > .nav-title { background: rgba(47,107,255,.18); }
+    .sidebar.collapsed .nav-group.has-active > .nav-title .ng-ic { color: #6f9bff; }
+    .sb-foot { border-top: 1px solid rgba(255,255,255,.07); padding: 10px; }
+    .sb-collapse {
+      width: 100%; height: 36px; border-radius: var(--r-md); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      color: #aab4c3; font-size: var(--fs-sm); transition: all .15s;
+    }
+    .sb-collapse:hover { color: #fff; background: rgba(255,255,255,.07); }
+    .nav-backdrop { position: fixed; inset: 0; background: rgba(12,18,28,.45); z-index: 55; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar {
+      height: 60px; flex: 0 0 60px;
+      background: var(--surface); border-bottom: 1px solid var(--line-soft);
+      display: flex; align-items: center; padding: 0 20px; gap: 16px;
+    }
+    .topbar .ico { font-size: 18px; color: var(--ink-2); cursor: pointer; padding: 8px; border-radius: var(--r-sm); transition: background .15s; }
+    .topbar .ico:hover { background: rgba(16,24,40,.05); }
+    .crumb { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); }
+    .crumb .sep { opacity: .5; }
+    .crumb .cur { color: var(--ink); font-weight: 500; }
+    .crumb .home-link { color: var(--ink-2); cursor: pointer; }
+    .crumb .home-link:hover { color: var(--brand); }
+    .spacer { flex: 1; }
+    .content { flex: 1; overflow-y: auto; padding: 20px; }
+    .panel { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; }
+    .page-head { padding: 18px 20px; border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; justify-content: space-between; }
+    .ph-title { font-size: var(--fs-lg); font-weight: 600; color: var(--ink); }
+    .org-content { display: flex; gap: 20px; padding: 20px; }
+    .org-left { width: 280px; flex: 0 0 280px; }
+    .org-right { flex: 1; min-width: 0; }
+    .tree-panel { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; background: var(--surface-2); }
+    .org-tabs { margin-bottom: 16px; }
+    .asset-card { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
+    .asset-card:hover { border-color: var(--brand); }
+    .empty-cell { text-align: center; padding: 40px; color: var(--ink-3); }
+    .permission-row { display: flex; gap: 16px; flex-wrap: wrap; }
+    .permission-item { display: flex; align-items: center; gap: 6px; }
+    .org-chart { padding: 40px 20px; overflow-x: auto; }
+    .org-tree { display: flex; flex-direction: column; align-items: center; }
+    .org-node {
+      background: linear-gradient(135deg, #5b8bff, #2f6bff);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: var(--r-md);
+      font-weight: 600;
+      text-align: center;
+      min-width: 140px;
+      box-shadow: 0 4px 14px rgba(47,107,255,.4);
+      cursor: pointer;
+      transition: transform .2s, box-shadow .2s;
+      position: relative;
+    }
+    .org-node:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(47,107,255,.5); }
+    .org-node.selected { border: 2px solid #fff; box-shadow: 0 0 0 3px rgba(47,107,255,.3); }
+    .org-node.children { background: linear-gradient(135deg, #6b7280, #4b5563); }
+    .org-node.leaf { background: linear-gradient(135deg, #10b981, #059669); }
+    .org-children { display: flex; gap: 40px; margin-top: 35px; position: relative; }
+    .org-children::before {
+      content: "";
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 25px;
+      background: var(--line);
+    }
+    .org-children::after {
+      content: "";
+      position: absolute;
+      top: -25px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--line);
+    }
+    .org-child { display: flex; flex-direction: column; align-items: center; position: relative; }
+    .org-child::before {
+      content: "";
+      position: absolute;
+      top: -25px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 2px;
+      height: 25px;
+      background: var(--line);
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+    <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span></div>
+      <nav class="nav">
+        <div v-for="g in menuGroups" :key="g.title" class="nav-group"
+             :class="{ open: g.open, 'has-active': g.items.includes(activeMenu) }">
+          <div class="nav-title" @click="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="g.icon"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><ArrowDown></ArrowDown></el-icon>
+          </div>
+          <div class="nav-children" v-show="g.open">
+            <a v-for="item in g.items" :key="item"
+               :href="menuHref[item] || '#'"
+               class="nav-item"
+               :class="{ active: item === activeMenu }"
+               @click="onMenuClick(item, $event)">
+              <span class="dot"></span>{{ item }}
+            </a>
+          </div>
+        </div>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
+          <el-icon><component :is="collapsed ? 'Expand' : 'Fold'"></component></el-icon>
+          <span v-if="!collapsed">收起菜单</span>
+        </div>
+      </div>
+    </aside>
+    <div class="nav-backdrop" v-if="mobileNav" @click="mobileNav = false"></div>
+    <div class="main">
+      <header class="topbar">
+        <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Expand></Expand></el-icon></span>
+        <div class="crumb">
+          <span class="home-link" tabindex="0"><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
+          <span class="sep">/</span><span class="">系统管理</span>
+          <span class="sep">/</span><span class="cur">组织管理</span>
+        </div>
+        <div class="spacer"></div>
+      </header>
+        <main class="content">
+          <div class="panel">
+            <div class="page-head">
+              <div class="ph-title">组织管理</div>
+              <el-button type="primary" @click="openAddOrg">新增组织</el-button>
+            </div>
+            <div class="org-content">
+              <div class="org-left">
+                <div class="tree-panel">
+                  <el-tree :data="orgTreeData" :props="{ label: 'name', children: 'children' }" node-key="id" :expand-on-click-node="false" highlight-current :default-expand-all="true" @node-click="handleOrgClick">
+                    <template #default="{ node, data }">
+                      <div>
+                        <span>{{ node.label }}</span>
+                      </div>
+                    </template>
+                  </el-tree>
+                </div>
+              </div>
+              <div class="org-right">
+                <div v-if="selectedOrg">
+                  <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
+                    <div>
+                      <h3 style="margin:0; color:var(--ink)">{{ selectedOrg.name }}</h3>
+                      <p style="margin:4px 0 0; font-size:var(--fs-sm); color:var(--ink-3)">
+                        {{ selectedOrg.parentName ? '上级：' + selectedOrg.parentName : '根组织' }} · 排序：{{ selectedOrg.sort }}
+                      </p>
+                    </div>
+                    <div>
+                      <el-button size="small" @click="openEditOrg">编辑</el-button>
+                      <el-button size="small" type="danger" @click="deleteOrg">删除</el-button>
+                    </div>
+                  </div>
+                  <el-tabs v-model="activeTab" class="org-tabs">
+                    <el-tab-pane label="拓扑图" name="chart">
+                      <div class="org-chart">
+                        <div class="org-tree">
+                          <template v-for="root in orgTreeData" :key="root.id">
+                            <div class="org-node" :class="{ selected: selectedOrg?.id === root.id, children: root.children?.length > 0, leaf: !root.children?.length }" @click="handleOrgClick(root)">
+                              {{ root.name }}
+                            </div>
+                            <div v-if="root.children?.length" class="org-children">
+                              <div v-for="child in root.children" :key="child.id" class="org-child">
+                                <template v-if="child.children?.length">
+                                  <div class="org-node" :class="{ selected: selectedOrg?.id === child.id, children: child.children?.length > 0, leaf: !child.children?.length }" @click="handleOrgClick(child)">
+                                    {{ child.name }}
+                                  </div>
+                                  <div class="org-children">
+                                    <div v-for="grandchild in child.children" :key="grandchild.id" class="org-child">
+                                      <div class="org-node" :class="{ selected: selectedOrg?.id === grandchild.id, leaf: true }" @click="handleOrgClick(grandchild)">
+                                        {{ grandchild.name }}
+                                      </div>
+                                    </div>
+                                  </div>
+                                </template>
+                                <template v-else>
+                                  <div class="org-node leaf" :class="{ selected: selectedOrg?.id === child.id }" @click="handleOrgClick(child)">
+                                    {{ child.name }}
+                                  </div>
+                                </template>
+                              </div>
+                            </div>
+                          </template>
+                        </div>
+                      </div>
+                    </el-tab-pane>
+                    <el-tab-pane label="职位" name="position">
+                      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+                        <div style="font-weight:600; color:var(--ink)">职位列表</div>
+                        <el-button type="primary" size="small" @click="openAddPosition">新增职位</el-button>
+                      </div>
+                      <el-table :data="positions" row-key="id" style="width:100%" stripe>
+                        <el-table-column prop="code" label="编号" width="120"></el-table-column>
+                        <el-table-column prop="name" label="名称" width="150"></el-table-column>
+                        <el-table-column prop="roleName" label="角色" width="120"></el-table-column>
+                        <el-table-column prop="parentName" label="上级职位" width="120"></el-table-column>
+                        <el-table-column prop="description" label="说明"></el-table-column>
+                        <el-table-column label="操作" width="180">
+                          <template #default="{ row }">
+                            <el-button size="small" @click="bindUserToPosition(row)">绑定用户</el-button>
+                            <el-button size="small" type="danger" @click="deletePosition(row)">删除</el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                      <div class="empty-cell" v-if="!positions.length">该组织暂无职位</div>
+                    </el-tab-pane>
+                    <el-tab-pane label="用户" name="user">
+                      <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+                        <div style="font-weight:600; color:var(--ink)">用户列表</div>
+                        <div>
+                          <el-button type="primary" size="small" @click="openBindUser">绑定用户</el-button>
+                          <el-button size="small" type="danger" :disabled="!selectedUsers.length" @click="batchUnbindUser">批量解绑</el-button>
+                        </div>
+                      </div>
+                      <el-table :data="orgUsers" row-key="id" style="width:100%" stripe @selection-change="handleUserSelection">
+                        <el-table-column type="selection" width="50"></el-table-column>
+                        <el-table-column prop="username" label="用户名" width="120"></el-table-column>
+                        <el-table-column prop="realName" label="姓名" width="100"></el-table-column>
+                        <el-table-column prop="positionName" label="职位" width="120"></el-table-column>
+                        <el-table-column label="操作" width="80">
+                          <template #default="{ row }">
+                            <el-button size="small" type="danger" @click="unbindUser(row)">解绑</el-button>
+                          </template>
+                        </el-table-column>
+                      </el-table>
+                      <div class="empty-cell" v-if="!orgUsers.length">该组织暂无用户</div>
+                    </el-tab-pane>
+                    <el-tab-pane label="资产" name="asset">
+                      <el-tabs v-model="assetTab">
+                        <el-tab-pane label="产品" name="product">
+                          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+                            <div style="font-weight:600; color:var(--ink)">产品资产</div>
+                            <el-button type="primary" size="small" @click="openAssetAssign('product')">资产分配</el-button>
+                          </div>
+                          <div v-for="item in assignedProducts" :key="item.id" class="asset-card">
+                            <div>
+                              <div style="font-weight:600">{{ item.name }}</div>
+                              <div style="font-size:var(--fs-sm); color:var(--ink-3)">编号：{{ item.code }}</div>
+                            </div>
+                            <div class="permission-row">
+                              <span class="permission-item" :class="{ 'text-green': item.permissions.view }">查看</span>
+                              <span class="permission-item" :class="{ 'text-green': item.permissions.edit }">编辑</span>
+                              <span class="permission-item" :class="{ 'text-green': item.permissions.delete }">删除</span>
+                              <span class="permission-item" :class="{ 'text-green': item.permissions.share }">共享</span>
+                              <el-button size="small" type="danger" @click="unassignAsset('product', item.id)">移除</el-button>
+                            </div>
+                          </div>
+                          <div class="empty-cell" v-if="!assignedProducts.length">该组织暂无产品资产</div>
+                        </el-tab-pane>
+                        <el-tab-pane label="设备" name="device">
+                          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
+                            <div style="font-weight:600; color:var(--ink)">设备资产</div>
+                            <el-button type="primary" size="small" @click="openAssetAssign('device')">资产分配</el-button>
+                          </div>
+                          <el-table :data="assignedDevices" row-key="id" style="width:100%" stripe>
+                            <el-table-column prop="name" label="设备名称"></el-table-column>
+                            <el-table-column prop="sn" label="设备编号" width="150"></el-table-column>
+                            <el-table-column prop="groupName" label="分组" width="120"></el-table-column>
+                            <el-table-column label="操作" width="80">
+                              <template #default="{ row }">
+                                <el-button size="small" type="danger" @click="unassignAsset('device', row.id)">移除</el-button>
+                              </template>
+                            </el-table-column>
+                          </el-table>
+                          <div class="empty-cell" v-if="!assignedDevices.length">该组织暂无设备资产</div>
+                        </el-tab-pane>
+                      </el-tabs>
+                    </el-tab-pane>
+                  </el-tabs>
+                </div>
+                <div v-else class="empty-cell">请选择组织</div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <el-dialog v-model="orgDialogVisible" :title="orgEditing ? '编辑组织' : '新增组织'" width="500px">
+      <el-form :model="orgForm" label-width="100px">
+        <el-form-item label="上级组织">
+          <el-select v-model="orgForm.parentId" placeholder="请选择" style="width:100%">
+            <el-option :value="null" label="根组织"></el-option>
+            <el-option v-for="o in orgOptions" :key="o.id" :value="o.id" :label="o.name"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="名称" required>
+          <el-input v-model="orgForm.name" maxlength="64" show-word-limit placeholder="请输入组织名称"></el-input>
+        </el-form-item>
+        <el-form-item label="排序" required>
+          <el-input-number v-model="orgForm.sort" :min="1" style="width:100%"></el-input-number>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="orgDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveOrg">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="positionDialogVisible" :title="positionEditing ? '编辑职位' : '新增职位'" width="550px">
+      <el-form :model="positionForm" label-width="100px">
+        <el-form-item label="编号" required>
+          <el-input v-model="positionForm.code" placeholder="可输入英文、数字、-、_" maxlength="64"></el-input>
+        </el-form-item>
+        <el-form-item label="名称" required>
+          <el-input v-model="positionForm.name" maxlength="64" placeholder="请输入职位名称"></el-input>
+        </el-form-item>
+        <el-form-item label="所属组织">
+          <el-input :value="selectedOrg?.name" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="角色" required>
+          <el-select v-model="positionForm.roleId" placeholder="请选择" style="width:100%">
+            <el-option v-for="r in roles" :key="r.id" :value="r.id" :label="r.name"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="上级职位">
+          <el-select v-model="positionForm.parentId" placeholder="请选择" style="width:100%">
+            <el-option :value="null" label="无"></el-option>
+            <el-option v-for="p in parentPositionOptions" :key="p.id" :value="p.id" :label="p.name"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="说明">
+          <el-input v-model="positionForm.description" type="textarea" maxlength="200" show-word-limit :rows="3"></el-input>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="positionDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="savePosition">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="bindUserDialogVisible" title="绑定用户" width="600px">
+      <el-table :data="availableUsers" row-key="id" style="width:100%" @selection-change="handleBindUserSelection">
+        <el-table-column type="selection"></el-table-column>
+        <el-table-column prop="username" label="用户名"></el-table-column>
+        <el-table-column prop="realName" label="姓名"></el-table-column>
+        <el-table-column prop="phone" label="手机号"></el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="bindUserDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmBindUser">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="bindPositionUserDialogVisible" title="绑定用户到职位" width="600px">
+      <div style="margin-bottom:12px; color:var(--ink-2)">职位：{{ currentPosition?.name }}</div>
+      <el-table :data="availableUsersForPosition" row-key="id" style="width:100%" @selection-change="handleBindPositionUserSelection">
+        <el-table-column type="selection"></el-table-column>
+        <el-table-column prop="username" label="用户名"></el-table-column>
+        <el-table-column prop="realName" label="姓名"></el-table-column>
+        <el-table-column prop="phone" label="手机号"></el-table-column>
+      </el-table>
+      <template #footer>
+        <el-button @click="bindPositionUserDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmBindPositionUser">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="assetAssignDialogVisible" :title="'绑定' + (assetAssignType === 'product' ? '产品' : '设备')" width="700px">
+      <template v-if="assetAssignType === 'product'">
+        <div style="margin-bottom:16px">
+          <el-switch v-model="batchConfig" active-text="批量配置" inactive-text="独立配置"></el-switch>
+        </div>
+        <div v-if="batchConfig" class="permission-row" style="margin-bottom:16px; padding:12px; border:1px solid var(--line); border-radius:var(--r-md)">
+          <el-checkbox v-model="batchPermissions.view" disabled>查看</el-checkbox>
+          <el-checkbox v-model="batchPermissions.edit">编辑</el-checkbox>
+          <el-checkbox v-model="batchPermissions.delete">删除</el-checkbox>
+          <el-checkbox v-model="batchPermissions.share">共享</el-checkbox>
+        </div>
+        <el-table :data="availableProducts" row-key="id" style="width:100%" @selection-change="handleProductSelection">
+          <el-table-column type="selection"></el-table-column>
+          <el-table-column prop="name" label="产品名称"></el-table-column>
+          <el-table-column prop="code" label="产品编号"></el-table-column>
+          <el-table-column label="权限" width="200">
+            <template #default="{ row }">
+              <div class="permission-row" v-if="!batchConfig">
+                <el-checkbox v-model="row.permissions.view" disabled>查看</el-checkbox>
+                <el-checkbox v-model="row.permissions.edit">编辑</el-checkbox>
+                <el-checkbox v-model="row.permissions.delete">删除</el-checkbox>
+                <el-checkbox v-model="row.permissions.share">共享</el-checkbox>
+              </div>
+              <div v-else style="color:var(--ink-3)">批量配置</div>
+            </template>
+          </el-table-column>
+        </el-table>
+      </template>
+      <template v-else>
+        <el-radio-group v-model="deviceSelectMode" style="margin-bottom:16px">
+          <el-radio label="custom">自定义</el-radio>
+          <el-radio label="all">全部</el-radio>
+          <el-radio label="organization">组织</el-radio>
+        </el-radio-group>
+        <el-table v-if="deviceSelectMode === 'custom'" :data="availableDevices" row-key="id" style="width:100%" @selection-change="handleDeviceSelection">
+          <el-table-column type="selection"></el-table-column>
+          <el-table-column prop="name" label="设备名称"></el-table-column>
+          <el-table-column prop="sn" label="设备编号"></el-table-column>
+          <el-table-column prop="groupName" label="分组"></el-table-column>
+        </el-table>
+        <div v-else-if="deviceSelectMode === 'all'" style="padding:20px; text-align:center; color:var(--ink-2)">
+          将分配所有设备（共 {{ allDevices.length }} 台）
+        </div>
+        <el-table v-else :data="orgListForDevice" row-key="id" style="width:100%" @selection-change="handleOrgDeviceSelection">
+          <el-table-column type="selection"></el-table-column>
+          <el-table-column prop="name" label="组织名称"></el-table-column>
+          <el-table-column prop="deviceCount" label="设备数量"></el-table-column>
+        </el-table>
+      </template>
+      <template #footer>
+        <el-button @click="assetAssignDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="confirmAssetAssign">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+  <script>
+const { ref, reactive, computed, createApp } = Vue;
+
+const MENU_DATA = [
+  { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
+  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['策略管理','资产分配','策略下发日志'] },
+  { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
+  { title: '系统管理', icon: 'Setting', open: true,  items: ['组织管理','用户管理','角色管理','菜单管理'] },
+];
+
+const MENU_HREF = {
+  '首页': 'index.html',
+  '设备分组': 'device-group.html',
+  '设备管理': 'device-management.html',
+  '策略管理': 'strategy.html',
+  '灯杆管理': 'pole-management.html',
+  '灯控策略': 'light-strategy.html',
+  '资产分配': 'asset-assign.html',
+  '组织管理': 'organization-management.html',
+};
+
+function createSharedSetup(activeMenuName) {
+  const collapsed = ref(false);
+  const mobileNav = ref(false);
+  const activeMenu = ref(activeMenuName);
+  const savedOpenState = localStorage.getItem('menuOpenState');
+  const savedOpen = savedOpenState ? JSON.parse(savedOpenState) : {};
+  const menuGroups = reactive(MENU_DATA.map(g => ({ ...g, open: savedOpen[g.title] !== undefined ? savedOpen[g.title] : g.open })));
+  const menuHref = MENU_HREF;
+  const toggleGroup = (g) => {
+    if (collapsed.value) { collapsed.value = false; g.open = true; }
+    else { g.open = !g.open; }
+    const openState = {};
+    menuGroups.forEach(grp => openState[grp.title] = grp.open);
+    localStorage.setItem('menuOpenState', JSON.stringify(openState));
+  };
+  const onMenuClick = (item, e) => {
+    const href = menuHref[item];
+    if (href) { window.location.href = href; }
+  };
+  return { activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick, collapsed, mobileNav };
+}
+
+const organizationsSeed = [
+  { id: 1, name: '云创科技集团', parentId: null, sort: 1 },
+  { id: 2, name: '华东分公司', parentId: 1, sort: 1 },
+  { id: 3, name: '上海办事处', parentId: 2, sort: 1 },
+  { id: 4, name: '苏州办事处', parentId: 2, sort: 2 },
+  { id: 5, name: '华南分公司', parentId: 1, sort: 2 },
+  { id: 6, name: '广州办事处', parentId: 5, sort: 1 },
+  { id: 7, name: '深圳办事处', parentId: 5, sort: 2 },
+];
+const positionsSeed = [
+  { id: 1, orgId: 1, code: 'admin', name: '管理员', roleId: 1, parentId: null, description: '系统管理员' },
+  { id: 2, orgId: 2, code: 'manager', name: '经理', roleId: 2, parentId: null, description: '分公司经理' },
+  { id: 3, orgId: 3, code: 'staff', name: '员工', roleId: 3, parentId: 2, description: '办事处员工' },
+];
+const usersSeed = [
+  { id: 1, username: 'admin', realName: '张三', phone: '13800138001' },
+  { id: 2, username: 'user1', realName: '李四', phone: '13800138002' },
+  { id: 3, username: 'user2', realName: '王五', phone: '13800138003' },
+  { id: 4, username: 'user3', realName: '赵六', phone: '13800138004' },
+  { id: 5, username: 'user4', realName: '孙七', phone: '13800138005' },
+];
+const orgUsersSeed = [
+  { userId: 1, orgId: 1, positionId: 1 },
+  { userId: 2, orgId: 2, positionId: 2 },
+  { userId: 3, orgId: 3, positionId: 3 },
+];
+const rolesSeed = [
+  { id: 1, name: '超级管理员' },
+  { id: 2, name: '管理员' },
+  { id: 3, name: '普通用户' },
+];
+const productsSeed = [
+  { id: 1, name: '智慧灯杆', code: 'LP-001' },
+  { id: 2, name: '智能网关', code: 'GW-001' },
+  { id: 3, name: '太阳能板', code: 'SP-001' },
+  { id: 4, name: 'LED灯具', code: 'LED-001' },
+];
+const orgProductsSeed = [
+  { orgId: 1, productId: 1, permissions: { view: true, edit: true, delete: true, share: true } },
+  { orgId: 1, productId: 2, permissions: { view: true, edit: true, delete: false, share: false } },
+];
+
+const app = createApp({
+  setup() {
+    const shared = createSharedSetup('组织管理');
+    const organizations = reactive(organizationsSeed);
+    const positionsData = reactive(positionsSeed);
+    const users = reactive(usersSeed);
+    const orgUsersData = reactive(orgUsersSeed);
+    const roles = reactive(rolesSeed);
+    const products = reactive(productsSeed);
+    const orgProducts = reactive(orgProductsSeed);
+    const devices = reactive([]);
+    for (let i = 1; i <= 20; i++) {
+      devices.push({ id: i, name: '智慧灯杆-' + String(i).padStart(3, '0'), sn: 'LP2026' + String(i).padStart(5, '0'), groupName: '示范路分组', orgId: i <= 10 ? 3 : 6 });
+    }
+
+    const activeTab = ref('position');
+    const assetTab = ref('product');
+    const selectedOrg = ref(null);
+    const selectedUsers = ref([]);
+
+    const orgDialogVisible = ref(false);
+    const orgEditing = ref(false);
+    const orgForm = reactive({ parentId: null, name: '', sort: 1 });
+
+    const positionDialogVisible = ref(false);
+    const positionEditing = ref(false);
+    const positionForm = reactive({ code: '', name: '', roleId: null, parentId: null, description: '' });
+
+    const bindUserDialogVisible = ref(false);
+    const bindPositionUserDialogVisible = ref(false);
+    const currentPosition = ref(null);
+    const selectedBindUsers = ref([]);
+    const selectedBindPositionUsers = ref([]);
+
+    const assetAssignDialogVisible = ref(false);
+    const assetAssignType = ref('product');
+    const batchConfig = ref(true);
+    const batchPermissions = reactive({ view: true, edit: false, delete: false, share: false });
+    const deviceSelectMode = ref('custom');
+    const selectedProducts = ref([]);
+    const selectedDevices = ref([]);
+    const selectedOrgDevices = ref([]);
+
+    const orgTreeData = computed(() => {
+      const map = new Map();
+      organizations.forEach(o => {
+        const parent = organizations.find(p => p.id === o.parentId);
+        map.set(o.id, { ...o, children: [], parentName: parent?.name || '' });
+      });
+      const roots = [];
+      organizations.forEach(o => {
+        const node = map.get(o.id);
+        if (o.parentId) {
+          const parent = map.get(o.parentId);
+          if (parent) parent.children.push(node);
+        } else {
+          roots.push(node);
+        }
+      });
+      return roots.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    });
+
+    const orgOptions = computed(() => {
+      return organizations.filter(o => o.id !== selectedOrg.value?.id).map(o => ({ id: o.id, name: o.name }));
+    });
+
+    const positions = computed(() => {
+      if (!selectedOrg.value) return [];
+      return positionsData.filter(p => p.orgId === selectedOrg.value.id).map(p => {
+        const role = roles.find(r => r.id === p.roleId);
+        const parent = positionsData.find(pos => pos.id === p.parentId);
+        return { ...p, roleName: role?.name || '', parentName: parent?.name || '' };
+      });
+    });
+
+    const parentPositionOptions = computed(() => {
+      if (!selectedOrg.value) return [];
+      return positionsData.filter(p => p.orgId === selectedOrg.value.id && p.id !== (positionEditing.value ? positionForm.id : null)).map(p => ({ id: p.id, name: p.name }));
+    });
+
+    const orgUsers = computed(() => {
+      if (!selectedOrg.value) return [];
+      return orgUsersData.filter(ou => ou.orgId === selectedOrg.value.id).map(ou => {
+        const user = users.find(u => u.id === ou.userId);
+        const position = positionsData.find(p => p.id === ou.positionId);
+        return { ...user, positionName: position?.name || '' };
+      });
+    });
+
+    const availableUsers = computed(() => {
+      if (!selectedOrg.value) return [];
+      const assignedIds = orgUsersData.filter(ou => ou.orgId === selectedOrg.value.id).map(ou => ou.userId);
+      return users.filter(u => !assignedIds.includes(u.id));
+    });
+
+    const availableUsersForPosition = computed(() => {
+      if (!currentPosition.value) return [];
+      const assignedIds = orgUsersData.filter(ou => ou.positionId === currentPosition.value.id).map(ou => ou.userId);
+      return users.filter(u => !assignedIds.includes(u.id));
+    });
+
+    const assignedProducts = computed(() => {
+      if (!selectedOrg.value) return [];
+      return orgProducts.filter(op => op.orgId === selectedOrg.value.id).map(op => {
+        const product = products.find(p => p.id === op.productId);
+        return { ...product, permissions: op.permissions };
+      });
+    });
+
+    const availableProducts = computed(() => {
+      if (!selectedOrg.value) return [];
+      const assignedIds = orgProducts.filter(op => op.orgId === selectedOrg.value.id).map(op => op.productId);
+      return products.filter(p => !assignedIds.includes(p.id)).map(p => ({
+        ...p,
+        permissions: { view: true, edit: false, delete: false, share: false }
+      }));
+    });
+
+    const assignedDevices = computed(() => {
+      if (!selectedOrg.value) return [];
+      return devices.filter(d => d.orgId === selectedOrg.value.id);
+    });
+
+    const availableDevices = computed(() => {
+      if (!selectedOrg.value) return [];
+      return devices.filter(d => d.orgId !== selectedOrg.value.id);
+    });
+
+    const allDevices = computed(() => devices);
+
+    const orgListForDevice = computed(() => {
+      return organizations.map(o => ({
+        id: o.id,
+        name: o.name,
+        deviceCount: devices.filter(d => d.orgId === o.id).length
+      })).filter(o => o.deviceCount > 0);
+    });
+
+    const handleOrgClick = (data) => {
+      selectedOrg.value = data;
+    };
+
+    const openAddOrg = () => {
+      orgEditing.value = false;
+      const maxSort = Math.max(...organizations.map(o => o.sort || 0), 0);
+      orgForm.parentId = null;
+      orgForm.name = '';
+      orgForm.sort = maxSort + 1;
+      orgDialogVisible.value = true;
+    };
+
+    const openEditOrg = () => {
+      if (!selectedOrg.value) return;
+      orgEditing.value = true;
+      orgForm.parentId = selectedOrg.value.parentId;
+      orgForm.name = selectedOrg.value.name;
+      orgForm.sort = selectedOrg.value.sort;
+      orgDialogVisible.value = true;
+    };
+
+    const saveOrg = () => {
+      if (!orgForm.name.trim()) {
+        ElementPlus.ElMessage.warning('请输入组织名称');
+        return;
+      }
+      if (orgEditing.value) {
+        const idx = organizations.findIndex(o => o.id === selectedOrg.value.id);
+        if (idx > -1) {
+          organizations[idx] = { ...organizations[idx], ...orgForm };
+          selectedOrg.value = organizations[idx];
+        }
+        ElementPlus.ElMessage.success('编辑成功');
+      } else {
+        const newId = Math.max(...organizations.map(o => o.id), 0) + 1;
+        organizations.push({ id: newId, ...orgForm });
+        ElementPlus.ElMessage.success('新增成功');
+      }
+      orgDialogVisible.value = false;
+    };
+
+    const deleteOrg = () => {
+      if (!selectedOrg.value) return;
+      const hasChildren = organizations.some(o => o.parentId === selectedOrg.value.id);
+      if (hasChildren) {
+        ElementPlus.ElMessage.warning('该组织下有子组织，无法删除');
+        return;
+      }
+      ElementPlus.ElMessageBox.confirm('确定删除该组织？', '提示', { type: 'warning' })
+        .then(() => {
+          const idx = organizations.findIndex(o => o.id === selectedOrg.value.id);
+          if (idx > -1) organizations.splice(idx, 1);
+          selectedOrg.value = null;
+          ElementPlus.ElMessage.success('删除成功');
+        }).catch(() => {});
+    };
+
+    const openAddPosition = () => {
+      if (!selectedOrg.value) {
+        ElementPlus.ElMessage.warning('请先选择组织');
+        return;
+      }
+      positionEditing.value = false;
+      positionForm.code = '';
+      positionForm.name = '';
+      positionForm.roleId = null;
+      positionForm.parentId = null;
+      positionForm.description = '';
+      positionDialogVisible.value = true;
+    };
+
+    const savePosition = () => {
+      if (!positionForm.code.trim()) {
+        ElementPlus.ElMessage.warning('请输入编号');
+        return;
+      }
+      if (!positionForm.name.trim()) {
+        ElementPlus.ElMessage.warning('请输入名称');
+        return;
+      }
+      if (!positionForm.roleId) {
+        ElementPlus.ElMessage.warning('请选择角色');
+        return;
+      }
+      const role = roles.find(r => r.id === positionForm.roleId);
+      if (positionEditing.value) {
+        const idx = positionsData.findIndex(p => p.id === positionForm.id);
+        if (idx > -1) {
+          positionsData[idx] = { ...positionsData[idx], ...positionForm, roleName: role.name };
+        }
+        ElementPlus.ElMessage.success('编辑成功');
+      } else {
+        const newId = Math.max(...positionsData.map(p => p.id), 0) + 1;
+        positionsData.push({ id: newId, orgId: selectedOrg.value.id, ...positionForm, roleName: role.name });
+        ElementPlus.ElMessage.success('新增成功');
+      }
+      positionDialogVisible.value = false;
+    };
+
+    const deletePosition = (row) => {
+      ElementPlus.ElMessageBox.confirm('确定删除该职位？', '提示', { type: 'warning' })
+        .then(() => {
+          const idx = positionsData.findIndex(p => p.id === row.id);
+          if (idx > -1) positionsData.splice(idx, 1);
+          ElementPlus.ElMessage.success('删除成功');
+        }).catch(() => {});
+    };
+
+    const openBindUser = () => {
+      if (!selectedOrg.value) {
+        ElementPlus.ElMessage.warning('请先选择组织');
+        return;
+      }
+      selectedBindUsers.value = [];
+      bindUserDialogVisible.value = true;
+    };
+
+    const handleBindUserSelection = (val) => {
+      selectedBindUsers.value = val;
+    };
+
+    const confirmBindUser = () => {
+      if (!selectedBindUsers.value.length) {
+        ElementPlus.ElMessage.warning('请选择要绑定的用户');
+        return;
+      }
+      selectedBindUsers.value.forEach(user => {
+        orgUsersData.push({ userId: user.id, orgId: selectedOrg.value.id, positionId: null });
+      });
+      ElementPlus.ElMessage.success(`成功绑定 ${selectedBindUsers.value.length} 个用户`);
+      bindUserDialogVisible.value = false;
+    };
+
+    const bindUserToPosition = (row) => {
+      currentPosition.value = row;
+      selectedBindPositionUsers.value = [];
+      bindPositionUserDialogVisible.value = true;
+    };
+
+    const handleBindPositionUserSelection = (val) => {
+      selectedBindPositionUsers.value = val;
+    };
+
+    const confirmBindPositionUser = () => {
+      if (!selectedBindPositionUsers.value.length) {
+        ElementPlus.ElMessage.warning('请选择要绑定的用户');
+        return;
+      }
+      selectedBindPositionUsers.value.forEach(user => {
+        const existing = orgUsersData.find(ou => ou.userId === user.id);
+        if (existing) {
+          existing.positionId = currentPosition.value.id;
+        } else {
+          orgUsersData.push({ userId: user.id, orgId: currentPosition.value.orgId, positionId: currentPosition.value.id });
+        }
+      });
+      ElementPlus.ElMessage.success(`成功绑定 ${selectedBindPositionUsers.value.length} 个用户`);
+      bindPositionUserDialogVisible.value = false;
+    };
+
+    const handleUserSelection = (val) => {
+      selectedUsers.value = val;
+    };
+
+    const unbindUser = (row) => {
+      const idx = orgUsersData.findIndex(ou => ou.userId === row.id);
+      if (idx > -1) {
+        orgUsersData.splice(idx, 1);
+        ElementPlus.ElMessage.success('解绑成功');
+      }
+    };
+
+    const batchUnbindUser = () => {
+      ElementPlus.ElMessageBox.confirm('确定批量解绑选中用户？', '提示', { type: 'warning' })
+        .then(() => {
+          selectedUsers.value.forEach(user => {
+            const idx = orgUsersData.findIndex(ou => ou.userId === user.id);
+            if (idx > -1) orgUsersData.splice(idx, 1);
+          });
+          selectedUsers.value = [];
+          ElementPlus.ElMessage.success('批量解绑成功');
+        }).catch(() => {});
+    };
+
+    const openAssetAssign = (type) => {
+      if (!selectedOrg.value) {
+        ElementPlus.ElMessage.warning('请先选择组织');
+        return;
+      }
+      assetAssignType.value = type;
+      selectedProducts.value = [];
+      selectedDevices.value = [];
+      selectedOrgDevices.value = [];
+      assetAssignDialogVisible.value = true;
+    };
+
+    const handleProductSelection = (val) => {
+      selectedProducts.value = val;
+    };
+
+    const handleDeviceSelection = (val) => {
+      selectedDevices.value = val;
+    };
+
+    const handleOrgDeviceSelection = (val) => {
+      selectedOrgDevices.value = val;
+    };
+
+    const confirmAssetAssign = () => {
+      if (assetAssignType.value === 'product') {
+        if (!selectedProducts.value.length) {
+          ElementPlus.ElMessage.warning('请选择要分配的产品');
+          return;
+        }
+        selectedProducts.value.forEach(product => {
+          orgProducts.push({
+            orgId: selectedOrg.value.id,
+            productId: product.id,
+            permissions: batchConfig.value ? { ...batchPermissions } : { ...product.permissions }
+          });
+        });
+        ElementPlus.ElMessage.success(`成功分配 ${selectedProducts.value.length} 个产品`);
+      } else {
+        if (deviceSelectMode.value === 'custom') {
+          if (!selectedDevices.value.length) {
+            ElementPlus.ElMessage.warning('请选择要分配的设备');
+            return;
+          }
+          selectedDevices.value.forEach(device => {
+            const idx = devices.findIndex(d => d.id === device.id);
+            if (idx > -1) devices[idx].orgId = selectedOrg.value.id;
+          });
+          ElementPlus.ElMessage.success(`成功分配 ${selectedDevices.value.length} 个设备`);
+        } else if (deviceSelectMode.value === 'organization') {
+          if (!selectedOrgDevices.value.length) {
+            ElementPlus.ElMessage.warning('请选择组织');
+            return;
+          }
+          let count = 0;
+          selectedOrgDevices.value.forEach(org => {
+            devices.forEach(d => {
+              if (d.orgId === org.id) {
+                d.orgId = selectedOrg.value.id;
+                count++;
+              }
+            });
+          });
+          ElementPlus.ElMessage.success(`成功分配 ${count} 个设备`);
+        } else {
+          devices.forEach(d => {
+            d.orgId = selectedOrg.value.id;
+          });
+          ElementPlus.ElMessage.success('成功分配所有设备');
+        }
+      }
+      assetAssignDialogVisible.value = false;
+    };
+
+    const unassignAsset = (type, id) => {
+      if (type === 'product') {
+        const idx = orgProducts.findIndex(op => op.productId === id && op.orgId === selectedOrg.value.id);
+        if (idx > -1) {
+          orgProducts.splice(idx, 1);
+          ElementPlus.ElMessage.success('移除成功');
+        }
+      } else {
+        const idx = devices.findIndex(d => d.id === id && d.orgId === selectedOrg.value.id);
+        if (idx > -1) {
+          devices[idx].orgId = null;
+          ElementPlus.ElMessage.success('移除成功');
+        }
+      }
+    };
+
+    return { ...shared, organizations, positions, users, orgUsers, roles, products, devices,
+      activeTab, assetTab, selectedOrg, selectedUsers,
+      orgDialogVisible, orgEditing, orgForm, orgOptions,
+      positionDialogVisible, positionEditing, positionForm, parentPositionOptions,
+      bindUserDialogVisible, bindPositionUserDialogVisible, currentPosition,
+      selectedBindUsers, selectedBindPositionUsers,
+      assetAssignDialogVisible, assetAssignType, batchConfig, batchPermissions,
+      deviceSelectMode, selectedProducts, selectedDevices, selectedOrgDevices,
+      orgTreeData, orgListForDevice,
+      assignedProducts, availableProducts, assignedDevices, availableDevices, allDevices,
+      handleOrgClick, openAddOrg, openEditOrg, saveOrg, deleteOrg,
+      openAddPosition, savePosition, deletePosition,
+      openBindUser, confirmBindUser, bindUserToPosition, confirmBindPositionUser,
+      handleUserSelection, unbindUser, batchUnbindUser,
+      openAssetAssign, confirmAssetAssign, unassignAsset,
+      handleProductSelection, handleDeviceSelection, handleOrgDeviceSelection
+    };
+  }
+});
+app.use(ElementPlus);
+app.mount('#app');
+</script>
+</body>
+</html>

@@ -1,0 +1,1149 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>灯杆管理 · 云创智慧平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+  <style>
+    :root {
+      /* ----- brand & status ----- */
+      --brand: #2f6bff;
+      --brand-deep: #1f4fd6;
+      --brand-soft: #ebf1ff;
+      --ok: #16a36a;
+      --off: #ef4d5e;
+      --warn: #e6952c;
+      /* ----- cool neutral ramp ----- */
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --line: #e6eaf2;
+      --line-soft: #eef1f7;
+      --ink: #1b2533;
+      --ink-2: #586273;
+      --ink-3: #7c8696;
+      /* ----- sidebar ----- */
+      --side: #1b2330;
+      --side-2: #12171f;
+      /* ----- radius scale ----- */
+      --r-sm: 8px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-pill: 999px;
+      /* ----- type scale ----- */
+      --fs-cap: 12px;
+      --fs-sm: 13px;
+      --fs: 14px;
+      --fs-md: 16px;
+      --fs-lg: 20px;
+      --fs-xl: 26px;
+      /* ----- shadow ----- */
+      --sh-sm: 0 1px 2px rgba(16,24,40,.05);
+      --sh-md: 0 6px 20px rgba(16,24,40,.07);
+      --sh-lg: 0 14px 36px rgba(31,71,214,.14);
+      /* ----- layout ----- */
+      --sb-w: 226px;
+      --sb-w-collapsed: 64px;
+      /* ----- Element Plus theming ----- */
+      --el-color-primary: #2f6bff;
+      --el-color-primary-light-3: #5c8bff;
+      --el-color-primary-light-5: #84a7ff;
+      --el-color-primary-light-7: #adc5ff;
+      --el-color-primary-light-8: #c1d3ff;
+      --el-color-primary-light-9: #ebf1ff;
+      --el-color-primary-dark-2: #1f4fd6;
+      --el-border-radius-base: 8px;
+      --el-font-size-base: 14px;
+      --el-text-color-regular: #586273;
+      --el-border-color: #e6eaf2;
+      --el-border-color-lighter: #eef1f7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--ink); font-size: var(--fs);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    #app { height: 100vh; }
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+
+    :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+
+    /* ============ Sidebar ============ */
+    .sidebar {
+      width: var(--sb-w); flex: 0 0 var(--sb-w);
+      background: linear-gradient(180deg, var(--side), var(--side-2));
+      color: #c3ccd9; display: flex; flex-direction: column;
+      transition: flex-basis .22s ease, width .22s ease, transform .25s ease;
+    }
+    .sidebar.collapsed { width: var(--sb-w-collapsed); flex-basis: var(--sb-w-collapsed); }
+    .brand {
+      height: 60px; display: flex; align-items: center; gap: 11px;
+      padding: 0 20px; color: #fff; font-weight: 700; font-size: var(--fs-md);
+      letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap;
+    }
+    .brand .logo {
+      width: 30px; height: 30px; border-radius: var(--r-md); flex: 0 0 auto;
+      background: linear-gradient(135deg, #5b8bff, #2f6bff);
+      display: grid; place-items: center; font-size: 15px;
+      box-shadow: 0 4px 14px rgba(47,107,255,.5);
+    }
+    .sidebar.collapsed .brand { padding: 0; justify-content: center; }
+    .sidebar.collapsed .brand .brand-txt { display: none; }
+
+    .nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 10px; }
+    .nav::-webkit-scrollbar { width: 6px; }
+    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: var(--r-pill); }
+
+    .nav-group { margin-bottom: 2px; }
+    .nav-group > .nav-title {
+      display: flex; align-items: center; gap: 11px;
+      padding: 11px 12px; border-radius: var(--r-md); font-size: var(--fs-sm);
+      color: #aab4c3; cursor: pointer; user-select: none;
+      transition: color .15s, background .15s; white-space: nowrap;
+    }
+    .nav-title .ng-ic { font-size: 16px; flex: 0 0 auto; display: inline-flex; }
+    .nav-title .ng-txt { flex: 1; }
+    .nav-title .caret { font-size: 13px; opacity: .55; transition: transform .2s; }
+    .nav-group.open > .nav-title .caret { transform: rotate(180deg); }
+    .nav-title:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-group.open > .nav-title,
+    .nav-group.has-active > .nav-title { color: #fff; }
+
+    .nav-children { overflow: hidden; padding: 2px 0 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px 9px 38px; font-size: var(--fs-sm); color: #aab4c3;
+      cursor: pointer; position: relative; border-radius: var(--r-md);
+      transition: all .15s; white-space: nowrap; margin: 1px 0;
+    }
+    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+    .nav-item.active .dot { opacity: 1; background: #6f9bff; }
+    .nav-item.active::before {
+      content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+      border-radius: var(--r-pill); background: var(--brand);
+    }
+    .sidebar.collapsed .nav-title { justify-content: center; padding: 13px 0; }
+    .sidebar.collapsed .nav-title .ng-txt,
+    .sidebar.collapsed .nav-title .caret { display: none; }
+    .sidebar.collapsed .nav-children { display: none !important; }
+    .sidebar.collapsed .nav-group.has-active > .nav-title { background: rgba(47,107,255,.18); }
+    .sidebar.collapsed .nav-group.has-active > .nav-title .ng-ic { color: #6f9bff; }
+
+    .sb-foot { border-top: 1px solid rgba(255,255,255,.07); padding: 10px; }
+    .sb-collapse {
+      width: 100%; height: 36px; border-radius: var(--r-md); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      color: #aab4c3; font-size: var(--fs-sm); transition: all .15s;
+    }
+    .sb-collapse:hover { color: #fff; background: rgba(255,255,255,.07); }
+
+    .nav-backdrop { position: fixed; inset: 0; background: rgba(12,18,28,.45); z-index: 55; }
+
+    /* ============ Main / Topbar ============ */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: 60px; background: var(--surface); display: flex; align-items: center;
+      padding: 0 18px; gap: 14px; border-bottom: 1px solid var(--line);
+    }
+    .crumb { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: var(--fs); }
+    .crumb .sep { color: var(--ink-3); }
+    .crumb .cur { color: var(--ink); font-weight: 600; }
+    .crumb .home-link { cursor: pointer; transition: color .15s; }
+    .crumb .home-link:hover { color: var(--brand); }
+    .topbar .spacer { flex: 1; }
+    .top-actions { display: flex; align-items: center; gap: 4px; color: var(--ink-2); font-size: var(--fs-sm); }
+    .top-actions .ico {
+      cursor: pointer; height: 36px; min-width: 36px; padding: 0 10px; border-radius: var(--r-md);
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: all .15s;
+    }
+    .top-actions .ico:hover { color: var(--brand); background: var(--brand-soft); }
+    .top-actions .ico .mini { font-size: 12px; opacity: .7; }
+    .top-actions .user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 0 8px 0 6px; height: 36px; border-radius: var(--r-md); transition: background .15s; }
+    .top-actions .user:hover { background: var(--surface-2); }
+    .top-actions .user .av {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b4658, #1f2733); color: #fff;
+      display: grid; place-items: center; font-size: 12px; font-weight: 600;
+    }
+    .hamburger { display: none; }
+
+    .nav-search-list { margin-top: 8px; max-height: 280px; overflow-y: auto; }
+    .nav-search-item { padding: 8px 10px; border-radius: var(--r-sm); font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
+    .nav-search-item:hover { background: var(--brand-soft); color: var(--brand); }
+    .nav-search-empty { padding: 14px; text-align: center; color: var(--ink-3); font-size: var(--fs-sm); }
+
+    /* ============ Tabs ============ */
+    .tabbar {
+      height: 44px; background: var(--surface); display: flex; align-items: center;
+      gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--line); box-shadow: var(--sh-sm);
+    }
+    .tabs-scroll { flex: 1; display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+    .tabs-scroll::-webkit-scrollbar { height: 0; }
+    .tab {
+      display: inline-flex; align-items: center; gap: 7px;
+      height: 28px; padding: 0 9px 0 12px; font-size: var(--fs-sm); color: var(--ink-2);
+      background: var(--surface-2); border-radius: var(--r-sm);
+      cursor: pointer; transition: all .15s; white-space: nowrap; flex: 0 0 auto;
+    }
+    .tab:hover { color: var(--brand); }
+    .tab.active { color: var(--brand); background: var(--brand-soft); font-weight: 500; }
+    .tab .tdot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+    .tab .tclose {
+      display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+      font-size: 11px; opacity: .55; transition: all .15s;
+    }
+    .tab .tclose:hover { opacity: 1; background: rgba(0,0,0,.1); }
+    .tabs-tools { flex: 0 0 auto; padding-left: 6px; }
+
+    .content { flex: 1; overflow-y: auto; padding: 20px; }
+    .content::-webkit-scrollbar { width: 10px; }
+    .content::-webkit-scrollbar-thumb { background: #d3d9e4; border-radius: var(--r-pill); }
+
+    .panel { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--sh-sm); }
+
+    /* ============ Page head / toolbar ============ */
+    .page-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0; gap: 12px; }
+    .page-head .ph-title { font-size: var(--fs-md); font-weight: 700; }
+    .page-head .ph-title small { font-weight: 400; color: var(--ink-3); font-size: var(--fs-sm); margin-left: 10px; }
+    .toolbar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+    .toolbar .lbl { font-size: var(--fs-sm); color: var(--ink-2); white-space: nowrap; }
+
+    /* ============ Grouping page ============ */
+    .split { display: flex; min-height: 520px; }
+    .cat-pane { width: 232px; flex: 0 0 232px; border-right: 1px solid var(--line); padding: 12px; overflow-y: auto; }
+    .cat-pane .cat-head { font-size: var(--fs-cap); color: var(--ink-3); padding: 4px 10px 10px; letter-spacing: .4px; }
+    .cat-item {
+      display: flex; align-items: center; gap: 9px; padding: 9px 12px; position: relative;
+      font-size: var(--fs-sm); color: var(--ink-2); border-radius: var(--r-md);
+      cursor: pointer; margin-bottom: 2px; transition: all .15s;
+    }
+    .cat-item:hover { background: var(--surface-2); color: var(--ink); }
+    .cat-item.active { background: var(--brand-soft); color: var(--brand-deep); font-weight: 600; }
+    .cat-item.active::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: var(--r-pill); background: var(--brand); }
+    .cat-item .ci-dot { width: 7px; height: 7px; border-radius: 2px; background: #c4ccd8; flex: 0 0 auto; }
+    .cat-item.active .ci-dot { background: var(--brand); }
+    .cat-item .ci-count { margin-left: auto; font-size: var(--fs-cap); color: var(--ink-3); }
+    .cat-item.active .ci-count { color: var(--brand); }
+
+    .table-pane { flex: 1; padding: 16px 20px; min-width: 0; }
+    .tp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .tp-head .tp-title { font-size: var(--fs); font-weight: 600; }
+    .tp-head .tp-title small { color: var(--ink-3); font-weight: 400; margin-left: 8px; font-size: var(--fs-cap); }
+
+    .seq-badge {
+      display: inline-grid; place-items: center; min-width: 40px; height: 24px; padding: 0 8px;
+      border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink-2);
+      font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+    .pager-wrap { display: flex; align-items: center; justify-content: flex-end; padding: 16px 20px; }
+    .row-actions { display: inline-flex; align-items: center; gap: 2px; }
+
+    /* ============ Device cards ============ */
+    .filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 16px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+    .dev-card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+      padding: 18px; position: relative; overflow: hidden; transition: all .2s; box-shadow: var(--sh-sm);
+    }
+    .dev-card:hover { transform: translateY(-3px); box-shadow: var(--sh-lg); border-color: rgba(47,107,255,.35); }
+    .dc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .dc-id { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: var(--fs); letter-spacing: .2px; }
+    .dc-id .chip { width: 26px; height: 26px; border-radius: var(--r-sm); display: grid; place-items: center; color: #fff; font-size: 13px; flex: 0 0 auto; }
+    .dc-id .chip.on  { background: linear-gradient(135deg,#1fd29a,#16a36a); }
+    .dc-id .chip.off { background: linear-gradient(135deg,#9aa6b6,#7a8597); }
+    .dc-wifi { font-size: 16px; }
+    .dc-wifi.on { color: var(--ok); }
+    .dc-wifi.off { color: #c4ccd8; }
+    .dc-status { display: inline-flex; align-items: center; gap: 6px; margin: 13px 0 14px; font-size: var(--fs-cap); font-weight: 600; padding: 3px 10px; border-radius: var(--r-pill); }
+    .dc-status.off { background: #fdecee; color: var(--off); }
+    .dc-status.on { background: #e7f7f0; color: var(--ok); }
+    .dc-status .s-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .dc-info { display: grid; gap: 9px; }
+    .dc-row { display: flex; font-size: var(--fs-sm); color: var(--ink-2); }
+    .dc-row .k { color: var(--ink-3); width: 64px; flex: 0 0 auto; }
+    .dc-row .v { color: var(--ink); word-break: break-all; }
+    .dc-art { position: absolute; right: 14px; bottom: 56px; font-size: 46px; opacity: .08; color: var(--brand); pointer-events: none; }
+    .dc-foot { margin-top: 16px; }
+
+    /* ============ Empty state ============ */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 64px 20px; text-align: center; }
+    .empty-state .es-ic { font-size: 46px; color: var(--ink-3); opacity: .6; }
+    .empty-state .es-t { font-size: var(--fs); font-weight: 600; color: var(--ink-2); }
+    .empty-state .es-s { font-size: var(--fs-sm); color: var(--ink-3); }
+
+    /* ============ Detail ============ */
+    .detail-wrap { display: flex; min-height: 520px; }
+    .detail-nav { width: 174px; flex: 0 0 174px; border-right: 1px solid var(--line); padding: 20px 12px; }
+    .dn-item {
+      display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: var(--r-md); position: relative;
+      font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; margin-bottom: 4px; transition: all .15s;
+    }
+    .dn-item:hover { background: var(--surface-2); }
+    .dn-item.active { background: var(--brand-soft); color: var(--brand-deep); font-weight: 600; }
+    .dn-item.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: var(--r-pill); background: var(--brand); }
+    .dn-item .dn-ic { width: 7px; height: 7px; border-radius: 50%; background: #c4ccd8; }
+    .dn-item.active .dn-ic { background: var(--brand); }
+    .detail-body { flex: 1; padding: 26px 30px; min-width: 0; }
+    .form-section-title { font-size: var(--fs); font-weight: 600; margin: 0 0 18px; display: flex; align-items: center; gap: 9px; }
+    .form-section-title::before { content: ""; width: 4px; height: 15px; border-radius: var(--r-pill); background: var(--brand); }
+    .runtime-head { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; font-size: var(--fs); font-weight: 600; }
+    .runtime-head .upd { font-weight: 400; color: var(--ink-3); font-size: var(--fs-sm); }
+    .runtime-head .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cap); color: var(--ok); font-weight: 600; }
+    .runtime-head .live .blink { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: blink 1.4s infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .metric { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px 16px 14px; transition: all .15s; }
+    .metric:hover { border-color: rgba(47,107,255,.3); box-shadow: var(--sh-md); }
+    .metric .m-k { font-size: var(--fs-cap); color: var(--ink-3); margin-bottom: 9px; }
+    .metric .m-v { font-size: var(--fs-lg); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 4px; }
+    .metric .m-v.ok { color: var(--ok); }
+    .metric .m-v.bad { color: var(--off); }
+    .metric .m-u { font-size: var(--fs-cap); font-weight: 500; color: var(--ink-3); }
+    .metric .m-bar { height: 4px; border-radius: var(--r-pill); background: #e3e8f1; margin-top: 12px; overflow: hidden; }
+    .metric .m-bar > i { display: block; height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg,#5b8bff,#2f6bff); }
+
+    /* ============ Strategy ============ */
+    .table-zone { padding: 16px 20px 8px; }
+    .expand-box { padding: 10px 20px 16px 56px; background: var(--surface-2); }
+    .expand-empty { color: var(--ink-3); font-size: var(--fs-sm); padding: 6px 0; }
+    .act-pill {
+      display: inline-flex; align-items: center; gap: 8px; background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-pill); padding: 6px 14px;
+      margin: 4px 8px 4px 0; font-size: var(--fs-sm);
+    }
+    .act-pill .seg { color: var(--ink-2); }
+    .act-pill .seg b { color: var(--ink); }
+    .time-divider { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; color: var(--ink-3); font-size: var(--fs-sm); }
+    .time-divider::before, .time-divider::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+    .dialog-actions-table { margin-top: 2px; }
+    .empty-cell { text-align: center; color: var(--ink-3); padding: 28px 0; font-size: var(--fs-sm); }
+    .tag-soft { background: var(--brand-soft); color: var(--brand); border: none; }
+
+    /* ============ 灯杆管理 / 批量条 / 选择详情提示 ============ */
+    .batch-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .batch-bar .bf-item { display: flex; align-items: center; gap: 8px; }
+    .batch-bar .bf-lbl { font-size: var(--fs-cap); color: var(--ink-3); white-space: nowrap; }
+    .batch-bar .bf-sel { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 600; }
+
+    .pick-detail { margin-top: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
+    .pick-detail .pd-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
+    .pick-detail .pd-name { font-weight: 700; font-size: var(--fs); }
+    .pick-detail .pd-row { display: flex; font-size: var(--fs-sm); color: var(--ink-2); margin-top: 7px; }
+    .pick-detail .pd-row .k { color: var(--ink-3); width: 82px; flex: 0 0 auto; }
+    .pick-detail .pd-actions { margin-top: 8px; }
+
+    .pick-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 10px 14px; background: var(--brand-soft); border-radius: var(--r-md); font-size: var(--fs-sm); color: var(--brand-deep); }
+    .pick-hint .ph-link { font-weight: 600; white-space: nowrap; }
+
+    /* ============ Placeholder ============ */
+    .placeholder { min-height: 460px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--ink-3); text-align: center; }
+    .placeholder .pl-ic { width: 88px; height: 88px; border-radius: var(--r-lg); display: grid; place-items: center; font-size: 40px; color: var(--brand); background: var(--brand-soft); }
+    .placeholder .pl-t { font-size: var(--fs-md); font-weight: 600; color: var(--ink-2); }
+    .placeholder .pl-s { font-size: var(--fs-sm); }
+
+    /* ============ Home ============ */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin-bottom: 16px; }
+    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sh-sm); transition: all .18s; }
+    .stat:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
+    .stat .st-ic { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; font-size: 24px; color: #fff; flex: 0 0 auto; }
+    .stat .st-v { font-size: var(--fs-xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .stat .st-k { font-size: var(--fs-sm); color: var(--ink-3); margin-top: 4px; }
+    .quick { padding: 20px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 12px; margin-top: 14px; }
+    .quick-item { border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all .15s; }
+    .quick-item:hover { border-color: rgba(47,107,255,.4); background: var(--brand-soft); transform: translateY(-2px); }
+    .quick-item .qi-ic { font-size: 20px; color: var(--brand); }
+    .quick-item .qi-t { font-size: var(--fs); font-weight: 600; }
+    .quick-item .qi-s { font-size: var(--fs-cap); color: var(--ink-3); }
+
+    /* ============ Element overrides ============ */
+    .el-button--primary { --el-button-bg-color: var(--brand); --el-button-border-color: var(--brand); --el-button-hover-bg-color: var(--brand-deep); --el-button-hover-border-color: var(--brand-deep); }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0; z-index: 60;
+        transform: translateX(-100%); box-shadow: var(--sh-lg);
+        width: var(--sb-w) !important; flex-basis: var(--sb-w) !important;
+      }
+      .sidebar.mobile-open { transform: none; }
+      .hamburger { display: inline-flex; }
+      .split, .detail-wrap { flex-direction: column; }
+      .cat-pane, .detail-nav { width: 100%; flex: none; border-right: none; border-bottom: 1px solid var(--line); }
+      .content { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+    <!-- ============ Sidebar ============ -->
+    <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span></div>
+      <nav class="nav">
+        <div v-for="g in menuGroups" :key="g.title" class="nav-group"
+             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
+          <div class="nav-title" @click="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="g.icon"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><ArrowDown></ArrowDown></el-icon>
+          </div>
+          <div class="nav-children" v-show="g.open && !collapsed">
+            <a v-for="item in g.items" :key="item"
+               :href="menuHref[item] || '#'"
+               class="nav-item"
+               :class="{ active: item === activeMenu }"
+               @click="onMenuClick(item, $event)">
+              <span class="dot"></span>{{ item }}
+            </a>
+          </div>
+        </div>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
+          <el-icon><component :is="collapsed ? 'Expand' : 'Fold'"></component></el-icon>
+          <span v-if="!collapsed">收起菜单</span>
+        </div>
+      </div>
+    </aside>
+    <div class="nav-backdrop" v-if="mobileNav" @click="mobileNav = false"></div>
+    <!-- ============ Main ============ -->
+    <div class="main">
+      <header class="topbar">
+        <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Expand></Expand></el-icon></span>
+        <div class="crumb">
+          <span class="home-link" tabindex="0"><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
+          <span class="sep">/</span><span class="">智慧灯杆</span>
+          <span class="sep">/</span><span class="cur">灯杆管理</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="top-actions">
+          <el-popover v-model:visible="searchPop" trigger="click" :width="280" placement="bottom-end">
+            <template #reference><span class="ico"><el-icon><Search></Search></el-icon></span></template>
+            <el-input v-model="navQuery" placeholder="搜索菜单…" size="small" clearable :prefix-icon="Search"></el-input>
+            <div class="nav-search-list">
+              <div v-for="m in navMatches" :key="m" class="nav-search-item" @click="jumpMenu(m)">{{ m }}</div>
+              <div v-if="!navMatches.length" class="nav-search-empty">无匹配菜单</div>
+            </div>
+          </el-popover>
+          <span class="ico" @click="toggleFull"><el-icon><FullScreen></FullScreen></el-icon></span>
+          <el-dropdown trigger="click">
+            <span class="ico">中文 <el-icon class="mini"><ArrowDown></ArrowDown></el-icon></span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item>简体中文</el-dropdown-item>
+              <el-dropdown-item>English</el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
+          <span class="ico">数据大屏</span>
+          <el-dropdown trigger="click">
+            <span class="user"><span class="av">云</span>云创 <el-icon class="mini"><ArrowDown></ArrowDown></el-icon></span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item :icon="User">个人中心</el-dropdown-item>
+              <el-dropdown-item :icon="Setting">账号设置</el-dropdown-item>
+              <el-dropdown-item :icon="SwitchButton" divided>退出登录</el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
+        </div>
+      </header>
+
+      <main class="content">
+        <section v-if="activeMenu === '灯杆管理'">
+          <div class="stat-grid">
+            <div class="stat" v-for="s in poleStats" :key="s.k">
+              <div class="st-ic" :style="{ background: s.c }"><el-icon><component :is="s.icon"></component></el-icon></div>
+              <div><div class="st-v">{{ s.v }}</div><div class="st-k">{{ s.k }}</div></div>
+            </div>
+          </div>
+          <div class="panel">
+            <div class="toolbar">
+              <span class="lbl">灯杆名称</span>
+              <el-input v-model="poleSearchForm.name" placeholder="请输入" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
+              <span class="lbl">序列号</span>
+              <el-input v-model="poleSearchForm.sn" placeholder="请输入" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
+              <span class="lbl">设备状态</span>
+              <el-select v-model="poleSearchForm.status" placeholder="请选择" style="width: 130px" clearable>
+                <el-option label="未注册" value="unregistered"></el-option><el-option label="在线" value="online"></el-option><el-option label="离线" value="offline"></el-option>
+              </el-select>
+              <span class="lbl">分组名称</span>
+              <el-select v-model="poleSearchForm.groupName" placeholder="请选择" style="width: 160px" clearable filterable>
+                <el-option v-for="g in allGroupNames" :key="g" :label="g" :value="g"></el-option>
+              </el-select>
+              <template v-if="poleShowMore">
+                <span class="lbl">项目名称</span>
+                <el-select v-model="poleSearchForm.projectName" placeholder="请选择" style="width: 180px" clearable filterable>
+                  <el-option v-for="p in poleProjectOptions" :key="p" :label="p" :value="p"></el-option>
+                </el-select>
+                <span class="lbl">所属产品</span>
+                <el-select v-model="poleSearchForm.product" placeholder="请选择" style="width: 180px" clearable>
+                  <el-option v-for="p in poleProductOptions" :key="p" :label="p" :value="p"></el-option>
+                </el-select>
+              </template>
+              <el-button type="primary" :icon="Search" @click="poleDoSearch">搜索</el-button>
+              <el-button :icon="RefreshRight" @click="poleResetSearch">重置</el-button>
+              <el-button text type="primary" @click="poleShowMore = !poleShowMore">
+                {{ poleShowMore ? '收起' : '展开' }}<el-icon><component :is="poleShowMore ? 'ArrowUp' : 'ArrowDown'"></component></el-icon>
+              </el-button>
+            </div>
+          </div>
+
+          <div class="panel batch-bar" style="margin-top:16px">
+            <span class="bf-sel">已选 {{ selectedPoles.length }} 项</span>
+            <div class="bf-item"><span class="bf-lbl">感应周期</span><el-input v-model="poleBatchForm.senseCycle" placeholder="输入" style="width:90px" size="small" :disabled="!selectedPoles.length"></el-input></div>
+            <div class="bf-item"><span class="bf-lbl">调光</span><el-slider v-model="poleBatchForm.dim" style="width:120px" size="small" :disabled="!selectedPoles.length"></el-slider><span class="bf-lbl">{{ poleBatchForm.dim }}%</span></div>
+            <div class="bf-item"><span class="bf-lbl">色温</span><el-slider v-model="poleBatchForm.colorTemp" style="width:120px" size="small" :disabled="!selectedPoles.length"></el-slider><span class="bf-lbl">{{ poleBatchForm.colorTemp < 30 ? '暖' : poleBatchForm.colorTemp > 70 ? '冷' : '中性' }}</span></div>
+            <div class="bf-item"><span class="bf-lbl">回路</span>
+              <el-select v-model="poleBatchForm.circuit" placeholder="选择" size="small" style="width:80px" :disabled="!selectedPoles.length">
+                <el-option v-for="n in 8" :key="n" :label="String(n)" :value="n"></el-option>
+              </el-select>
+            </div>
+            <el-button type="primary" size="small" :disabled="!selectedPoles.length" @click="poleBatchApply">应用</el-button>
+          </div>
+
+          <div class="panel" style="margin-top:16px">
+            <div class="page-head"><div class="ph-title">智慧照明列表 <small>共 {{ filteredPoles.length }} 条</small></div></div>
+            <div class="toolbar">
+              <el-button type="primary" size="small" :icon="Plus" @click="openAddPole">新增</el-button>
+              <el-button size="small" :icon="Upload" @click="poleImportVisible = true">导入</el-button>
+              <el-button size="small" :icon="Download" @click="poleExport">导出</el-button>
+              <el-divider direction="vertical"></el-divider>
+              
+              <el-button size="small" type="success" plain :icon="Lightning" @click="poleLightOn">开灯</el-button>
+              <el-button size="small" type="primary" plain :icon="MuteNotification" @click="poleLightOff">关灯</el-button>
+              <el-divider direction="vertical"></el-divider>
+              <el-button size="small" type="primary" plain :icon="SetUp" @click="openPoleStrategyPick">下发策略</el-button>
+              <el-button size="small" type="primary" plain :icon="Close" @click="poleCancelStrategy">取消策略</el-button>
+              <el-divider direction="vertical"></el-divider>
+              <el-button size="small" type="danger" plain :icon="Delete" @click="poleBatchDelete">删除</el-button>
+            </div>
+            <div class="table-zone">
+              <el-table :data="pagedPoles" stripe style="width:100%" :header-cell-style="tableHeaderStyle" @selection-change="poleSelectionChange">
+                <el-table-column type="selection" width="45"></el-table-column>
+                <el-table-column prop="name" label="灯杆名称" min-width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="sn" label="序列号" min-width="140" show-overflow-tooltip></el-table-column>
+                <el-table-column label="状态" width="90" align="center">
+                  <template #default="{ row }"><el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag></template>
+                </el-table-column>
+                <el-table-column label="开关" width="70" align="center">
+                  <template #default="{ row }"><el-tag :type="row.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ row.switchOn ? '开' : '关' }}</el-tag></template>
+                </el-table-column>
+                <el-table-column prop="voltage" label="电压(V)" width="85" align="right"></el-table-column>
+                <el-table-column prop="power" label="功率(W)" width="85" align="right"></el-table-column>
+                <el-table-column prop="brightness" label="亮度(%)" width="85" align="right"></el-table-column>
+                <el-table-column label="光控" width="70" align="center">
+                  <template #default="{ row }"><el-switch v-model="row.lightControl" size="small"></el-switch></template>
+                </el-table-column>
+                <el-table-column label="人体感应" width="90" align="center">
+                  <template #default="{ row }"><el-switch v-model="row.bodySense" size="small"></el-switch></template>
+                </el-table-column>
+                <el-table-column label="杆体倾斜" width="90" align="center">
+                  <template #default="{ row }"><el-tag :type="poleTiltType(row.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(row.tilt) }}</el-tag></template>
+                </el-table-column>
+                <el-table-column prop="lampType" label="灯具类型" width="100"></el-table-column>
+                <el-table-column prop="product" label="所属产品" width="140" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="projectName" label="项目名称" width="150" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="groupName" label="分组" width="110" show-overflow-tooltip></el-table-column>
+                <el-table-column label="操作" width="150" align="center" fixed="right">
+                  <template #default="{ row }">
+                    <div class="row-actions">
+                      <el-button link type="primary" :icon="Timer" @click="poleHandleTimeStrategy(row)">时间策略</el-button>
+                      <el-divider direction="vertical"></el-divider>
+                      <el-button link type="primary" :icon="Edit" @click="openEditPole(row)">编辑</el-button>
+                      <el-divider direction="vertical"></el-divider>
+                      <el-button link type="danger" :icon="Delete" @click="poleHandleDelete(row)">删除</el-button>
+                    </div>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div class="pager-wrap">
+              <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                :total="filteredPoles.length" v-model:current-page="polePage" v-model:page-size="polePageSize" :page-sizes="[10,20,50]"></el-pagination>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+  <!-- ============ 新增/编辑 分组 ============ -->
+  <el-dialog v-model="groupDialog" :title="grpEditing ? '编辑设备分组' : '添加设备分组'" width="460px" align-center>
+    <el-form ref="groupFormRef" :model="groupForm" :rules="groupRules" label-width="80px" label-position="left">
+      <el-form-item label="分组名称" prop="name"><el-input v-model="groupForm.name" placeholder="请输入分组名称"></el-input></el-form-item>
+      <el-form-item label="分组排序" prop="seq"><el-input v-model="groupForm.seq" placeholder="请输入数字，越大越靠前"></el-input></el-form-item>
+      <el-form-item label="备注"><el-input v-model="groupForm.remark" type="textarea" :rows="3" placeholder="请输入内容"></el-input></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="groupDialog = false">取 消</el-button>
+      <el-button type="primary" @click="saveGroup">确 定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 新增 策略 ============ -->
+  <el-dialog v-model="strategyDialog" title="添加策略" width="980px" top="7vh" :close-on-click-modal="false" destroy-on-close>
+    <el-row :gutter="24">
+      <el-col :span="10">
+        <el-form ref="stFormRef" :model="stForm" :rules="stRules" label-width="84px">
+          <el-form-item label="策略名称" prop="name"><el-input v-model="stForm.name" placeholder="请输入策略名称"></el-input></el-form-item>
+          <el-form-item label="设备类型" prop="deviceType">
+            <el-select v-model="stForm.deviceType" placeholder="请选择" style="width:100%" @change="onDeviceChange">
+              <el-option v-for="d in deviceTypes" :key="d" :label="d" :value="d"></el-option>
+            </el-select>
+          </el-form-item>
+          <template v-if="stForm.deviceType === '智慧灯杆'">
+            <el-form-item label="策略类型" prop="strategyType">
+              <el-select v-model="stForm.strategyType" placeholder="请选择" style="width:100%"><el-option v-for="s in strategyTypes" :key="s" :label="s" :value="s"></el-option></el-select>
+            </el-form-item>
+            <el-form-item label="回路" prop="loop">
+              <el-select v-model="stForm.loop" placeholder="请选择" style="width:100%"><el-option v-for="l in loops" :key="l" :label="'回路 ' + l" :value="l"></el-option></el-select>
+            </el-form-item>
+          </template>
+          <el-form-item label="备注"><el-input v-model="stForm.remark" type="textarea" :rows="2" placeholder="请输入备注"></el-input></el-form-item>
+        </el-form>
+      </el-col>
+      <el-col :span="14">
+        <el-table :data="stForm.actions" border size="small" class="dialog-actions-table">
+          <el-table-column label="开始" min-width="170">
+            <template #default="{ row }">开始：{{ row.startHour }}时-{{ row.startMinute }}分 ({{ row.action==='开关灯' ? (row.startOn?'开':'关') : '亮'+row.startBright+'%' }})</template>
+          </el-table-column>
+          <el-table-column label="结束" min-width="170">
+            <template #default="{ row }">结束：{{ row.endHour }}时-{{ row.endMinute }}分 ({{ row.action==='开关灯' ? (row.endOn?'开':'关') : '亮'+row.endBright+'%' }})</template>
+          </el-table-column>
+          <el-table-column label="动作" width="80" align="center">
+            <template #default="{ row }"><el-tag size="small" effect="plain" class="tag-soft">{{ row.action }}</el-tag></template>
+          </el-table-column>
+          <el-table-column label="操作" width="110" align="center">
+            <template #default="{ $index }">
+              <el-button link type="primary" size="small" @click="editAction(stForm, $index)">编辑</el-button>
+              <el-button link type="danger" size="small" @click="stForm.actions.splice($index,1)">删除</el-button>
+            </template>
+          </el-table-column>
+          <template #empty><div class="empty-cell">暂无数据，请点击「添加动作」</div></template>
+        </el-table>
+      </el-col>
+    </el-row>
+    <template #footer>
+      <div style="display:flex; align-items:center">
+        <el-button type="success" :icon="CirclePlus" @click="openCmd(stForm)">添加动作</el-button>
+        <div style="flex:1"></div>
+        <el-button @click="strategyDialog = false">取 消</el-button>
+        <el-button type="primary" @click="saveStrategy">确 定</el-button>
+      </div>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 编辑 策略（含分组/灯杆绑定） ============ -->
+  <el-dialog v-model="strategyEditDialog" title="编辑策略" width="1200px" top="6vh" :close-on-click-modal="false" destroy-on-close>
+    <div style="display:flex; gap:20px; min-height:480px">
+      <div style="width:300px; flex:0 0 300px">
+        <el-form :model="stEditForm" label-width="84px">
+          <el-form-item label="策略名称"><el-input v-model="stEditForm.name" placeholder="请输入策略名称"></el-input></el-form-item>
+          <el-form-item label="设备类型">
+            <el-select v-model="stEditForm.deviceType" placeholder="请选择" style="width:100%" @change="onEditDeviceChange">
+              <el-option v-for="d in deviceTypes" :key="d" :label="d" :value="d"></el-option>
+            </el-select>
+          </el-form-item>
+          <template v-if="stEditForm.deviceType === '智慧灯杆'">
+            <el-form-item label="策略类型">
+              <el-select v-model="stEditForm.strategyType" placeholder="请选择" style="width:100%"><el-option v-for="s in strategyTypes" :key="s" :label="s" :value="s"></el-option></el-select>
+            </el-form-item>
+            <el-form-item label="回路">
+              <el-select v-model="stEditForm.loop" placeholder="请选择" style="width:100%"><el-option v-for="l in loops" :key="l" :label="'回路 ' + l" :value="l"></el-option></el-select>
+            </el-form-item>
+          </template>
+          <el-form-item label="执行动作">
+            <el-link type="primary" :underline="false" @click="openCmd(stEditForm)">+ 添加</el-link>
+          </el-form-item>
+          <el-table :data="stEditForm.actions" border size="small">
+            <el-table-column label="执行动作" width="70"><template #default="{ row }">{{ row.action === '开关灯' ? (row.startOn ? '开灯' : '关灯') : '调光' }}</template></el-table-column>
+            <el-table-column label="开始时间" min-width="90"><template #default="{ row }">{{ row.startHour }}时{{ row.startMinute }}分</template></el-table-column>
+            <el-table-column label="结束时间" min-width="90"><template #default="{ row }">{{ row.endHour }}时{{ row.endMinute }}分</template></el-table-column>
+            <el-table-column label="操作" width="90" align="center">
+              <template #default="{ $index }">
+                <el-button link type="primary" size="small" @click="editAction(stEditForm, $index)">编辑</el-button>
+                <el-button link type="danger" size="small" @click="stEditForm.actions.splice($index,1)">删除</el-button>
+              </template>
+            </el-table-column>
+            <template #empty><div class="empty-cell">暂无动作</div></template>
+          </el-table>
+          <el-form-item label="备注" style="margin-top:16px"><el-input v-model="stEditForm.remark" type="textarea" :rows="2" placeholder="请输入备注"></el-input></el-form-item>
+        </el-form>
+      </div>
+      <div style="width:160px; flex:0 0 160px; border-left:1px solid var(--line); border-right:1px solid var(--line); padding:0 14px; overflow-y:auto">
+        <div class="cat-head">分组列表</div>
+        <div class="cat-item" :class="{ active: stEditGroupFilter === '全部' }" @click="stEditGroupFilter = '全部'"><span class="ci-dot"></span>全部</div>
+        <div class="cat-item" v-for="g in groups" :key="g.id" :class="{ active: stEditGroupFilter === g.name }" @click="stEditGroupFilter = g.name"><span class="ci-dot"></span>{{ g.name }}</div>
+      </div>
+      <div style="flex:1; min-width:0">
+        <div class="cat-head" style="padding:4px 0 10px">灯杆列表 · 已选 {{ stEditSelectedIds.length }} 台</div>
+        <div style="display:flex; gap:8px; margin-bottom:10px">
+          <el-input v-model="stEditPoleSearch.name" placeholder="灯杆名称" size="small" clearable style="width:140px"></el-input>
+          <el-input v-model="stEditPoleSearch.sn" placeholder="序列号" size="small" clearable style="width:160px"></el-input>
+        </div>
+        <el-table :data="filteredEditPoles" border size="small" max-height="380" row-key="id">
+          <el-table-column width="44" align="center">
+            <template #default="{ row }"><el-checkbox :model-value="stEditSelectedIds.includes(row.id)" @change="(val) => toggleEditPole(row.id, val)"></el-checkbox></template>
+          </el-table-column>
+          <el-table-column prop="name" label="灯杆名称" min-width="120"></el-table-column>
+          <el-table-column prop="sn" label="灯杆序列号" min-width="150" sortable></el-table-column>
+          <template #empty><div class="empty-cell">该分组下暂无灯杆</div></template>
+        </el-table>
+      </div>
+    </div>
+    <template #footer>
+      <el-button @click="strategyEditDialog = false">取消</el-button>
+      <el-button type="primary" @click="saveStrategyEdit">确定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 新增/编辑 灯杆 ============ -->
+  <el-dialog v-model="poleDialogVisible" :title="poleDialogTitle" width="640px" align-center :close-on-click-modal="false">
+    <el-form :model="poleForm" label-width="100px">
+      <el-row :gutter="16">
+        <el-col :span="12"><el-form-item label="所属项目"><el-select v-model="poleForm.projectName" placeholder="请选择" clearable filterable style="width:100%"><el-option v-for="p in poleProjectOptions" :key="p" :label="p" :value="p"></el-option></el-select></el-form-item></el-col>
+        <el-col :span="12"><el-form-item label="所属产品"><el-select v-model="poleForm.product" placeholder="请选择" clearable style="width:100%"><el-option v-for="p in poleProductOptions" :key="p" :label="p" :value="p"></el-option></el-select></el-form-item></el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col :span="12"><el-form-item label="灯杆序列号"><el-input v-model="poleForm.sn" placeholder="请输入"></el-input></el-form-item></el-col>
+        <el-col :span="12"><el-form-item label="灯杆名称"><el-input v-model="poleForm.name" placeholder="请输入"></el-input></el-form-item></el-col>
+      </el-row>
+      <el-row :gutter="16">
+        <el-col :span="12"><el-form-item label="经度坐标"><el-input v-model="poleForm.lng" placeholder="请输入"></el-input></el-form-item></el-col>
+        <el-col :span="12"><el-form-item label="纬度坐标"><el-input v-model="poleForm.lat" placeholder="请输入"></el-input></el-form-item></el-col>
+      </el-row>
+      <el-form-item label="灯杆地址"><el-input v-model="poleForm.address" placeholder="请输入"></el-input></el-form-item>
+      <el-form-item label="备注"><el-input v-model="poleForm.remark" type="textarea" :rows="2" placeholder="请输入"></el-input></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="poleDialogVisible = false">取 消</el-button>
+      <el-button type="primary" @click="savePole">确 定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 导入灯具 ============ -->
+  <el-dialog v-model="poleImportVisible" title="导入灯具" width="480px" align-center>
+    <div style="text-align:center;padding:20px 0;color:var(--ink-3)">
+      <el-icon style="font-size:44px"><UploadFilled></UploadFilled></el-icon>
+      <div style="margin-top:10px;font-size:var(--fs-sm)">示例演示，暂不解析真实文件</div>
+      <div style="margin-top:16px">
+        <el-button type="primary" text :icon="Download" @click="poleDownloadTemplate">下载导入模板</el-button>
+      </div>
+    </div>
+    <template #footer>
+      <el-button @click="poleImportVisible = false">取 消</el-button>
+      <el-button type="primary" @click="poleImportVisible = false; ElementPlus.ElMessage.success('导入成功（示例）')">确 定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 时间策略详情 ============ -->
+  <el-dialog v-model="poleTsVisible" title="时间策略详情" width="640px" align-center>
+    <div style="margin-bottom:14px;font-size:var(--fs-sm);color:var(--ink-2)">设备序列号：<b style="color:var(--ink)">{{ poleTsSn }}</b></div>
+    <el-timeline v-if="poleTsData.length" style="padding:4px 0">
+      <el-timeline-item
+        v-for="(row, i) in poleTsData"
+        :key="i"
+        :timestamp="row.time"
+        placement="top"
+      >
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+          <el-tag :type="row.enabled ? 'success' : 'info'" size="small" effect="plain">{{ row.enabled ? '启用' : '停用' }}</el-tag>
+          <span style="font-size:var(--fs-sm); color:var(--ink-2);">{{ row.action }}</span>
+        </div>
+      </el-timeline-item>
+    </el-timeline>
+    <div class="empty-cell" v-else>暂无时间策略配置</div>
+    <template #footer><el-button type="primary" @click="poleTsVisible = false">关闭</el-button></template>
+  </el-dialog>
+
+  <!-- ============ 策略选择 ============ -->
+  <el-dialog v-model="poleStrategyDialogVisible" title="选择策略" width="520px" align-center>
+    <el-form label-width="60px">
+      <el-form-item label="策略">
+        <el-select v-model="poleStrategyPickId" placeholder="请选择策略" clearable filterable style="width:100%">
+          <el-option v-for="s in lightStrategies" :key="s.id" :label="s.name" :value="s.id"></el-option>
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <div class="pick-detail" v-if="poleStrategyPickDetail">
+      <div class="pd-top">
+        <span class="pd-name">{{ poleStrategyPickDetail.name }}</span>
+        <span><el-tag size="small" effect="plain">{{ poleStrategyPickDetail.deviceType }}</el-tag> <el-tag size="small" effect="plain" type="success" v-if="poleStrategyPickDetail.strategyType">{{ poleStrategyPickDetail.strategyType }}</el-tag></span>
+      </div>
+      <div class="pd-row" v-if="poleStrategyPickDetail.loop"><span class="k">回路</span><span>回路 {{ poleStrategyPickDetail.loop }}</span></div>
+      <div class="pd-actions">
+        <template v-if="poleStrategyPickDetail.actions && poleStrategyPickDetail.actions.length">
+          <el-timeline style="padding:4px 0">
+            <el-timeline-item
+              v-for="(a, i) in sortPoleActions(poleStrategyPickDetail.actions)"
+              :key="i"
+              :timestamp="formatPoleActionTime(a, 'start')"
+              placement="top"
+            >
+              <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+                <el-tag size="small" effect="plain" class="tag-soft">{{ a.action }}</el-tag>
+                <span style="font-size:var(--fs-sm); color:var(--ink-2);">结束 {{ formatPoleActionTime(a, 'end') }} ({{ a.action === '开关灯' ? (a.endOn?'开':'关') : '亮度'+a.endBright+'%' }})</span>
+              </div>
+              <div style="margin-top:4px; font-size:var(--fs-sm); color:var(--ink-2);">开始状态：{{ a.action === '开关灯' ? (a.startOn?'开':'关') : '亮度'+a.startBright+'%' }}</div>
+            </el-timeline-item>
+          </el-timeline>
+        </template>
+        <div class="expand-empty" v-else>该策略暂未配置动作</div>
+      </div>
+      <div class="pd-row"><span class="k">备注</span><span>{{ poleStrategyPickDetail.remark || '—' }}</span></div>
+      <div class="pd-row"><span class="k">创建时间</span><span>{{ poleStrategyPickDetail.createTime }}</span></div>
+    </div>
+    <div class="pick-hint">
+      <span>没有需要的策略？</span>
+      <el-link type="primary" class="ph-link" :underline="false" @click="poleStrategyDialogVisible = false; openMenu('策略管理')">去策略管理配置 →</el-link>
+    </div>
+    <template #footer>
+      <el-button @click="poleStrategyDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="confirmPoleStrategyPick">确定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 指令（动作） ============ -->
+  <el-dialog v-model="cmdDialog" title="指令配置" width="460px" append-to-body :close-on-click-modal="false">
+    <el-form :model="cmd" label-width="76px">
+      <el-form-item label="动作" required>
+        <el-select v-model="cmd.action" placeholder="请选择" style="width:100%"><el-option label="开关灯" value="开关灯"></el-option><el-option label="调光" value="调光"></el-option></el-select>
+      </el-form-item>
+      <template v-if="cmd.action">
+        <div class="time-divider">开始时间</div>
+        <el-form-item label="开关" v-if="cmd.action === '开关灯'"><el-switch v-model="cmd.startOn" active-text="开" inactive-text="关" inline-prompt></el-switch></el-form-item>
+        <el-form-item label="亮度" v-else><el-slider v-model="cmd.startBright" :max="100" style="width:100%"></el-slider></el-form-item>
+        <el-form-item label="时间" required><el-time-picker v-model="cmd.startTime" format="HH:mm" value-format="HH:mm" placeholder="选择开始时间" style="width:100%"></el-time-picker></el-form-item>
+        <div class="time-divider">结束时间</div>
+        <el-form-item label="开关" v-if="cmd.action === '开关灯'"><el-switch v-model="cmd.endOn" active-text="开" inactive-text="关" inline-prompt></el-switch></el-form-item>
+        <el-form-item label="亮度" v-else><el-slider v-model="cmd.endBright" :max="100" style="width:100%"></el-slider></el-form-item>
+        <el-form-item label="时间" required><el-time-picker v-model="cmd.endTime" format="HH:mm" value-format="HH:mm" placeholder="选择结束时间" style="width:100%"></el-time-picker></el-form-item>
+      </template>
+    </el-form>
+    <template #footer>
+      <el-button @click="cmdDialog = false">取 消</el-button>
+      <el-button type="primary" @click="saveCmd">确 定</el-button>
+    </template>
+  </el-dialog>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script>
+/* ====================== 数据 ====================== */
+const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
+const groupsSeed = [
+  { id: 1, name: '燧煌二组', seq: 118, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
+  { id: 2, name: '燧煌一组', seq: 117, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
+  { id: 3, name: '测试99',   seq: 116, created: '2026-06-14', owner: 'admin', remark: '' },
+  { id: 4, name: '亚明星投光灯', seq: 120, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 5, name: '毛毛虫',   seq: 121, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 6, name: '亚明星路灯', seq: 119, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 7, name: '金牛座',   seq: 118, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 8, name: '东风',     seq: 117, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 9, name: 'UFO',      seq: 116, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 10, name: '金叶',    seq: 115, created: '2026-06-03', owner: 'bsyg', remark: '' },
+];
+for (let i = 11; i <= 58; i++) groupsSeed.push({ id: i, name: '分组' + i, seq: 100 + (i % 30), created: '2026-05-' + String((i % 28) + 1).padStart(2,'0'), owner: 'bsyg', remark: '' });
+
+const deviceCodes = ['862041074724346','862041074848699','865743082867622','865743082882522','866522075609640','866522075661187','869978083918950','869978083926847','869978083928090','869978084012712','869978084012803','869978084253662'];
+const devicesSeed = [];
+const createdDates = ['2025-12-20','2025-12-20','2026-03-13','2026-03-13','2026-01-27','2026-01-27','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21'];
+for (let i = 0; i < 148; i++) {
+  const base = deviceCodes[i % deviceCodes.length];
+  const code = i < 12 ? base : (Number(base) + i).toString();
+  devicesSeed.push({
+    code, tenant: '贵州燧煌照明工程有限公司', product: 'WHX-4G-110AC MINI',
+    created: createdDates[i % createdDates.length],
+    status: i % 7 === 0 ? 'online' : 'offline',
+    group: GROUP_POOL[i % GROUP_POOL.length],
+    sim: false, shadow: false, remark: '',
+    locType: '', lng: '121.51292', lat: '31.225543', address: '上海', ip: '',
+    runtime: { updated: '2026-06-01 15:28:39', sw: 'V8.11', simcard: '898602B61025D0037662', voltage: 230.8, current: 0.007, power: 0, pf: 0, energy: 0, brightness: 100, cct: 0, chip: 27.6, hours: 5, alarm: 0, sw_state: 0, signal: 31 }
+  });
+}
+
+const strategiesSeed = [
+  { id:1, name:'策略1', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'备注', createTime:'2026-06-29 23:24:02', actions:[{action:'开关灯', startHour:0,startMinute:1,startOn:true, endHour:1,endMinute:1,endOn:false}], boundPoleIds:[1,2,3] },
+  { id:2, name:'test_1', deviceType:'智慧灯杆', strategyType:'平台策略', loop:2, remark:'', createTime:'2026-06-20 18:14:44', actions:[{action:'调光', startHour:18,startMinute:0,startBright:80, endHour:23,endMinute:30,endBright:30}], boundPoleIds:[] },
+  { id:3, name:'龙游', deviceType:'智慧网关', remark:'', createTime:'2026-06-01 02:25:56', actions:[], boundPoleIds:[] },
+  { id:4, name:'龙游巨龙路总开关', deviceType:'智慧灯杆', strategyType:'本地策略', loop:3, remark:'', createTime:'2026-06-01 02:15:14', actions:[{action:'开关灯', startHour:19,startMinute:0,startOn:true, endHour:6,endMinute:0,endOn:false}], boundPoleIds:[4,5] },
+  { id:5, name:'亮宇平台', deviceType:'太阳能灯杆', remark:'', createTime:'2026-05-21 21:03:51', actions:[], boundPoleIds:[] },
+  { id:6, name:'亮宇', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'', createTime:'2026-05-21 21:01:52', actions:[], boundPoleIds:[] },
+  { id:7, name:'门市仓库', deviceType:'视频监控', remark:'', createTime:'2026-05-05 11:26:05', actions:[] },
+  { id:8, name:'55', deviceType:'环境监测', remark:'', createTime:'2026-04-15 16:53:43', actions:[] },
+  { id:9, name:'212', deviceType:'智慧充电桩', remark:'', createTime:'2026-04-15 09:12:50', actions:[] },
+  { id:10, name:'11', deviceType:'信息发布LED', remark:'', createTime:'2026-03-10 10:47:02', actions:[] },
+];
+
+const poleProjectOptionsSeed = ['智慧园区照明项目','城市道路改造项目','滨江路景观照明'];
+const poleProductOptionsSeed = ['智慧灯杆-标准型','智慧灯杆-经济型','智慧灯杆-旗舰型'];
+const poleLampTypesSeed = ['LED路灯','投光灯','庭院灯','高杆灯'];
+const poleTiltsSeed = ['normal','slight','severe'];
+const polesSeed = [];
+for (let i = 1; i <= 42; i++) {
+  polesSeed.push({
+    id: i,
+    name: '灯杆-' + String(i).padStart(3, '0'),
+    sn: 'LP2026' + String(100000 + i),
+    address: '上海市浦东新区示范路' + i + '号',
+    status: i % 5 === 0 ? 'unregistered' : (i % 3 === 0 ? 'offline' : 'online'),
+    switchOn: i % 3 !== 0,
+    voltage: +(220 + (i % 10)).toFixed(1),
+    current: +(0.5 + (i % 5) * 0.1).toFixed(2),
+    power: +(80 + (i % 20) * 3).toFixed(1),
+    powerFactor: +(85 + (i % 10)).toFixed(1),
+    brightness: 40 + (i % 6) * 10,
+    temperature: 26 + (i % 15),
+    runHours: 100 + i * 7,
+    lightControl: i % 2 === 0,
+    bodySense: i % 4 === 0,
+    tilt: poleTiltsSeed[i % poleTiltsSeed.length],
+    frequency: 50,
+    lampType: poleLampTypesSeed[i % poleLampTypesSeed.length],
+    product: poleProductOptionsSeed[i % poleProductOptionsSeed.length],
+    projectName: poleProjectOptionsSeed[i % poleProjectOptionsSeed.length],
+    groupName: GROUP_POOL[i % GROUP_POOL.length],
+  });
+}
+
+/* ====================== 共享逻辑 ====================== */
+const { createApp, ref, reactive, computed, watch } = Vue;
+
+const MENU_DATA = [
+  { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
+  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['策略管理','资产分配','策略下发日志'] },
+  { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
+  { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
+  { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
+  { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
+  { title: '会员中心', icon: 'User', open: false, items: ['会员列表'] },
+  { title: '商城系统', icon: 'ShoppingCart', open: false, items: ['商品管理','订单管理'] },
+  { title: '公众号管理', icon: 'ChatDotRound', open: false, items: ['菜单配置'] },
+];
+
+const MENU_HREF = {
+  '首页': 'index.html',
+  '设备分组': 'device-group.html',
+  '设备管理': 'device-management.html',
+  '策略管理': 'strategy.html',
+  '灯杆管理': 'pole-management.html',
+  '灯控策略': 'light-strategy.html',
+  '资产分配': 'asset-assign.html',
+  '组织管理': 'organization-management.html',
+};
+
+function createSharedSetup(activeMenuName) {
+  const collapsed = ref(false);
+  const mobileNav = ref(false);
+  const activeMenu = ref(activeMenuName);
+  const savedOpenState = localStorage.getItem('menuOpenState');
+  const savedOpen = savedOpenState ? JSON.parse(savedOpenState) : {};
+  const menuGroups = reactive(MENU_DATA.map(g => ({ ...g, open: savedOpen[g.title] !== undefined ? savedOpen[g.title] : g.open })));
+  const menuHref = MENU_HREF;
+  const toggleGroup = (g) => {
+    if (collapsed.value) { collapsed.value = false; g.open = true; }
+    else { g.open = !g.open; }
+    const openState = {};
+    menuGroups.forEach(grp => openState[grp.title] = grp.open);
+    localStorage.setItem('menuOpenState', JSON.stringify(openState));
+  };
+  const searchPop = ref(false);
+  const navQuery = ref('');
+  const allLeaves = MENU_DATA.flatMap(g => g.items);
+  const navMatches = computed(() => {
+    const q = navQuery.value.trim().toLowerCase();
+    return q ? allLeaves.filter(n => n.toLowerCase().includes(q)) : allLeaves.slice(0, 8);
+  });
+  const jumpMenu = (m) => {
+    const href = MENU_HREF[m];
+    if (href) window.location.href = href;
+    else ElementPlus.ElMessage.info(m + ' 模块建设中');
+    navQuery.value = ''; searchPop.value = false;
+  };
+  const toggleFull = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
+  const placeholder = (m) => ElementPlus.ElMessage.info((m || '该模块') + ' 建设中，敬请期待');
+  const onMenuClick = (item, e) => {
+    const href = MENU_HREF[item];
+    if (!href) { e.preventDefault(); placeholder(item); }
+    // 有 href 时，放行默认跳转，不 prevent
+  };
+  return {
+    collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
+    searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
+  };
+}
+
+function registerIcons(app) {
+  app.use(ElementPlus);
+  try {
+    if (window.ElementPlusIconsVue) {
+      for (const [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+    }
+  } catch (e) {}
+}
+
+const pad2 = n => String(n ?? 0).padStart(2, '0');
+const tableHeaderStyle = { background: '#f5f8fd', color: '#586273', fontWeight: '600', fontSize: '13px' };
+
+
+const app = createApp({
+  setup() {
+    const shared = createSharedSetup('灯杆管理');
+    const poleProjectOptions = poleProjectOptionsSeed;
+    const poleProductOptions = poleProductOptionsSeed;
+    const poles = reactive(polesSeed);
+    const groups = reactive(groupsSeed);
+    const allGroupNames = computed(() => groups.map(g => g.name));
+    const poleSearchForm = reactive({ name: '', sn: '', status: '', projectName: '', simCard: '', gatewaySn: '', product: '', groupName: '' });
+    const poleApplied = reactive({ ...poleSearchForm });
+    const poleShowMore = ref(false);
+    const polePage = ref(1);
+    const polePageSize = ref(10);
+    const filteredPoles = computed(() => poles.filter(p =>
+      (!poleApplied.name || p.name.includes(poleApplied.name)) &&
+      (!poleApplied.sn || p.sn.includes(poleApplied.sn)) &&
+      (!poleApplied.status || p.status === poleApplied.status) &&
+      (!poleApplied.projectName || p.projectName === poleApplied.projectName) &&
+      (!poleApplied.product || p.product === poleApplied.product) &&
+      (!poleApplied.groupName || p.groupName === poleApplied.groupName)));
+    const pagedPoles = computed(() => { const s = (polePage.value - 1) * polePageSize.value; return filteredPoles.value.slice(s, s + polePageSize.value); });
+    const poleStats = computed(() => {
+      const total = poles.length;
+      const online = poles.filter(p => p.status === 'online').length;
+      const offline = poles.filter(p => p.status === 'offline').length;
+      const unregistered = poles.filter(p => p.status === 'unregistered').length;
+      return [
+        { k: '设备总数', v: total, c: 'linear-gradient(135deg,#5b8bff,#2f6bff)', icon: 'Cpu' },
+        { k: '在线设备', v: online, c: 'linear-gradient(135deg,#1fd29a,#16a36a)', icon: 'Connection' },
+        { k: '离线设备', v: offline, c: 'linear-gradient(135deg,#ffb74d,#fb8c00)', icon: 'Offline' },
+        { k: '未注册', v: unregistered, c: 'linear-gradient(135deg,#9aa6b6,#7a8597)', icon: 'UserFilled' },
+      ];
+    });
+    const poleDoSearch = () => { Object.assign(poleApplied, poleSearchForm); polePage.value = 1; };
+    const poleResetSearch = () => { Object.assign(poleSearchForm, { name: '', sn: '', status: '', projectName: '', simCard: '', gatewaySn: '', product: '', groupName: '' }); Object.assign(poleApplied, poleSearchForm); polePage.value = 1; };
+    const selectedPoles = ref([]);
+    const poleSelectionChange = (rows) => { selectedPoles.value = rows; };
+    const poleCheckSelected = (fn) => { if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择设备'); return; } fn(); };
+    const poleConfirmAndExec = (message, fn, type = 'warning') => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择设备'); return; }
+      ElementPlus.ElMessageBox.confirm(message, '操作确认', { confirmButtonText: '确定', cancelButtonText: '取消', type })
+        .then(fn).catch(() => {});
+    };
+    const poleBatchForm = reactive({ senseCycle: '', dim: 50, colorTemp: 50, circuit: null });
+    const poleBatchApply = () => poleCheckSelected(() => { ElementPlus.ElMessage.success(`已对 ${selectedPoles.value.length} 项设备应用批量设置`); });
+    const poleStatusType = (s) => ({ online: 'success', offline: 'danger', unregistered: 'info' }[s] || 'info');
+    const poleStatusLabel = (s) => ({ online: '在线', offline: '离线', unregistered: '未注册' }[s] || s);
+    const poleTiltType = (t) => ({ normal: 'success', slight: 'warning', severe: 'danger' }[t] || 'info');
+    const poleTiltLabel = (t) => ({ normal: '正常', slight: '微倾', severe: '严重倾斜' }[t] || t);
+    const poleLightOn = () => poleConfirmAndExec('确定要对选中的灯杆执行【开灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = true); ElementPlus.ElMessage.success('开灯成功'); });
+    const poleLightOff = () => poleConfirmAndExec('确定要对选中的灯杆执行【关灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = false); ElementPlus.ElMessage.success('关灯成功'); });
+    const poleCancelStrategy = () => poleConfirmAndExec('确定要【取消策略】吗？取消后选中灯杆将停止执行已下发的策略。', () => { ElementPlus.ElMessage.success('策略已取消'); });
+    const poleBatchDelete = () => poleConfirmAndExec('确定要删除选中的灯杆吗？此操作不可恢复！', () => {
+      const ids = selectedPoles.value.map(p => p.id);
+      for (let i = poles.length - 1; i >= 0; i--) if (ids.includes(poles[i].id)) poles.splice(i, 1);
+      selectedPoles.value = [];
+      ElementPlus.ElMessage.success('批量删除成功');
+    }, 'error');
+    const poleExport = () => ElementPlus.ElMessage.success('导出成功（示例）');
+    const poleDownloadTemplate = () => {
+      const csvContent = '\uFEFF' + [
+        '灯杆名称,序列号,项目名称,产品类型,地址',
+        '灯杆-001,LP2026100001,智慧园区照明项目,智慧灯杆-标准型,上海市浦东新区示范路1号',
+        '灯杆-002,LP2026100002,城市道路改造项目,智慧灯杆-经济型,上海市浦东新区示范路2号',
+      ].join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '灯杆导入模板.csv';
+      link.click();
+      ElementPlus.ElMessage.success('模板下载成功');
+    };
+    const poleDialogVisible = ref(false);
+    const poleDialogTitle = ref('新增灯杆');
+    const poleEditingId = ref(null);
+    const blankPoleForm = () => ({ projectName: '', product: '', sn: '', name: '', lng: '', lat: '', address: '', remark: '' });
+    const poleForm = reactive(blankPoleForm());
+    const openAddPole = () => { poleEditingId.value = null; poleDialogTitle.value = '新增灯杆'; Object.assign(poleForm, blankPoleForm()); poleDialogVisible.value = true; };
+    const openEditPole = (row) => { poleEditingId.value = row.id; poleDialogTitle.value = '编辑灯杆信息'; Object.assign(poleForm, { projectName: row.projectName, product: row.product, sn: row.sn, name: row.name, lng: '', lat: '', address: row.address, remark: '' }); poleDialogVisible.value = true; };
+    const savePole = () => {
+      if (!poleForm.name || !poleForm.sn) { ElementPlus.ElMessage.warning('请填写灯杆名称和序列号'); return; }
+      if (poleEditingId.value) {
+        const t = poles.find(p => p.id === poleEditingId.value);
+        if (t) Object.assign(t, { name: poleForm.name, sn: poleForm.sn, product: poleForm.product, projectName: poleForm.projectName, address: poleForm.address });
+        ElementPlus.ElMessage.success('编辑成功');
+      } else {
+        poles.unshift({ id: Date.now(), name: poleForm.name, sn: poleForm.sn, address: poleForm.address, status: 'unregistered', switchOn: false,
+          voltage: 220, current: 0, power: 0, powerFactor: 90, brightness: 0, temperature: 25, runHours: 0,
+          lightControl: false, bodySense: false, tilt: 'normal', frequency: 50, lampType: 'LED路灯',
+          product: poleForm.product, projectName: poleForm.projectName, groupName: '' });
+        ElementPlus.ElMessage.success('新增成功');
+      }
+      poleDialogVisible.value = false;
+    };
+    const poleHandleDelete = (row) => {
+      ElementPlus.ElMessageBox.confirm(`确认删除灯杆「${row.name}」？`, '提示', { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' })
+        .then(() => { const i = poles.findIndex(p => p.id === row.id); if (i > -1) poles.splice(i, 1); ElementPlus.ElMessage.success('删除成功'); }).catch(() => {});
+    };
+    const poleImportVisible = ref(false);
+    const poleTsVisible = ref(false);
+    const poleTsSn = ref('');
+    const poleTsData = ref([]);
+    const poleHandleTimeStrategy = (row) => { poleTsSn.value = row.sn; poleTsData.value = []; poleTsVisible.value = true; };
+    const poleStrategyDialogVisible = ref(false);
+    const poleStrategyPickId = ref(null);
+    const lightStrategies = computed(() => strategies.filter(s => s.deviceType === '智慧灯杆'));
+    const poleStrategyPickDetail = computed(() => lightStrategies.value.find(s => s.id === poleStrategyPickId.value) || null);
+    const openPoleStrategyPick = () => poleCheckSelected(() => { poleStrategyPickId.value = null; poleStrategyDialogVisible.value = true; });
+    const confirmPoleStrategyPick = () => {
+      if (!poleStrategyPickId.value) { ElementPlus.ElMessage.warning('请选择策略'); return; }
+      ElementPlus.ElMessage.success(`已对 ${selectedPoles.value.length} 台灯杆下发策略「${poleStrategyPickDetail.value.name}」`);
+      poleStrategyDialogVisible.value = false;
+    };
+    const pad2 = n => String(n ?? 0).padStart(2, '0');
+    const formatPoleActionTime = (a, type) => {
+      const h = type === 'start' ? a.startHour : a.endHour;
+      const m = type === 'start' ? a.startMinute : a.endMinute;
+      const mode = type === 'start' ? a.startTimeMode : a.endTimeMode;
+      if (mode === 'sunrise') return '日出';
+      if (mode === 'sunset') return '日落';
+      return `${pad2(h)}:${pad2(m)}`;
+    };
+    const sortPoleActions = (actions) => {
+      return [...(actions || [])].sort((a, b) => {
+        if (a.nextDay && !b.nextDay) return 1;
+        if (!a.nextDay && b.nextDay) return -1;
+        const aMin = (a.startHour || 0) * 60 + (a.startMinute || 0);
+        const bMin = (b.startHour || 0) * 60 + (b.startMinute || 0);
+        return aMin - bMin;
+      });
+    };
+    return { ...shared,
+      poleProjectOptions, poleProductOptions, poles, poleSearchForm, poleShowMore, polePage, polePageSize,
+      filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleStats,
+      selectedPoles, poleSelectionChange, poleBatchForm, poleBatchApply,
+      poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
+      poleLightOn, poleLightOff, poleCancelStrategy, poleBatchDelete,
+      poleExport, poleDownloadTemplate,
+      poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete,
+      poleImportVisible, poleTsVisible, poleTsSn, poleTsData, poleHandleTimeStrategy,
+      poleStrategyDialogVisible, poleStrategyPickId, lightStrategies, poleStrategyPickDetail, openPoleStrategyPick, confirmPoleStrategyPick,
+      pad2, formatPoleActionTime, sortPoleActions, allGroupNames, tableHeaderStyle,
+      Search: ElementPlusIconsVue?.Search, RefreshRight: ElementPlusIconsVue?.RefreshRight, Plus: ElementPlusIconsVue?.Plus,
+      Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, Download: ElementPlusIconsVue?.Download,
+      Cpu: ElementPlusIconsVue?.Cpu, Connection: ElementPlusIconsVue?.Connection, Offline: ElementPlusIconsVue?.Offline, UserFilled: ElementPlusIconsVue?.UserFilled,
+    };
+  }
+});
+registerIcons(app);
+app.mount('#app');
+
+</script>
+</body>
+</html>

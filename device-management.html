@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>设备管理 · 云创智慧平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+  <style>
+    :root {
+      /* ----- brand & status ----- */
+      --brand: #2f6bff;
+      --brand-deep: #1f4fd6;
+      --brand-soft: #ebf1ff;
+      --ok: #16a36a;
+      --off: #ef4d5e;
+      --warn: #e6952c;
+      /* ----- cool neutral ramp ----- */
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface-2: #f8fafc;
+      --line: #e6eaf2;
+      --line-soft: #eef1f7;
+      --ink: #1b2533;
+      --ink-2: #586273;
+      --ink-3: #7c8696;
+      /* ----- sidebar ----- */
+      --side: #1b2330;
+      --side-2: #12171f;
+      /* ----- radius scale ----- */
+      --r-sm: 8px;
+      --r-md: 10px;
+      --r-lg: 14px;
+      --r-pill: 999px;
+      /* ----- type scale ----- */
+      --fs-cap: 12px;
+      --fs-sm: 13px;
+      --fs: 14px;
+      --fs-md: 16px;
+      --fs-lg: 20px;
+      --fs-xl: 26px;
+      /* ----- shadow ----- */
+      --sh-sm: 0 1px 2px rgba(16,24,40,.05);
+      --sh-md: 0 6px 20px rgba(16,24,40,.07);
+      --sh-lg: 0 14px 36px rgba(31,71,214,.14);
+      /* ----- layout ----- */
+      --sb-w: 226px;
+      --sb-w-collapsed: 64px;
+      /* ----- Element Plus theming ----- */
+      --el-color-primary: #2f6bff;
+      --el-color-primary-light-3: #5c8bff;
+      --el-color-primary-light-5: #84a7ff;
+      --el-color-primary-light-7: #adc5ff;
+      --el-color-primary-light-8: #c1d3ff;
+      --el-color-primary-light-9: #ebf1ff;
+      --el-color-primary-dark-2: #1f4fd6;
+      --el-border-radius-base: 8px;
+      --el-font-size-base: 14px;
+      --el-text-color-regular: #586273;
+      --el-border-color: #e6eaf2;
+      --el-border-color-lighter: #eef1f7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body {
+      font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, -apple-system, sans-serif;
+      background: var(--bg); color: var(--ink); font-size: var(--fs);
+      -webkit-font-smoothing: antialiased; text-rendering: optimizeLegibility;
+    }
+    #app { height: 100vh; }
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+
+    :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+
+    /* ============ Sidebar ============ */
+    .sidebar {
+      width: var(--sb-w); flex: 0 0 var(--sb-w);
+      background: linear-gradient(180deg, var(--side), var(--side-2));
+      color: #c3ccd9; display: flex; flex-direction: column;
+      transition: flex-basis .22s ease, width .22s ease, transform .25s ease;
+    }
+    .sidebar.collapsed { width: var(--sb-w-collapsed); flex-basis: var(--sb-w-collapsed); }
+    .brand {
+      height: 60px; display: flex; align-items: center; gap: 11px;
+      padding: 0 20px; color: #fff; font-weight: 700; font-size: var(--fs-md);
+      letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap;
+    }
+    .brand .logo {
+      width: 30px; height: 30px; border-radius: var(--r-md); flex: 0 0 auto;
+      background: linear-gradient(135deg, #5b8bff, #2f6bff);
+      display: grid; place-items: center; font-size: 15px;
+      box-shadow: 0 4px 14px rgba(47,107,255,.5);
+    }
+    .sidebar.collapsed .brand { padding: 0; justify-content: center; }
+    .sidebar.collapsed .brand .brand-txt { display: none; }
+
+    .nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 10px; }
+    .nav::-webkit-scrollbar { width: 6px; }
+    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: var(--r-pill); }
+
+    .nav-group { margin-bottom: 2px; }
+    .nav-group > .nav-title {
+      display: flex; align-items: center; gap: 11px;
+      padding: 11px 12px; border-radius: var(--r-md); font-size: var(--fs-sm);
+      color: #aab4c3; cursor: pointer; user-select: none;
+      transition: color .15s, background .15s; white-space: nowrap;
+    }
+    .nav-title .ng-ic { font-size: 16px; flex: 0 0 auto; display: inline-flex; }
+    .nav-title .ng-txt { flex: 1; }
+    .nav-title .caret { font-size: 13px; opacity: .55; transition: transform .2s; }
+    .nav-group.open > .nav-title .caret { transform: rotate(180deg); }
+    .nav-title:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-group.open > .nav-title,
+    .nav-group.has-active > .nav-title { color: #fff; }
+
+    .nav-children { overflow: hidden; padding: 2px 0 4px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 12px 9px 38px; font-size: var(--fs-sm); color: #aab4c3;
+      cursor: pointer; position: relative; border-radius: var(--r-md);
+      transition: all .15s; white-space: nowrap; margin: 1px 0;
+    }
+    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+    .nav-item.active .dot { opacity: 1; background: #6f9bff; }
+    .nav-item.active::before {
+      content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+      border-radius: var(--r-pill); background: var(--brand);
+    }
+    .sidebar.collapsed .nav-title { justify-content: center; padding: 13px 0; }
+    .sidebar.collapsed .nav-title .ng-txt,
+    .sidebar.collapsed .nav-title .caret { display: none; }
+    .sidebar.collapsed .nav-children { display: none !important; }
+    .sidebar.collapsed .nav-group.has-active > .nav-title { background: rgba(47,107,255,.18); }
+    .sidebar.collapsed .nav-group.has-active > .nav-title .ng-ic { color: #6f9bff; }
+
+    .sb-foot { border-top: 1px solid rgba(255,255,255,.07); padding: 10px; }
+    .sb-collapse {
+      width: 100%; height: 36px; border-radius: var(--r-md); cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      color: #aab4c3; font-size: var(--fs-sm); transition: all .15s;
+    }
+    .sb-collapse:hover { color: #fff; background: rgba(255,255,255,.07); }
+
+    .nav-backdrop { position: fixed; inset: 0; background: rgba(12,18,28,.45); z-index: 55; }
+
+    /* ============ Main / Topbar ============ */
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar {
+      height: 60px; background: var(--surface); display: flex; align-items: center;
+      padding: 0 18px; gap: 14px; border-bottom: 1px solid var(--line);
+    }
+    .crumb { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: var(--fs); }
+    .crumb .sep { color: var(--ink-3); }
+    .crumb .cur { color: var(--ink); font-weight: 600; }
+    .crumb .home-link { cursor: pointer; transition: color .15s; }
+    .crumb .home-link:hover { color: var(--brand); }
+    .topbar .spacer { flex: 1; }
+    .top-actions { display: flex; align-items: center; gap: 4px; color: var(--ink-2); font-size: var(--fs-sm); }
+    .top-actions .ico {
+      cursor: pointer; height: 36px; min-width: 36px; padding: 0 10px; border-radius: var(--r-md);
+      display: inline-flex; align-items: center; justify-content: center; gap: 5px; transition: all .15s;
+    }
+    .top-actions .ico:hover { color: var(--brand); background: var(--brand-soft); }
+    .top-actions .ico .mini { font-size: 12px; opacity: .7; }
+    .top-actions .user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 0 8px 0 6px; height: 36px; border-radius: var(--r-md); transition: background .15s; }
+    .top-actions .user:hover { background: var(--surface-2); }
+    .top-actions .user .av {
+      width: 30px; height: 30px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b4658, #1f2733); color: #fff;
+      display: grid; place-items: center; font-size: 12px; font-weight: 600;
+    }
+    .hamburger { display: none; }
+
+    .nav-search-list { margin-top: 8px; max-height: 280px; overflow-y: auto; }
+    .nav-search-item { padding: 8px 10px; border-radius: var(--r-sm); font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; }
+    .nav-search-item:hover { background: var(--brand-soft); color: var(--brand); }
+    .nav-search-empty { padding: 14px; text-align: center; color: var(--ink-3); font-size: var(--fs-sm); }
+
+    /* ============ Tabs ============ */
+    .tabbar {
+      height: 44px; background: var(--surface); display: flex; align-items: center;
+      gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--line); box-shadow: var(--sh-sm);
+    }
+    .tabs-scroll { flex: 1; display: flex; align-items: center; gap: 8px; overflow-x: auto; }
+    .tabs-scroll::-webkit-scrollbar { height: 0; }
+    .tab {
+      display: inline-flex; align-items: center; gap: 7px;
+      height: 28px; padding: 0 9px 0 12px; font-size: var(--fs-sm); color: var(--ink-2);
+      background: var(--surface-2); border-radius: var(--r-sm);
+      cursor: pointer; transition: all .15s; white-space: nowrap; flex: 0 0 auto;
+    }
+    .tab:hover { color: var(--brand); }
+    .tab.active { color: var(--brand); background: var(--brand-soft); font-weight: 500; }
+    .tab .tdot { width: 6px; height: 6px; border-radius: 50%; background: var(--brand); }
+    .tab .tclose {
+      display: inline-grid; place-items: center; width: 16px; height: 16px; border-radius: 50%;
+      font-size: 11px; opacity: .55; transition: all .15s;
+    }
+    .tab .tclose:hover { opacity: 1; background: rgba(0,0,0,.1); }
+    .tabs-tools { flex: 0 0 auto; padding-left: 6px; }
+
+    .content { flex: 1; overflow-y: auto; padding: 20px; }
+    .content::-webkit-scrollbar { width: 10px; }
+    .content::-webkit-scrollbar-thumb { background: #d3d9e4; border-radius: var(--r-pill); }
+
+    .panel { background: var(--surface); border-radius: var(--r-lg); border: 1px solid var(--line); box-shadow: var(--sh-sm); }
+
+    /* ============ Page head / toolbar ============ */
+    .page-head { display: flex; align-items: center; justify-content: space-between; padding: 20px 20px 0; gap: 12px; }
+    .page-head .ph-title { font-size: var(--fs-md); font-weight: 700; }
+    .page-head .ph-title small { font-weight: 400; color: var(--ink-3); font-size: var(--fs-sm); margin-left: 10px; }
+    .toolbar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
+    .toolbar .lbl { font-size: var(--fs-sm); color: var(--ink-2); white-space: nowrap; }
+
+    /* ============ Grouping page ============ */
+    .split { display: flex; min-height: 520px; }
+    .cat-pane { width: 232px; flex: 0 0 232px; border-right: 1px solid var(--line); padding: 12px; overflow-y: auto; }
+    .cat-pane .cat-head { font-size: var(--fs-cap); color: var(--ink-3); padding: 4px 10px 10px; letter-spacing: .4px; }
+    .cat-item {
+      display: flex; align-items: center; gap: 9px; padding: 9px 12px; position: relative;
+      font-size: var(--fs-sm); color: var(--ink-2); border-radius: var(--r-md);
+      cursor: pointer; margin-bottom: 2px; transition: all .15s;
+    }
+    .cat-item:hover { background: var(--surface-2); color: var(--ink); }
+    .cat-item.active { background: var(--brand-soft); color: var(--brand-deep); font-weight: 600; }
+    .cat-item.active::before { content: ""; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: var(--r-pill); background: var(--brand); }
+    .cat-item .ci-dot { width: 7px; height: 7px; border-radius: 2px; background: #c4ccd8; flex: 0 0 auto; }
+    .cat-item.active .ci-dot { background: var(--brand); }
+    .cat-item .ci-count { margin-left: auto; font-size: var(--fs-cap); color: var(--ink-3); }
+    .cat-item.active .ci-count { color: var(--brand); }
+
+    .table-pane { flex: 1; padding: 16px 20px; min-width: 0; }
+    .tp-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .tp-head .tp-title { font-size: var(--fs); font-weight: 600; }
+    .tp-head .tp-title small { color: var(--ink-3); font-weight: 400; margin-left: 8px; font-size: var(--fs-cap); }
+
+    .seq-badge {
+      display: inline-grid; place-items: center; min-width: 40px; height: 24px; padding: 0 8px;
+      border-radius: var(--r-sm); background: var(--surface-2); color: var(--ink-2);
+      font-size: var(--fs-sm); font-weight: 600; font-variant-numeric: tabular-nums;
+    }
+    .pager-wrap { display: flex; align-items: center; justify-content: flex-end; padding: 16px 20px; }
+    .row-actions { display: inline-flex; align-items: center; gap: 2px; }
+
+    /* ============ Device cards ============ */
+    .filter-bar { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 16px 20px; margin-bottom: 16px; }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 16px; }
+    .dev-card {
+      background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg);
+      padding: 18px; position: relative; overflow: hidden; transition: all .2s; box-shadow: var(--sh-sm);
+    }
+    .dev-card:hover { transform: translateY(-3px); box-shadow: var(--sh-lg); border-color: rgba(47,107,255,.35); }
+    .dc-top { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; }
+    .dc-id { display: flex; align-items: center; gap: 9px; font-weight: 700; font-size: var(--fs); letter-spacing: .2px; }
+    .dc-id .chip { width: 26px; height: 26px; border-radius: var(--r-sm); display: grid; place-items: center; color: #fff; font-size: 13px; flex: 0 0 auto; }
+    .dc-id .chip.on  { background: linear-gradient(135deg,#1fd29a,#16a36a); }
+    .dc-id .chip.off { background: linear-gradient(135deg,#9aa6b6,#7a8597); }
+    .dc-wifi { font-size: 16px; }
+    .dc-wifi.on { color: var(--ok); }
+    .dc-wifi.off { color: #c4ccd8; }
+    .dc-status { display: inline-flex; align-items: center; gap: 6px; margin: 13px 0 14px; font-size: var(--fs-cap); font-weight: 600; padding: 3px 10px; border-radius: var(--r-pill); }
+    .dc-status.off { background: #fdecee; color: var(--off); }
+    .dc-status.on { background: #e7f7f0; color: var(--ok); }
+    .dc-status .s-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .dc-info { display: grid; gap: 9px; }
+    .dc-row { display: flex; font-size: var(--fs-sm); color: var(--ink-2); }
+    .dc-row .k { color: var(--ink-3); width: 64px; flex: 0 0 auto; }
+    .dc-row .v { color: var(--ink); word-break: break-all; }
+    .dc-art { position: absolute; right: 14px; bottom: 56px; font-size: 46px; opacity: .08; color: var(--brand); pointer-events: none; }
+    .dc-foot { margin-top: 16px; }
+
+    /* ============ Empty state ============ */
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 64px 20px; text-align: center; }
+    .empty-state .es-ic { font-size: 46px; color: var(--ink-3); opacity: .6; }
+    .empty-state .es-t { font-size: var(--fs); font-weight: 600; color: var(--ink-2); }
+    .empty-state .es-s { font-size: var(--fs-sm); color: var(--ink-3); }
+
+    /* ============ Detail ============ */
+    .detail-wrap { display: flex; min-height: 520px; }
+    .detail-nav { width: 174px; flex: 0 0 174px; border-right: 1px solid var(--line); padding: 20px 12px; }
+    .dn-item {
+      display: flex; align-items: center; gap: 9px; padding: 10px 14px; border-radius: var(--r-md); position: relative;
+      font-size: var(--fs-sm); color: var(--ink-2); cursor: pointer; margin-bottom: 4px; transition: all .15s;
+    }
+    .dn-item:hover { background: var(--surface-2); }
+    .dn-item.active { background: var(--brand-soft); color: var(--brand-deep); font-weight: 600; }
+    .dn-item.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: var(--r-pill); background: var(--brand); }
+    .dn-item .dn-ic { width: 7px; height: 7px; border-radius: 50%; background: #c4ccd8; }
+    .dn-item.active .dn-ic { background: var(--brand); }
+    .detail-body { flex: 1; padding: 26px 30px; min-width: 0; }
+    .form-section-title { font-size: var(--fs); font-weight: 600; margin: 0 0 18px; display: flex; align-items: center; gap: 9px; }
+    .form-section-title::before { content: ""; width: 4px; height: 15px; border-radius: var(--r-pill); background: var(--brand); }
+    .runtime-head { display: flex; align-items: center; gap: 10px; margin-bottom: 22px; font-size: var(--fs); font-weight: 600; }
+    .runtime-head .upd { font-weight: 400; color: var(--ink-3); font-size: var(--fs-sm); }
+    .runtime-head .live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: var(--fs-cap); color: var(--ok); font-weight: 600; }
+    .runtime-head .live .blink { width: 7px; height: 7px; border-radius: 50%; background: var(--ok); animation: blink 1.4s infinite; }
+    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: .25; } }
+    .metric-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+    .metric { background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px 16px 14px; transition: all .15s; }
+    .metric:hover { border-color: rgba(47,107,255,.3); box-shadow: var(--sh-md); }
+    .metric .m-k { font-size: var(--fs-cap); color: var(--ink-3); margin-bottom: 9px; }
+    .metric .m-v { font-size: var(--fs-lg); font-weight: 700; color: var(--ink); font-variant-numeric: tabular-nums; display: flex; align-items: baseline; gap: 4px; }
+    .metric .m-v.ok { color: var(--ok); }
+    .metric .m-v.bad { color: var(--off); }
+    .metric .m-u { font-size: var(--fs-cap); font-weight: 500; color: var(--ink-3); }
+    .metric .m-bar { height: 4px; border-radius: var(--r-pill); background: #e3e8f1; margin-top: 12px; overflow: hidden; }
+    .metric .m-bar > i { display: block; height: 100%; border-radius: var(--r-pill); background: linear-gradient(90deg,#5b8bff,#2f6bff); }
+
+    /* ============ Strategy ============ */
+    .table-zone { padding: 16px 20px 8px; }
+    .expand-box { padding: 10px 20px 16px 56px; background: var(--surface-2); }
+    .expand-empty { color: var(--ink-3); font-size: var(--fs-sm); padding: 6px 0; }
+    .act-pill {
+      display: inline-flex; align-items: center; gap: 8px; background: var(--surface);
+      border: 1px solid var(--line); border-radius: var(--r-pill); padding: 6px 14px;
+      margin: 4px 8px 4px 0; font-size: var(--fs-sm);
+    }
+    .act-pill .seg { color: var(--ink-2); }
+    .act-pill .seg b { color: var(--ink); }
+    .time-divider { display: flex; align-items: center; gap: 12px; margin: 6px 0 16px; color: var(--ink-3); font-size: var(--fs-sm); }
+    .time-divider::before, .time-divider::after { content: ""; height: 1px; background: var(--line); flex: 1; }
+    .dialog-actions-table { margin-top: 2px; }
+    .empty-cell { text-align: center; color: var(--ink-3); padding: 28px 0; font-size: var(--fs-sm); }
+    .tag-soft { background: var(--brand-soft); color: var(--brand); border: none; }
+
+    /* ============ 灯杆管理 / 批量条 / 选择详情提示 ============ */
+    .batch-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+    .batch-bar .bf-item { display: flex; align-items: center; gap: 8px; }
+    .batch-bar .bf-lbl { font-size: var(--fs-cap); color: var(--ink-3); white-space: nowrap; }
+    .batch-bar .bf-sel { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 600; }
+
+    .pick-detail { margin-top: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
+    .pick-detail .pd-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
+    .pick-detail .pd-name { font-weight: 700; font-size: var(--fs); }
+    .pick-detail .pd-row { display: flex; font-size: var(--fs-sm); color: var(--ink-2); margin-top: 7px; }
+    .pick-detail .pd-row .k { color: var(--ink-3); width: 82px; flex: 0 0 auto; }
+    .pick-detail .pd-actions { margin-top: 8px; }
+
+    .pick-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 10px 14px; background: var(--brand-soft); border-radius: var(--r-md); font-size: var(--fs-sm); color: var(--brand-deep); }
+    .pick-hint .ph-link { font-weight: 600; white-space: nowrap; }
+
+    /* ============ Placeholder ============ */
+    .placeholder { min-height: 460px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--ink-3); text-align: center; }
+    .placeholder .pl-ic { width: 88px; height: 88px; border-radius: var(--r-lg); display: grid; place-items: center; font-size: 40px; color: var(--brand); background: var(--brand-soft); }
+    .placeholder .pl-t { font-size: var(--fs-md); font-weight: 600; color: var(--ink-2); }
+    .placeholder .pl-s { font-size: var(--fs-sm); }
+
+    /* ============ Home ============ */
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin-bottom: 16px; }
+    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sh-sm); transition: all .18s; }
+    .stat:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
+    .stat .st-ic { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; font-size: 24px; color: #fff; flex: 0 0 auto; }
+    .stat .st-v { font-size: var(--fs-xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
+    .stat .st-k { font-size: var(--fs-sm); color: var(--ink-3); margin-top: 4px; }
+    .quick { padding: 20px; }
+    .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 12px; margin-top: 14px; }
+    .quick-item { border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all .15s; }
+    .quick-item:hover { border-color: rgba(47,107,255,.4); background: var(--brand-soft); transform: translateY(-2px); }
+    .quick-item .qi-ic { font-size: 20px; color: var(--brand); }
+    .quick-item .qi-t { font-size: var(--fs); font-weight: 600; }
+    .quick-item .qi-s { font-size: var(--fs-cap); color: var(--ink-3); }
+
+    /* ============ Element overrides ============ */
+    .el-button--primary { --el-button-bg-color: var(--brand); --el-button-border-color: var(--brand); --el-button-hover-bg-color: var(--brand-deep); --el-button-hover-border-color: var(--brand-deep); }
+
+    @media (max-width: 900px) {
+      .sidebar {
+        position: fixed; left: 0; top: 0; bottom: 0; z-index: 60;
+        transform: translateX(-100%); box-shadow: var(--sh-lg);
+        width: var(--sb-w) !important; flex-basis: var(--sb-w) !important;
+      }
+      .sidebar.mobile-open { transform: none; }
+      .hamburger { display: inline-flex; }
+      .split, .detail-wrap { flex-direction: column; }
+      .cat-pane, .detail-nav { width: 100%; flex: none; border-right: none; border-bottom: 1px solid var(--line); }
+      .content { padding: 14px; }
+    }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+    <!-- ============ Sidebar ============ -->
+    <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span></div>
+      <nav class="nav">
+        <div v-for="g in menuGroups" :key="g.title" class="nav-group"
+             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
+          <div class="nav-title" @click="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="g.icon"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><ArrowDown></ArrowDown></el-icon>
+          </div>
+          <div class="nav-children" v-show="g.open && !collapsed">
+            <a v-for="item in g.items" :key="item"
+               :href="menuHref[item] || '#'"
+               class="nav-item"
+               :class="{ active: item === activeMenu }"
+               @click="onMenuClick(item, $event)">
+              <span class="dot"></span>{{ item }}
+            </a>
+          </div>
+        </div>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
+          <el-icon><component :is="collapsed ? 'Expand' : 'Fold'"></component></el-icon>
+          <span v-if="!collapsed">收起菜单</span>
+        </div>
+      </div>
+    </aside>
+    <div class="nav-backdrop" v-if="mobileNav" @click="mobileNav = false"></div>
+    <!-- ============ Main ============ -->
+    <div class="main">
+      <header class="topbar">
+        <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Expand></Expand></el-icon></span>
+        <div class="crumb">
+          <span class="home-link" tabindex="0"><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
+          <span class="sep">/</span><span class="">设备管理</span>
+          <span class="sep">/</span><span class="cur">设备管理</span>
+        </div>
+        <div class="spacer"></div>
+        <div class="top-actions">
+          <el-popover v-model:visible="searchPop" trigger="click" :width="280" placement="bottom-end">
+            <template #reference><span class="ico"><el-icon><Search></Search></el-icon></span></template>
+            <el-input v-model="navQuery" placeholder="搜索菜单…" size="small" clearable :prefix-icon="Search"></el-input>
+            <div class="nav-search-list">
+              <div v-for="m in navMatches" :key="m" class="nav-search-item" @click="jumpMenu(m)">{{ m }}</div>
+              <div v-if="!navMatches.length" class="nav-search-empty">无匹配菜单</div>
+            </div>
+          </el-popover>
+          <span class="ico" @click="toggleFull"><el-icon><FullScreen></FullScreen></el-icon></span>
+          <el-dropdown trigger="click">
+            <span class="ico">中文 <el-icon class="mini"><ArrowDown></ArrowDown></el-icon></span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item>简体中文</el-dropdown-item>
+              <el-dropdown-item>English</el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
+          <span class="ico">数据大屏</span>
+          <el-dropdown trigger="click">
+            <span class="user"><span class="av">云</span>云创 <el-icon class="mini"><ArrowDown></ArrowDown></el-icon></span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item :icon="User">个人中心</el-dropdown-item>
+              <el-dropdown-item :icon="Setting">账号设置</el-dropdown-item>
+              <el-dropdown-item :icon="SwitchButton" divided>退出登录</el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
+        </div>
+      </header>
+
+      <main class="content">
+        <section v-if="activeMenu === '设备管理'">
+          <template v-if="!showDetail">
+            <div class="panel filter-bar">
+              <span class="lbl">租户</span>
+              <el-input v-model="devFilter.tenant" placeholder="请输入租户" style="width: 160px" clearable @keyup.enter="doDevSearch"></el-input>
+              <span class="lbl">设备名称</span>
+              <el-input v-model="devFilter.name" placeholder="名称 / 型号" style="width: 160px" clearable @keyup.enter="doDevSearch"></el-input>
+              <span class="lbl">设备编号</span>
+              <el-input v-model="devFilter.code" placeholder="请输入设备编号" style="width: 170px" clearable @keyup.enter="doDevSearch"></el-input>
+              <span class="lbl">状态</span>
+              <el-select v-model="devFilter.status" placeholder="全部" style="width: 110px" clearable>
+                <el-option label="在线" value="online"></el-option><el-option label="离线" value="offline"></el-option>
+              </el-select>
+              <span class="lbl">分组</span>
+              <el-select v-model="devFilter.group" placeholder="全部分组" style="width: 150px" clearable filterable>
+                <el-option v-for="g in allGroupNames" :key="g" :label="g" :value="g"></el-option>
+              </el-select>
+              <el-button type="primary" :icon="Search" @click="doDevSearch">搜索</el-button>
+              <el-button :icon="RefreshRight" @click="resetDevFilter">重置</el-button>
+            </div>
+
+            <div class="card-grid" v-if="pagedDevices.length">
+              <div v-for="d in pagedDevices" :key="d.code" class="dev-card">
+                <div class="dc-top">
+                  <div class="dc-id"><span class="chip" :class="d.status === 'online' ? 'on' : 'off'"><el-icon><Cpu></Cpu></el-icon></span>{{ d.code }}</div>
+                  <span class="dc-wifi" :class="d.status === 'online' ? 'on' : 'off'">
+                    <el-icon><component :is="d.status === 'online' ? 'Connection' : 'WarningFilled'"></component></el-icon>
+                  </span>
+                </div>
+                <div class="dc-status" :class="d.status === 'online' ? 'on' : 'off'">
+                  <span class="s-dot"></span>{{ d.status === 'online' ? '在线' : '离线' }}
+                </div>
+                <div class="dc-info">
+                  <div class="dc-row"><span class="k">租户</span><span class="v">{{ d.tenant }}</span></div>
+                  <div class="dc-row"><span class="k">分组</span><span class="v">{{ d.group }}</span></div>
+                  <div class="dc-row"><span class="k">产品</span><span class="v">{{ d.product }}</span></div>
+                  <div class="dc-row"><span class="k">创建时间</span><span class="v">{{ d.created }}</span></div>
+                </div>
+                <div class="dc-art"><el-icon><Cpu></Cpu></el-icon></div>
+                <div class="dc-foot"><el-button type="primary" :icon="View" style="width:100%" @click="viewDevice(d)">查看详情</el-button></div>
+              </div>
+            </div>
+            <div class="panel empty-state" v-else>
+              <el-icon class="es-ic"><Box></Box></el-icon>
+              <div class="es-t">暂无符合条件的设备</div>
+              <div class="es-s">试试调整筛选条件，或重置后重新查询</div>
+              <el-button :icon="RefreshRight" @click="resetDevFilter">重置筛选</el-button>
+            </div>
+
+            <div class="panel pager-wrap" style="margin-top:16px" v-if="pagedDevices.length">
+              <el-pagination background layout="total, sizes, prev, pager, next, jumper"
+                :total="filteredDevices.length" v-model:current-page="devPage"
+                v-model:page-size="devPageSize" :page-sizes="[12, 24, 48]"></el-pagination>
+            </div>
+          </template>
+
+          <!-- 详情 -->
+          <div class="panel" v-else>
+            <div style="padding:16px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:14px">
+              <el-button :icon="Back" @click="backToDevices">返回列表</el-button>
+              <div style="font-size:var(--fs);font-weight:600">设备详情 · {{ currentDevice.code }}</div>
+              <span class="dc-status" :class="currentDevice.status === 'online' ? 'on' : 'off'" style="margin:0">
+                <span class="s-dot"></span>{{ currentDevice.status === 'online' ? '在线' : '离线' }}
+              </span>
+            </div>
+            <div class="detail-wrap">
+              <div class="detail-nav">
+                <div class="dn-item" :class="{ active: detailTab === 'basic' }" tabindex="0" @click="detailTab = 'basic'" @keyup.enter="detailTab='basic'"><span class="dn-ic"></span>基本信息</div>
+                <div class="dn-item" :class="{ active: detailTab === 'runtime' }" tabindex="0" @click="detailTab = 'runtime'" @keyup.enter="detailTab='runtime'"><span class="dn-ic"></span>运行状态</div>
+              </div>
+              <div class="detail-body">
+                <div v-if="detailTab === 'basic'">
+                  <div class="form-section-title">基本信息</div>
+                  <el-form label-width="92px" label-position="left">
+                    <el-row :gutter="40">
+                      <el-col :span="12">
+                        <el-form-item label="设备名称" required><el-input v-model="currentDevice.code" disabled></el-input></el-form-item>
+                        <el-form-item label="所属产品" required><el-input v-model="currentDevice.product" disabled><template #append><el-button>选择</el-button></template></el-input></el-form-item>
+                        <el-form-item label="设备编号" required><el-input v-model="currentDevice.code" disabled></el-input></el-form-item>
+                        <el-form-item label="固件版本" required><el-input v-model="currentDevice.runtime.sw" placeholder="请输入固件版本"></el-input></el-form-item>
+                        <el-form-item label="模拟设备"><el-switch v-model="currentDevice.sim"></el-switch></el-form-item>
+                        <el-form-item label="设备影子"><el-switch v-model="currentDevice.shadow"></el-switch></el-form-item>
+                        <el-form-item label="备注信息"><el-input v-model="currentDevice.remark" type="textarea" :rows="2" placeholder="请输入内容"></el-input></el-form-item>
+                        <el-form-item label="租户"><el-select v-model="currentDevice.tenant" placeholder="请选择租户" style="width:100%"><el-option :label="currentDevice.tenant" :value="currentDevice.tenant"></el-option></el-select></el-form-item>
+                      </el-col>
+                      <el-col :span="12">
+                        <el-form-item label="定位方式"><el-select v-model="currentDevice.locType" placeholder="请选择定位方式" style="width:100%"><el-option label="GPS 定位" value="gps"></el-option><el-option label="基站定位" value="lbs"></el-option></el-select></el-form-item>
+                        <el-form-item label="设备经度"><el-input v-model="currentDevice.lng" disabled><template #append><el-button>坐标拾取</el-button></template></el-input></el-form-item>
+                        <el-form-item label="设备纬度"><el-input v-model="currentDevice.lat" disabled><template #append><el-button>坐标拾取</el-button></template></el-input></el-form-item>
+                        <el-form-item label="所在地址"><el-input v-model="currentDevice.address"></el-input></el-form-item>
+                        <el-form-item label="入网地址"><el-input v-model="currentDevice.ip" placeholder="设备入网 IP"></el-input></el-form-item>
+                      </el-col>
+                    </el-row>
+                  </el-form>
+                </div>
+                <div v-if="detailTab === 'runtime'">
+                  <div class="runtime-head">
+                    更新时间：<span class="upd">{{ currentDevice.runtime.updated }}</span>
+                    <span class="live"><span class="blink"></span>实时</span>
+                  </div>
+                  <div class="metric-grid">
+                    <div class="metric" v-for="m in metrics" :key="m.k">
+                      <div class="m-k">{{ m.k }}</div>
+                      <div class="m-v" :class="m.tone">{{ m.v }}<span class="m-u" v-if="m.u">{{ m.u }}</span></div>
+                      <div class="m-bar" v-if="m.pct !== undefined"><i :style="{ width: m.pct + '%' }"></i></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script>
+/* ====================== 数据 ====================== */
+const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
+const groupsSeed = [
+  { id: 1, name: '燧煌二组', seq: 118, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
+  { id: 2, name: '燧煌一组', seq: 117, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
+  { id: 3, name: '测试99',   seq: 116, created: '2026-06-14', owner: 'admin', remark: '' },
+  { id: 4, name: '亚明星投光灯', seq: 120, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 5, name: '毛毛虫',   seq: 121, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 6, name: '亚明星路灯', seq: 119, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 7, name: '金牛座',   seq: 118, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 8, name: '东风',     seq: 117, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 9, name: 'UFO',      seq: 116, created: '2026-06-03', owner: 'bsyg', remark: '' },
+  { id: 10, name: '金叶',    seq: 115, created: '2026-06-03', owner: 'bsyg', remark: '' },
+];
+for (let i = 11; i <= 58; i++) groupsSeed.push({ id: i, name: '分组' + i, seq: 100 + (i % 30), created: '2026-05-' + String((i % 28) + 1).padStart(2,'0'), owner: 'bsyg', remark: '' });
+
+const deviceCodes = ['862041074724346','862041074848699','865743082867622','865743082882522','866522075609640','866522075661187','869978083918950','869978083926847','869978083928090','869978084012712','869978084012803','869978084253662'];
+const devicesSeed = [];
+const createdDates = ['2025-12-20','2025-12-20','2026-03-13','2026-03-13','2026-01-27','2026-01-27','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21'];
+for (let i = 0; i < 148; i++) {
+  const base = deviceCodes[i % deviceCodes.length];
+  const code = i < 12 ? base : (Number(base) + i).toString();
+  devicesSeed.push({
+    code, tenant: '贵州燧煌照明工程有限公司', product: 'WHX-4G-110AC MINI',
+    created: createdDates[i % createdDates.length],
+    status: i % 7 === 0 ? 'online' : 'offline',
+    group: GROUP_POOL[i % GROUP_POOL.length],
+    sim: false, shadow: false, remark: '',
+    locType: '', lng: '121.51292', lat: '31.225543', address: '上海', ip: '',
+    runtime: { updated: '2026-06-01 15:28:39', sw: 'V8.11', simcard: '898602B61025D0037662', voltage: 230.8, current: 0.007, power: 0, pf: 0, energy: 0, brightness: 100, cct: 0, chip: 27.6, hours: 5, alarm: 0, sw_state: 0, signal: 31 }
+  });
+}
+
+const strategiesSeed = [
+  { id:1, name:'策略1', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'备注', createTime:'2026-06-29 23:24:02', actions:[{action:'开关灯', startHour:0,startMinute:1,startOn:true, endHour:1,endMinute:1,endOn:false}], boundPoleIds:[1,2,3] },
+  { id:2, name:'test_1', deviceType:'智慧灯杆', strategyType:'平台策略', loop:2, remark:'', createTime:'2026-06-20 18:14:44', actions:[{action:'调光', startHour:18,startMinute:0,startBright:80, endHour:23,endMinute:30,endBright:30}], boundPoleIds:[] },
+  { id:3, name:'龙游', deviceType:'智慧网关', remark:'', createTime:'2026-06-01 02:25:56', actions:[], boundPoleIds:[] },
+  { id:4, name:'龙游巨龙路总开关', deviceType:'智慧灯杆', strategyType:'本地策略', loop:3, remark:'', createTime:'2026-06-01 02:15:14', actions:[{action:'开关灯', startHour:19,startMinute:0,startOn:true, endHour:6,endMinute:0,endOn:false}], boundPoleIds:[4,5] },
+  { id:5, name:'亮宇平台', deviceType:'太阳能灯杆', remark:'', createTime:'2026-05-21 21:03:51', actions:[], boundPoleIds:[] },
+  { id:6, name:'亮宇', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'', createTime:'2026-05-21 21:01:52', actions:[], boundPoleIds:[] },
+  { id:7, name:'门市仓库', deviceType:'视频监控', remark:'', createTime:'2026-05-05 11:26:05', actions:[] },
+  { id:8, name:'55', deviceType:'环境监测', remark:'', createTime:'2026-04-15 16:53:43', actions:[] },
+  { id:9, name:'212', deviceType:'智慧充电桩', remark:'', createTime:'2026-04-15 09:12:50', actions:[] },
+  { id:10, name:'11', deviceType:'信息发布LED', remark:'', createTime:'2026-03-10 10:47:02', actions:[] },
+];
+
+const poleProjectOptionsSeed = ['智慧园区照明项目','城市道路改造项目','滨江路景观照明'];
+const poleProductOptionsSeed = ['智慧灯杆-标准型','智慧灯杆-经济型','智慧灯杆-旗舰型'];
+const poleLampTypesSeed = ['LED路灯','投光灯','庭院灯','高杆灯'];
+const poleTiltsSeed = ['normal','slight','severe'];
+const polesSeed = [];
+for (let i = 1; i <= 42; i++) {
+  polesSeed.push({
+    id: i,
+    name: '灯杆-' + String(i).padStart(3, '0'),
+    sn: 'LP2026' + String(100000 + i),
+    address: '上海市浦东新区示范路' + i + '号',
+    status: i % 5 === 0 ? 'unregistered' : (i % 3 === 0 ? 'offline' : 'online'),
+    switchOn: i % 3 !== 0,
+    voltage: +(220 + (i % 10)).toFixed(1),
+    current: +(0.5 + (i % 5) * 0.1).toFixed(2),
+    power: +(80 + (i % 20) * 3).toFixed(1),
+    powerFactor: +(85 + (i % 10)).toFixed(1),
+    brightness: 40 + (i % 6) * 10,
+    temperature: 26 + (i % 15),
+    runHours: 100 + i * 7,
+    lightControl: i % 2 === 0,
+    bodySense: i % 4 === 0,
+    tilt: poleTiltsSeed[i % poleTiltsSeed.length],
+    frequency: 50,
+    lampType: poleLampTypesSeed[i % poleLampTypesSeed.length],
+    product: poleProductOptionsSeed[i % poleProductOptionsSeed.length],
+    projectName: poleProjectOptionsSeed[i % poleProjectOptionsSeed.length],
+    groupName: GROUP_POOL[i % GROUP_POOL.length],
+  });
+}
+
+/* ====================== 共享逻辑 ====================== */
+const { createApp, ref, reactive, computed, watch } = Vue;
+
+const MENU_DATA = [
+  { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
+  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['策略管理','资产分配','策略下发日志'] },
+  { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
+  { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
+  { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
+  { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
+  { title: '会员中心', icon: 'User', open: false, items: ['会员列表'] },
+  { title: '商城系统', icon: 'ShoppingCart', open: false, items: ['商品管理','订单管理'] },
+  { title: '公众号管理', icon: 'ChatDotRound', open: false, items: ['菜单配置'] },
+];
+
+const MENU_HREF = {
+  '首页': 'index.html',
+  '设备分组': 'device-group.html',
+  '设备管理': 'device-management.html',
+  '策略管理': 'strategy.html',
+  '灯杆管理': 'pole-management.html',
+  '灯控策略': 'light-strategy.html',
+  '资产分配': 'asset-assign.html',
+  '组织管理': 'organization-management.html',
+};
+
+function createSharedSetup(activeMenuName) {
+  const collapsed = ref(false);
+  const mobileNav = ref(false);
+  const activeMenu = ref(activeMenuName);
+  const savedOpenState = localStorage.getItem('menuOpenState');
+  const savedOpen = savedOpenState ? JSON.parse(savedOpenState) : {};
+  const menuGroups = reactive(MENU_DATA.map(g => ({ ...g, open: savedOpen[g.title] !== undefined ? savedOpen[g.title] : g.open })));
+  const menuHref = MENU_HREF;
+  const toggleGroup = (g) => {
+    if (collapsed.value) { collapsed.value = false; g.open = true; }
+    else { g.open = !g.open; }
+    const openState = {};
+    menuGroups.forEach(grp => openState[grp.title] = grp.open);
+    localStorage.setItem('menuOpenState', JSON.stringify(openState));
+  };
+  const searchPop = ref(false);
+  const navQuery = ref('');
+  const allLeaves = MENU_DATA.flatMap(g => g.items);
+  const navMatches = computed(() => {
+    const q = navQuery.value.trim().toLowerCase();
+    return q ? allLeaves.filter(n => n.toLowerCase().includes(q)) : allLeaves.slice(0, 8);
+  });
+  const jumpMenu = (m) => {
+    const href = MENU_HREF[m];
+    if (href) window.location.href = href;
+    else ElementPlus.ElMessage.info(m + ' 模块建设中');
+    navQuery.value = ''; searchPop.value = false;
+  };
+  const toggleFull = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
+  const placeholder = (m) => ElementPlus.ElMessage.info((m || '该模块') + ' 建设中，敬请期待');
+  const onMenuClick = (item, e) => {
+    const href = MENU_HREF[item];
+    if (!href) { e.preventDefault(); placeholder(item); }
+    // 有 href 时，放行默认跳转，不 prevent
+  };
+  return {
+    collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
+    searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
+  };
+}
+
+function registerIcons(app) {
+  app.use(ElementPlus);
+  try {
+    if (window.ElementPlusIconsVue) {
+      for (const [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+    }
+  } catch (e) {}
+}
+
+const pad2 = n => String(n ?? 0).padStart(2, '0');
+const tableHeaderStyle = { background: '#f5f8fd', color: '#586273', fontWeight: '600', fontSize: '13px' };
+
+
+const app = createApp({
+  setup() {
+    const shared = createSharedSetup('设备管理');
+    const devices = reactive(devicesSeed);
+    const urlParams = new URLSearchParams(window.location.search);
+    const initialGroup = urlParams.get('group') || '';
+    const devFilter = reactive({ tenant: '', name: '', code: '', status: '', group: initialGroup });
+    const devApplied = reactive({ ...devFilter });
+    const devPage = ref(1);
+    const devPageSize = ref(12);
+    const filteredDevices = computed(() => devices.filter(d =>
+      (!devApplied.tenant || d.tenant.includes(devApplied.tenant)) &&
+      (!devApplied.name || d.product.includes(devApplied.name) || d.code.includes(devApplied.name)) &&
+      (!devApplied.code || d.code.includes(devApplied.code)) &&
+      (!devApplied.status || d.status === devApplied.status) &&
+      (!devApplied.group || d.group === devApplied.group)));
+    const pagedDevices = computed(() => { const s = (devPage.value - 1) * devPageSize.value; return filteredDevices.value.slice(s, s + devPageSize.value); });
+    const doDevSearch = () => { Object.assign(devApplied, devFilter); devPage.value = 1; };
+    const resetDevFilter = () => { Object.assign(devFilter, { tenant: '', name: '', code: '', status: '', group: '' }); Object.assign(devApplied, devFilter); devPage.value = 1; };
+    const showDetail = ref(false);
+    const currentDevice = ref(devices[0]);
+    const detailTab = ref('basic');
+    const viewDevice = (d) => { currentDevice.value = d; detailTab.value = 'basic'; showDetail.value = true; };
+    const backToDevices = () => { showDetail.value = false; };
+    const metrics = computed(() => {
+      const r = currentDevice.value.runtime;
+      return [
+        { k: '软件版本', v: r.sw }, { k: 'SIM 卡', v: r.simcard },
+        { k: '电压', v: r.voltage, u: 'V', pct: Math.min(100, r.voltage / 2.5) },
+        { k: '电流', v: r.current, u: 'A', pct: 10 },
+        { k: '功率', v: r.power.toFixed(3), u: 'W', pct: 0 },
+        { k: '功率因素', v: r.pf, pct: r.pf * 100 },
+        { k: '累计电量', v: r.energy.toFixed(2), u: 'kWh', pct: 0 },
+        { k: '亮度', v: r.brightness, u: '%', pct: r.brightness },
+        { k: '色温', v: r.cct, u: 'K', pct: 0 },
+        { k: '芯片温度', v: r.chip, u: '℃', pct: r.chip },
+        { k: '累计用时', v: r.hours, u: 'h', pct: 5 },
+        { k: '告警状态', v: r.alarm ? '告警' : '正常', tone: r.alarm ? 'bad' : 'ok' },
+        { k: '开关', v: r.sw_state ? '开' : '关', tone: r.sw_state ? 'ok' : '' },
+        { k: '信号质量', v: r.signal, pct: (r.signal / 31) * 100 },
+      ];
+    });
+    return { ...shared,
+      devices, devFilter, devPage, devPageSize, filteredDevices, pagedDevices, doDevSearch, resetDevFilter,
+      showDetail, currentDevice, detailTab, viewDevice, backToDevices, metrics,
+      tableHeaderStyle,
+      Search: ElementPlusIconsVue?.Search, RefreshRight: ElementPlusIconsVue?.RefreshRight,
+      View: ElementPlusIconsVue?.View, Back: ElementPlusIconsVue?.Back,
+    };
+  }
+});
+registerIcons(app);
+app.mount('#app');
+
+</script>
+</body>
+</html>
