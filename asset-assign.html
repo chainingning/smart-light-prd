@@ -296,7 +296,7 @@
     <aside class="sidebar" :class="{ collapsed }">
       <div class="brand">
         <div class="logo">云</div>
-        <span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.1</span>
+        <span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span>
       </div>
       <nav class="nav">
         <div class="nav-group" v-for="g in menuGroups" :key="g.title">
@@ -343,20 +343,20 @@
         <section v-if="activeMenu === '资产分配'">
           <div class="panel">
             <div class="page-head">
-              <div class="ph-title">资产分配 <small>上级账号分配路灯设备给下级账号</small></div>
+              <div class="ph-title">资产分配 <small>上级组织分配路灯设备给下级组织</small></div>
             </div>
             <div class="stat-grid">
               <div class="stat-card">
-                <div class="stat-icon blue"><el-icon><UserFilled></UserFilled></el-icon></div>
+                <div class="stat-icon blue"><el-icon><OfficeBuilding></el-icon></div>
                 <div class="stat-info">
-                  <div class="stat-value">{{ users.length }}</div>
-                  <div class="stat-label">下级账号</div>
+                  <div class="stat-value">{{ organizations.length }}</div>
+                  <div class="stat-label">组织数量</div>
                 </div>
               </div>
               <div class="stat-card">
                 <div class="stat-icon green"><el-icon><Monitor></el-icon></div>
                 <div class="stat-info">
-                  <div class="stat-value">{{ poles.length }}</div>
+                  <div class="stat-value">{{ devices.length }}</div>
                   <div class="stat-label">设备总数</div>
                 </div>
               </div>
@@ -377,36 +377,41 @@
             </div>
             <div class="table-zone" style="margin-bottom:16px">
               <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:12px">
-                <div style="font-weight:600; color:var(--ink)">用户资产统计</div>
+                <div style="font-weight:600; color:var(--ink)">组织资产统计</div>
               </div>
-              <el-table :data="pagedUserAssetStats" row-key="id" style="width:100%" stripe :header-cell-style="tableHeaderStyle">
-                <el-table-column prop="username" label="账号" width="120">
+              <el-table :data="pagedOrgAssetStats" row-key="id" style="width:100%" stripe :header-cell-style="tableHeaderStyle">
+                <el-table-column prop="name" label="组织名称" width="150">
                   <template #default="{ row }">
-                    <el-tag size="small" effect="plain">{{ row.username }}</el-tag>
+                    <el-tag size="small" effect="plain">{{ row.name }}</el-tag>
                   </template>
                 </el-table-column>
-                <el-table-column prop="name" label="姓名" width="80"></el-table-column>
+                <el-table-column prop="parentName" label="上级组织" width="120"></el-table-column>
                 <el-table-column prop="total" label="资产总数" width="100" align="center">
                   <template #default="{ row }">
                     <span style="font-weight:600; color:var(--brand)">{{ row.total }}</span>
                   </template>
                 </el-table-column>
-                <el-table-column v-for="type in ASSET_TYPES" :key="type" :label="type" width="90" align="center">
+                <el-table-column prop="online" label="在线设备" width="100" align="center">
                   <template #default="{ row }">
-                    <span :style="{ color: row[type] > 0 ? '#16a36a' : '#999' }">{{ row[type] }}</span>
+                    <span style="color:#16a36a">{{ row.online }}</span>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="offline" label="离线设备" width="100" align="center">
+                  <template #default="{ row }">
+                    <span style="color:#ef4d5e">{{ row.offline }}</span>
                   </template>
                 </el-table-column>
               </el-table>
               <div class="pager-wrap">
                 <el-pagination background layout="total, sizes, prev, pager, next, jumper"
-                  :total="userAssetStats.length" :page-sizes="[5,10,20]"
+                  :total="orgAssetStats.length" :page-sizes="[5,10,20]"
                   v-model:current-page="userPage.current" v-model:page-size="userPage.size"></el-pagination>
               </div>
             </div>
             <div class="toolbar">
               <el-button type="primary" :icon="Plus" @click="openAssignDialog">分配设备</el-button>
-              <span class="lbl">用户名称</span>
-              <el-input v-model="query.username" placeholder="请输入用户名" clearable style="width: 180px" @keyup.enter="doSearch"></el-input>
+              <span class="lbl">组织名称</span>
+              <el-input v-model="query.orgName" placeholder="请输入组织名称" clearable style="width: 180px" @keyup.enter="doSearch"></el-input>
               <span class="lbl">设备名称</span>
               <el-input v-model="query.deviceName" placeholder="请输入设备名称" clearable style="width: 180px" @keyup.enter="doSearch"></el-input>
               <el-button type="primary" :icon="Search" @click="doSearch">搜索</el-button>
@@ -415,17 +420,23 @@
             <div class="table-zone">
               <el-table :data="pagedRecords" row-key="id" style="width:100%" stripe :header-cell-style="tableHeaderStyle">
                 <el-table-column prop="id" label="ID" width="70" align="center"></el-table-column>
-                <el-table-column prop="username" label="下级账号" width="150">
+                <el-table-column prop="orgName" label="组织名称" width="150">
                   <template #default="{ row }">
-                    <el-tag size="small" effect="plain">{{ row.username }}</el-tag>
+                    <el-tag size="small" effect="plain">{{ row.orgName }}</el-tag>
                   </template>
                 </el-table-column>
                 <el-table-column prop="deviceName" label="设备名称" min-width="150"></el-table-column>
                 <el-table-column prop="deviceSn" label="设备序列号" min-width="180"></el-table-column>
-                <el-table-column prop="assignTime" label="分配时间" width="180"></el-table-column>
+                <el-table-column prop="ownerName" label="负责人" width="100"></el-table-column>
+                <el-table-column prop="actionText" label="操作" width="80" align="center">
+                  <template #default="{ row }">
+                    <el-tag size="small" :type="row.action === 'assign' ? 'success' : 'danger'">{{ row.actionText }}</el-tag>
+                  </template>
+                </el-table-column>
+                <el-table-column prop="time" label="操作时间" width="180"></el-table-column>
                 <el-table-column label="操作" width="120" align="center">
                   <template #default="{ row }">
-                    <el-button link type="danger" :icon="Delete" @click="revokeAssign(row)">撤销分配</el-button>
+                    <el-button link type="danger" :icon="Delete" @click="revokeAssign(row)" v-if="row.action === 'assign'">撤销分配</el-button>
                   </template>
                 </el-table-column>
               </el-table>
@@ -443,21 +454,26 @@
     <el-dialog v-model="assignDialog" title="分配设备" width="1100px" top="5vh" :close-on-click-modal="false" destroy-on-close>
       <div style="display:flex; gap:20px; min-height:480px">
         <div style="width:300px; flex:0 0 300px">
-          <div class="cat-head">选择下级账号</div>
-          <el-table :data="users" border size="small" max-height="450" row-key="id" @row-click="selectUser">
-            <el-table-column width="44" align="center">
-              <template #default="{ row }"><el-radio :model-value="selectedUserId" :value="row.id"></el-radio></template>
-            </el-table-column>
-            <el-table-column prop="username" label="账号" width="100"></el-table-column>
-            <el-table-column prop="name" label="姓名" width="80"></el-table-column>
-            <el-table-column prop="role" label="角色" width="70">
-              <template #default="{ row }"><el-tag size="small" effect="plain">{{ row.role }}</el-tag></template>
-            </el-table-column>
-            <template #empty><div class="empty-cell">暂无下级账号</div></template>
-          </el-table>
+          <div class="cat-head">选择目标组织</div>
+          <el-tree :data="orgTreeData" :props="{ label: 'name', children: 'children' }" node-key="id" :expand-on-click-node="false" highlight-current :default-expand-all="true" @node-click="selectOrg">
+            <template #default="{ node, data }">
+              <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
+                <span>{{ node.label }}</span>
+                <el-radio :model-value="selectedOrgId" :value="data.id" @click.stop="selectedOrgId = data.id"></el-radio>
+              </div>
+            </template>
+          </el-tree>
         </div>
         <div style="flex:1; min-width:0">
-          <div class="cat-head" style="padding:4px 0 10px">设备列表 · 已选 {{ selectedDeviceIds.length }} 台</div>
+          <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
+            <div class="cat-head">设备列表 · 已选 {{ selectedDeviceIds.length }} 台</div>
+            <div>
+              <span style="font-size:var(--fs-sm); color:var(--ink-2); margin-right:8px">负责人：</span>
+              <el-select v-model="selectedOwner" placeholder="不指定负责人" clearable style="width:180px">
+                <el-option v-for="u in users" :key="u.id" :value="u.id" :label="u.realName"></el-option>
+              </el-select>
+            </div>
+          </div>
           <div style="display:flex; gap:8px; margin-bottom:10px">
             <el-input v-model="deviceSearch.name" placeholder="设备名称" size="small" clearable style="width:140px"></el-input>
             <el-input v-model="deviceSearch.sn" placeholder="序列号" size="small" clearable style="width:160px"></el-input>
@@ -472,6 +488,7 @@
             <el-table-column prop="name" label="设备名称" min-width="120"></el-table-column>
             <el-table-column prop="sn" label="序列号" min-width="150"></el-table-column>
             <el-table-column prop="groupName" label="分组" width="100"></el-table-column>
+            <el-table-column prop="currentOrgName" label="当前归属" width="120"></el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template #default="{ row }">
                 <el-tag size="small" :type="row.status === 'online' ? 'success' : row.status === 'offline' ? 'danger' : 'info'">{{ row.status === 'online' ? '在线' : row.status === 'offline' ? '离线' : '未注册' }}</el-tag>
@@ -576,85 +593,119 @@ function registerIcons(app) {
 }
 const tableHeaderStyle = { background: '#f5f8fd', color: '#586273', fontWeight: '600', fontSize: '13px' };
 
-const usersSeed = [
-  { id: 1, username: 'admin01', name: '张三', role: '管理员', createTime: '2026-06-01' },
-  { id: 2, username: 'admin02', name: '李四', role: '管理员', createTime: '2026-06-05' },
-  { id: 3, username: 'user01', name: '王五', role: '操作员', createTime: '2026-06-10' },
-  { id: 4, username: 'user02', name: '赵六', role: '操作员', createTime: '2026-06-12' },
-  { id: 5, username: 'user03', name: '孙七', role: '操作员', createTime: '2026-06-15' },
+const organizationsSeed = [
+  { id: 1, name: '云创科技集团', parentId: null, sort: 1 },
+  { id: 2, name: '华东分公司', parentId: 1, sort: 1 },
+  { id: 3, name: '上海办事处', parentId: 2, sort: 1 },
+  { id: 4, name: '苏州办事处', parentId: 2, sort: 2 },
+  { id: 5, name: '华南分公司', parentId: 1, sort: 2 },
+  { id: 6, name: '广州办事处', parentId: 5, sort: 1 },
+  { id: 7, name: '深圳办事处', parentId: 5, sort: 2 },
 ];
-const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
-const ASSET_TYPES = ['灯具', '太阳能', '网关', '监控', 'LED', '广播', '环境监测', '无线网络', '一键呼叫', '井盖', '充电桩'];
-const polesSeed = [];
-for (let i = 1; i <= 30; i++) {
-  const groupName = GROUP_POOL[i % GROUP_POOL.length];
-  const types = [];
-  types.push('灯具');
-  if (i % 2 === 0) types.push('太阳能');
-  if (i % 3 === 0) types.push('网关');
-  if (i % 4 === 0) types.push('监控');
-  if (i % 5 === 0) types.push('LED');
-  if (i % 6 === 0) types.push('广播');
-  if (i % 7 === 0) types.push('环境监测');
-  if (i % 8 === 0) types.push('无线网络');
-  if (i % 9 === 0) types.push('一键呼叫');
-  if (i % 10 === 0) types.push('井盖');
-  if (i % 11 === 0) types.push('充电桩');
-  polesSeed.push({
+const usersSeed = [
+  { id: 1, username: 'admin', realName: '张三', phone: '13800138001' },
+  { id: 2, username: 'user1', realName: '李四', phone: '13800138002' },
+  { id: 3, username: 'user2', realName: '王五', phone: '13800138003' },
+  { id: 4, username: 'user3', realName: '赵六', phone: '13800138004' },
+  { id: 5, username: 'user4', realName: '孙七', phone: '13800138005' },
+];
+const devicesSeed = [];
+for (let i = 1; i <= 20; i++) {
+  devicesSeed.push({
     id: i,
     name: '智慧灯杆-' + String(i).padStart(3, '0'),
     sn: 'LP2026' + String(i).padStart(5, '0'),
-    projectName: '智慧园区项目',
-    product: i % 3 === 0 ? '智慧灯杆-经济型' : '智慧灯杆-标准型',
-    groupName: groupName,
-    status: i % 3 === 0 ? 'offline' : i % 5 === 0 ? 'unregistered' : 'online',
-    lng: 121.47 + (i * 0.001),
-    lat: 31.23 + (i * 0.0008),
-    address: '上海市浦东新区示范路' + i + '号',
-    owner: null,
-    types: types,
+    groupName: '示范路分组',
+    orgId: i <= 10 ? 3 : 6,
+    owner: i <= 3 ? (i <= 1 ? 1 : 2) : null,
+    status: i % 3 === 0 ? 'offline' : 'online'
   });
 }
 const assignRecordsSeed = [
-  { id: 1, userId: 1, username: 'admin01', deviceId: 1, deviceName: '智慧灯杆-001', deviceSn: 'LP202600001', assignTime: '2026-06-20 10:30:00' },
-  { id: 2, userId: 1, username: 'admin01', deviceId: 2, deviceName: '智慧灯杆-002', deviceSn: 'LP202600002', assignTime: '2026-06-20 10:30:00' },
-  { id: 3, userId: 2, username: 'admin02', deviceId: 3, deviceName: '智慧灯杆-003', deviceSn: 'LP202600003', assignTime: '2026-06-21 14:20:00' },
-  { id: 4, userId: 2, username: 'admin02', deviceId: 4, deviceName: '智慧灯杆-004', deviceSn: 'LP202600004', assignTime: '2026-06-21 14:20:00' },
-  { id: 5, userId: 3, username: 'user01', deviceId: 5, deviceName: '智慧灯杆-005', deviceSn: 'LP202600005', assignTime: '2026-06-22 09:15:00' },
+  { id: 1, deviceId: 1, orgId: 3, userId: 1, action: 'assign', time: '2026-06-20 10:30:00', operator: 'admin' },
+  { id: 2, deviceId: 2, orgId: 3, userId: 2, action: 'assign', time: '2026-06-20 10:32:00', operator: 'admin' },
+  { id: 3, deviceId: 3, orgId: 3, userId: null, action: 'assign', time: '2026-06-20 10:35:00', operator: 'admin' },
+  { id: 4, deviceId: 11, orgId: 6, userId: 3, action: 'assign', time: '2026-06-21 14:20:00', operator: 'admin' },
+  { id: 5, deviceId: 12, orgId: 6, userId: null, action: 'assign', time: '2026-06-21 14:25:00', operator: 'admin' },
 ];
-
-for (const record of assignRecordsSeed) {
-  const pole = polesSeed.find(p => p.id === record.deviceId);
-  if (pole) pole.owner = record.userId;
-}
 
 const app = createApp({
   setup() {
     const shared = createSharedSetup('资产分配');
+    const organizations = reactive(organizationsSeed);
     const users = reactive(usersSeed);
-    const poles = reactive(polesSeed);
+    const devices = reactive(devicesSeed);
     const assignRecords = reactive(assignRecordsSeed);
     
-    const query = reactive({ username: '', deviceName: '' });
+    const query = reactive({ orgName: '', deviceName: '' });
     const page = reactive({ current: 1, size: 10 });
     const userPage = reactive({ current: 1, size: 10 });
     const assignDialog = ref(false);
-    const selectedUserId = ref(null);
+    const selectedOrgId = ref(null);
     const selectedDeviceIds = ref([]);
+    const selectedOwner = ref(null);
     const deviceSearch = reactive({ name: '', sn: '', group: '' });
     
-    const allGroupNames = computed(() => [...new Set(poles.map(p => p.groupName))]);
-    const unassignedCount = computed(() => poles.filter(p => !p.owner).length);
+    const orgTreeData = computed(() => {
+      const map = new Map();
+      organizations.forEach(o => {
+        const parent = organizations.find(p => p.id === o.parentId);
+        map.set(o.id, { ...o, children: [], parentName: parent?.name || '' });
+      });
+      const roots = [];
+      organizations.forEach(o => {
+        const node = map.get(o.id);
+        if (o.parentId) {
+          const parent = map.get(o.parentId);
+          if (parent) parent.children.push(node);
+        } else {
+          roots.push(node);
+        }
+      });
+      return roots.sort((a, b) => (a.sort || 0) - (b.sort || 0));
+    });
+    
+    const allGroupNames = computed(() => [...new Set(devices.map(d => d.groupName))]);
+    const unassignedCount = computed(() => devices.filter(d => !d.orgId).length);
+    
+    const orgAssetStats = computed(() => {
+      return organizations.map(org => {
+        const orgDevices = devices.filter(d => d.orgId === org.id);
+        return {
+          ...org,
+          total: orgDevices.length,
+          online: orgDevices.filter(d => d.status === 'online').length,
+          offline: orgDevices.filter(d => d.status === 'offline').length
+        };
+      });
+    });
+    
+    const pagedOrgAssetStats = computed(() => {
+      const start = (userPage.current - 1) * userPage.size;
+      return orgAssetStats.value.slice(start, start + userPage.size);
+    });
     
     const filteredRecords = computed(() => {
-      let result = assignRecords;
-      if (query.username) {
-        result = result.filter(r => r.username.includes(query.username));
+      let result = assignRecords.map(r => {
+        const device = devices.find(d => d.id === r.deviceId);
+        const org = organizations.find(o => o.id === r.orgId);
+        const user = users.find(u => u.id === r.userId);
+        return {
+          ...r,
+          deviceName: device?.name || '-',
+          deviceSn: device?.sn || '-',
+          orgName: org?.name || '-',
+          ownerName: user?.realName || '-',
+          actionText: r.action === 'assign' ? '分配' : '移除'
+        };
+      });
+      if (query.orgName) {
+        result = result.filter(r => r.orgName.includes(query.orgName));
       }
       if (query.deviceName) {
         result = result.filter(r => r.deviceName.includes(query.deviceName));
       }
-      return result;
+      return result.sort((a, b) => new Date(b.time) - new Date(a.time));
     });
     
     const pagedRecords = computed(() => {
@@ -662,37 +713,23 @@ const app = createApp({
       return filteredRecords.value.slice(start, start + page.size);
     });
     
-    const pagedUserAssetStats = computed(() => {
-      const start = (userPage.current - 1) * userPage.size;
-      return userAssetStats.value.slice(start, start + userPage.size);
-    });
+    const availableDevices = computed(() => devices.filter(d =>
+      (!deviceSearch.name || d.name.includes(deviceSearch.name)) &&
+      (!deviceSearch.sn || d.sn.includes(deviceSearch.sn)) &&
+      (!deviceSearch.group || d.groupName === deviceSearch.group)
+    ).map(d => {
+      const currentOrg = organizations.find(o => o.id === d.orgId);
+      return { ...d, currentOrgName: currentOrg?.name || '未分配' };
+    }));
     
-    const availableDevices = computed(() => poles.filter(p =>
-      !p.owner &&
-      (!deviceSearch.name || p.name.includes(deviceSearch.name)) &&
-      (!deviceSearch.sn || p.sn.includes(deviceSearch.sn)) &&
-      (!deviceSearch.group || p.groupName === deviceSearch.group)
-    ));
+    const generateTime = () => {
+      const now = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
+    };
     
-    const userAssetStats = computed(() => {
-      return users.map(user => {
-        const userPoles = poles.filter(p => p.owner === user.id);
-        const stats = {
-          total: userPoles.length,
-          '灯具': 0, '太阳能': 0, '网关': 0, '监控': 0, 'LED': 0,
-          '广播': 0, '环境监测': 0, '无线网络': 0, '一键呼叫': 0, '井盖': 0, '充电桩': 0
-        };
-        userPoles.forEach(pole => {
-          pole.types.forEach(type => {
-            if (stats[type] !== undefined) stats[type]++;
-          });
-        });
-        return { ...user, ...stats };
-      });
-    });
-    
-    const selectUser = (row) => {
-      selectedUserId.value = row.id;
+    const selectOrg = (data) => {
+      selectedOrgId.value = data.id;
     };
     
     const toggleDevice = (id, val) => {
@@ -702,8 +739,9 @@ const app = createApp({
     };
     
     const openAssignDialog = () => {
-      selectedUserId.value = null;
+      selectedOrgId.value = null;
       selectedDeviceIds.value = [];
+      selectedOwner.value = null;
       deviceSearch.name = '';
       deviceSearch.sn = '';
       deviceSearch.group = '';
@@ -711,47 +749,59 @@ const app = createApp({
     };
     
     const confirmAssign = () => {
-      if (!selectedUserId.value) {
-        ElementPlus.ElMessage.warning('请选择下级账号');
+      if (!selectedOrgId.value) {
+        ElementPlus.ElMessage.warning('请选择目标组织');
         return;
       }
       if (!selectedDeviceIds.value.length) {
         ElementPlus.ElMessage.warning('请选择要分配的设备');
         return;
       }
-      const user = users.find(u => u.id === selectedUserId.value);
-      const now = new Date();
-      const p = n => String(n).padStart(2, '0');
-      const timeStr = `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
+      const org = organizations.find(o => o.id === selectedOrgId.value);
       selectedDeviceIds.value.forEach(deviceId => {
-        const pole = poles.find(p => p.id === deviceId);
-        if (pole) {
-          pole.owner = selectedUserId.value;
+        const idx = devices.findIndex(d => d.id === deviceId);
+        if (idx > -1) {
+          devices[idx].orgId = selectedOrgId.value;
+          if (selectedOwner.value !== null) {
+            devices[idx].owner = selectedOwner.value;
+          }
           assignRecords.unshift({
             id: assignRecords.length + 1,
-            userId: selectedUserId.value,
-            username: user.username,
             deviceId: deviceId,
-            deviceName: pole.name,
-            deviceSn: pole.sn,
-            assignTime: timeStr,
+            orgId: selectedOrgId.value,
+            userId: selectedOwner.value,
+            action: 'assign',
+            time: generateTime(),
+            operator: 'admin'
           });
         }
       });
-      ElementPlus.ElMessage.success(`成功分配 ${selectedDeviceIds.value.length} 台设备给 ${user.username}`);
+      ElementPlus.ElMessage.success(`成功分配 ${selectedDeviceIds.value.length} 台设备给 ${org.name}`);
       assignDialog.value = false;
     };
     
     const revokeAssign = (row) => {
-      ElementPlus.ElMessageBox.confirm(`确认撤销分配给「${row.username}」的设备「${row.deviceName}」吗？`, '提示', {
+      ElementPlus.ElMessageBox.confirm(`确认撤销分配给「${row.orgName}」的设备「${row.deviceName}」吗？`, '提示', {
         type: 'warning',
         confirmButtonText: '确定',
         cancelButtonText: '取消'
       }).then(() => {
         const idx = assignRecords.findIndex(r => r.id === row.id);
         if (idx > -1) {
-          const pole = poles.find(p => p.id === row.deviceId);
-          if (pole) pole.owner = null;
+          const deviceIdx = devices.findIndex(d => d.id === row.deviceId);
+          if (deviceIdx > -1) {
+            devices[deviceIdx].orgId = null;
+            devices[deviceIdx].owner = null;
+          }
+          assignRecords.unshift({
+            id: assignRecords.length + 1,
+            deviceId: row.deviceId,
+            orgId: row.orgId,
+            userId: row.userId,
+            action: 'unassign',
+            time: generateTime(),
+            operator: 'admin'
+          });
           assignRecords.splice(idx, 1);
         }
         ElementPlus.ElMessage.success('撤销成功');
@@ -763,24 +813,25 @@ const app = createApp({
     };
     
     const resetQuery = () => {
-      query.username = '';
+      query.orgName = '';
       query.deviceName = '';
       page.current = 1;
     };
     
     return {
       ...shared,
-      users, poles, assignRecords,
+      organizations, users, devices, assignRecords,
       query, page, filteredRecords, pagedRecords,
-      userPage, userAssetStats, pagedUserAssetStats, ASSET_TYPES,
-      allGroupNames, unassignedCount,
-      assignDialog, selectedUserId, selectedDeviceIds, deviceSearch, availableDevices,
-      selectUser, toggleDevice, openAssignDialog, confirmAssign, revokeAssign,
+      userPage, orgAssetStats, pagedOrgAssetStats,
+      orgTreeData, allGroupNames, unassignedCount,
+      assignDialog, selectedOrgId, selectedDeviceIds, selectedOwner, deviceSearch, availableDevices,
+      selectOrg, toggleDevice, openAssignDialog, confirmAssign, revokeAssign,
       doSearch, resetQuery,
       Plus: window.ElementPlusIconsVue?.Plus,
       Search: window.ElementPlusIconsVue?.Search,
       RefreshRight: window.ElementPlusIconsVue?.RefreshRight,
       Delete: window.ElementPlusIconsVue?.Delete,
+      OfficeBuilding: window.ElementPlusIconsVue?.OfficeBuilding,
       tableHeaderStyle,
     };
   }

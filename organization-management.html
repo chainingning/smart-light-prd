@@ -199,7 +199,7 @@
 <div id="app">
   <div class="shell">
     <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
-      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.1</span></div>
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
       <nav class="nav">
         <div v-for="g in menuGroups" :key="g.title" class="nav-group"
              :class="{ open: g.open, 'has-active': g.items.includes(activeMenu) }">
@@ -374,13 +374,35 @@
                             <el-table-column prop="name" label="设备名称"></el-table-column>
                             <el-table-column prop="sn" label="设备编号" width="150"></el-table-column>
                             <el-table-column prop="groupName" label="分组" width="120"></el-table-column>
-                            <el-table-column label="操作" width="80">
+                            <el-table-column label="状态" width="90" align="center">
                               <template #default="{ row }">
+                                <el-tag size="small" :type="row.status === 'online' ? 'success' : 'danger'">{{ row.status === 'online' ? '在线' : '离线' }}</el-tag>
+                              </template>
+                            </el-table-column>
+                            <el-table-column prop="ownerOrgName" label="所属组织" width="120"></el-table-column>
+                            <el-table-column prop="ownerName" label="负责人" width="100"></el-table-column>
+                            <el-table-column label="操作" width="120">
+                              <template #default="{ row }">
+                                <el-button size="small" @click="editDeviceOwner(row)">设负责人</el-button>
                                 <el-button size="small" type="danger" @click="unassignAsset('device', row.id)">移除</el-button>
                               </template>
                             </el-table-column>
                           </el-table>
                           <div class="empty-cell" v-if="!assignedDevices.length">该组织暂无设备资产</div>
+                        </el-tab-pane>
+                        <el-tab-pane label="分配记录" name="record">
+                          <el-table :data="deviceAssignRecords" row-key="id" style="width:100%" stripe>
+                            <el-table-column prop="deviceName" label="设备名称" width="180"></el-table-column>
+                            <el-table-column prop="actionText" label="操作" width="80" align="center">
+                              <template #default="{ row }">
+                                <el-tag size="small" :type="row.action === 'assign' ? 'success' : 'danger'">{{ row.actionText }}</el-tag>
+                              </template>
+                            </el-table-column>
+                            <el-table-column prop="userName" label="负责人" width="100"></el-table-column>
+                            <el-table-column prop="time" label="操作时间" width="180"></el-table-column>
+                            <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
+                          </el-table>
+                          <div class="empty-cell" v-if="!deviceAssignRecords.length">暂无分配记录</div>
                         </el-tab-pane>
                       </el-tabs>
                     </el-tab-pane>
@@ -474,7 +496,24 @@
       </template>
     </el-dialog>
 
-    <el-dialog v-model="assetAssignDialogVisible" :title="'绑定' + (assetAssignType === 'product' ? '产品' : '设备')" width="700px">
+    <el-dialog v-model="editDeviceOwnerDialogVisible" title="设置设备负责人" width="400px">
+      <el-form label-width="100px">
+        <el-form-item label="设备名称">
+          <el-input :value="editingDevice?.name" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-select v-model="editingOwner" placeholder="请选择负责人" clearable style="width:100%">
+            <el-option v-for="u in users" :key="u.id" :value="u.id" :label="u.realName"></el-option>
+          </el-select>
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="editDeviceOwnerDialogVisible = false">取消</el-button>
+        <el-button type="primary" @click="saveDeviceOwner">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="assetAssignDialogVisible" :title="'绑定' + (assetAssignType === 'product' ? '产品' : '设备')" width="800px">
       <template v-if="assetAssignType === 'product'">
         <div style="margin-bottom:16px">
           <el-switch v-model="batchConfig" active-text="批量配置" inactive-text="独立配置"></el-switch>
@@ -503,16 +542,26 @@
         </el-table>
       </template>
       <template v-else>
-        <el-radio-group v-model="deviceSelectMode" style="margin-bottom:16px">
-          <el-radio label="custom">自定义</el-radio>
-          <el-radio label="all">全部</el-radio>
-          <el-radio label="organization">组织</el-radio>
-        </el-radio-group>
+        <div style="display:flex; gap:16px; margin-bottom:16px">
+          <el-radio-group v-model="deviceSelectMode" style="flex:1">
+            <el-radio label="custom">自定义</el-radio>
+            <el-radio label="all">全部</el-radio>
+            <el-radio label="organization">组织</el-radio>
+          </el-radio-group>
+          <div style="flex:1">
+            <span style="font-size:var(--fs-sm); color:var(--ink-2); margin-right:8px">负责人：</span>
+            <el-select v-model="selectedOwner" placeholder="不指定负责人" clearable style="width:200px">
+              <el-option v-for="u in users" :key="u.id" :value="u.id" :label="u.realName"></el-option>
+            </el-select>
+          </div>
+        </div>
         <el-table v-if="deviceSelectMode === 'custom'" :data="availableDevices" row-key="id" style="width:100%" @selection-change="handleDeviceSelection">
           <el-table-column type="selection"></el-table-column>
           <el-table-column prop="name" label="设备名称"></el-table-column>
           <el-table-column prop="sn" label="设备编号"></el-table-column>
           <el-table-column prop="groupName" label="分组"></el-table-column>
+          <el-table-column prop="currentOrgName" label="当前归属" width="120"></el-table-column>
+          <el-table-column prop="ownerName" label="当前负责人" width="100"></el-table-column>
         </el-table>
         <div v-else-if="deviceSelectMode === 'all'" style="padding:20px; text-align:center; color:var(--ink-2)">
           将分配所有设备（共 {{ allDevices.length }} 台）
@@ -616,6 +665,23 @@ const orgProductsSeed = [
   { orgId: 1, productId: 1, permissions: { view: true, edit: true, delete: true, share: true } },
   { orgId: 1, productId: 2, permissions: { view: true, edit: true, delete: false, share: false } },
 ];
+const devicesSeed = [];
+for (let i = 1; i <= 20; i++) {
+  devicesSeed.push({
+    id: i,
+    name: '智慧灯杆-' + String(i).padStart(3, '0'),
+    sn: 'LP2026' + String(i).padStart(5, '0'),
+    groupName: '示范路分组',
+    orgId: i <= 10 ? 3 : 6,
+    owner: i <= 3 ? (i <= 1 ? 1 : 2) : null,
+    status: i % 3 === 0 ? 'offline' : 'online'
+  });
+}
+const assignRecordsSeed = [
+  { id: 1, deviceId: 1, orgId: 3, userId: 1, action: 'assign', time: '2026-06-20 10:30:00', operator: 'admin' },
+  { id: 2, deviceId: 2, orgId: 3, userId: 2, action: 'assign', time: '2026-06-20 10:32:00', operator: 'admin' },
+  { id: 3, deviceId: 3, orgId: 3, userId: null, action: 'assign', time: '2026-06-20 10:35:00', operator: 'admin' },
+];
 
 const app = createApp({
   setup() {
@@ -627,10 +693,8 @@ const app = createApp({
     const roles = reactive(rolesSeed);
     const products = reactive(productsSeed);
     const orgProducts = reactive(orgProductsSeed);
-    const devices = reactive([]);
-    for (let i = 1; i <= 20; i++) {
-      devices.push({ id: i, name: '智慧灯杆-' + String(i).padStart(3, '0'), sn: 'LP2026' + String(i).padStart(5, '0'), groupName: '示范路分组', orgId: i <= 10 ? 3 : 6 });
-    }
+    const devices = reactive(devicesSeed);
+    const assignRecords = reactive(assignRecordsSeed);
 
     const activeTab = ref('position');
     const assetTab = ref('product');
@@ -659,6 +723,32 @@ const app = createApp({
     const selectedProducts = ref([]);
     const selectedDevices = ref([]);
     const selectedOrgDevices = ref([]);
+    const selectedOwner = ref(null);
+
+    const getOrgDescendants = (orgId) => {
+      const descendants = [];
+      const findChildren = (id) => {
+        const children = organizations.filter(o => o.parentId === id);
+        children.forEach(child => {
+          descendants.push(child.id);
+          findChildren(child.id);
+        });
+      };
+      findChildren(orgId);
+      return descendants;
+    };
+
+    const getOrgAncestors = (orgId) => {
+      const ancestors = [];
+      let currentId = orgId;
+      while (currentId) {
+        const org = organizations.find(o => o.id === currentId);
+        if (!org) break;
+        ancestors.push(org.id);
+        currentId = org.parentId;
+      }
+      return ancestors;
+    };
 
     const orgTreeData = computed(() => {
       const map = new Map();
@@ -737,22 +827,45 @@ const app = createApp({
 
     const assignedDevices = computed(() => {
       if (!selectedOrg.value) return [];
-      return devices.filter(d => d.orgId === selectedOrg.value.id);
+      const orgIds = getOrgAncestors(selectedOrg.value.id);
+      return devices.filter(d => orgIds.includes(d.orgId)).map(d => {
+        const ownerUser = users.find(u => u.id === d.owner);
+        const ownerOrg = organizations.find(o => o.id === d.orgId);
+        return { ...d, ownerName: ownerUser?.realName || '-', ownerOrgName: ownerOrg?.name || '-' };
+      });
     });
 
     const availableDevices = computed(() => {
       if (!selectedOrg.value) return [];
-      return devices.filter(d => d.orgId !== selectedOrg.value.id);
+      const ownedOrgIds = getOrgAncestors(selectedOrg.value.id);
+      return devices.filter(d => !ownedOrgIds.includes(d.orgId)).map(d => {
+        const ownerUser = users.find(u => u.id === d.owner);
+        const currentOrg = organizations.find(o => o.id === d.orgId);
+        return { ...d, ownerName: ownerUser?.realName || '-', currentOrgName: currentOrg?.name || '未分配' };
+      });
     });
 
     const allDevices = computed(() => devices);
 
     const orgListForDevice = computed(() => {
-      return organizations.map(o => ({
-        id: o.id,
-        name: o.name,
-        deviceCount: devices.filter(d => d.orgId === o.id).length
-      })).filter(o => o.deviceCount > 0);
+      return organizations.map(o => {
+        const descendants = getOrgDescendants(o.id);
+        const allIds = [o.id, ...descendants];
+        return {
+          id: o.id,
+          name: o.name,
+          deviceCount: devices.filter(d => allIds.includes(d.orgId)).length
+        };
+      }).filter(o => o.deviceCount > 0);
+    });
+
+    const deviceAssignRecords = computed(() => {
+      if (!selectedOrg.value) return [];
+      return assignRecords.filter(r => r.orgId === selectedOrg.value.id).map(r => {
+        const device = devices.find(d => d.id === r.deviceId);
+        const user = users.find(u => u.id === r.userId);
+        return { ...r, deviceName: device?.name || '-', userName: user?.realName || '-', actionText: r.action === 'assign' ? '分配' : '移除' };
+      }).sort((a, b) => new Date(b.time) - new Date(a.time));
     });
 
     const handleOrgClick = (data) => {
@@ -964,6 +1077,12 @@ const app = createApp({
       selectedOrgDevices.value = val;
     };
 
+    const generateTime = () => {
+      const now = new Date();
+      const p = n => String(n).padStart(2, '0');
+      return `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
+    };
+
     const confirmAssetAssign = () => {
       if (assetAssignType.value === 'product') {
         if (!selectedProducts.value.length) {
@@ -979,38 +1098,47 @@ const app = createApp({
         });
         ElementPlus.ElMessage.success(`成功分配 ${selectedProducts.value.length} 个产品`);
       } else {
+        let assignedCount = 0;
+        const assignDevice = (device) => {
+          const idx = devices.findIndex(d => d.id === device.id);
+          if (idx > -1) {
+            devices[idx].orgId = selectedOrg.value.id;
+            if (selectedOwner.value !== null) {
+              devices[idx].owner = selectedOwner.value;
+            }
+            assignRecords.push({
+              id: assignRecords.length + 1,
+              deviceId: device.id,
+              orgId: selectedOrg.value.id,
+              userId: selectedOwner.value,
+              action: 'assign',
+              time: generateTime(),
+              operator: 'admin'
+            });
+            assignedCount++;
+          }
+        };
+
         if (deviceSelectMode.value === 'custom') {
           if (!selectedDevices.value.length) {
             ElementPlus.ElMessage.warning('请选择要分配的设备');
             return;
           }
-          selectedDevices.value.forEach(device => {
-            const idx = devices.findIndex(d => d.id === device.id);
-            if (idx > -1) devices[idx].orgId = selectedOrg.value.id;
-          });
-          ElementPlus.ElMessage.success(`成功分配 ${selectedDevices.value.length} 个设备`);
+          selectedDevices.value.forEach(assignDevice);
         } else if (deviceSelectMode.value === 'organization') {
           if (!selectedOrgDevices.value.length) {
             ElementPlus.ElMessage.warning('请选择组织');
             return;
           }
-          let count = 0;
           selectedOrgDevices.value.forEach(org => {
-            devices.forEach(d => {
-              if (d.orgId === org.id) {
-                d.orgId = selectedOrg.value.id;
-                count++;
-              }
-            });
+            devices.filter(d => d.orgId === org.id).forEach(assignDevice);
           });
-          ElementPlus.ElMessage.success(`成功分配 ${count} 个设备`);
         } else {
-          devices.forEach(d => {
-            d.orgId = selectedOrg.value.id;
-          });
-          ElementPlus.ElMessage.success('成功分配所有设备');
+          devices.forEach(assignDevice);
         }
+        ElementPlus.ElMessage.success(`成功分配 ${assignedCount} 个设备`);
       }
+      selectedOwner.value = null;
       assetAssignDialogVisible.value = false;
     };
 
@@ -1024,10 +1152,50 @@ const app = createApp({
       } else {
         const idx = devices.findIndex(d => d.id === id && d.orgId === selectedOrg.value.id);
         if (idx > -1) {
+          const device = devices[idx];
           devices[idx].orgId = null;
+          devices[idx].owner = null;
+          assignRecords.push({
+            id: assignRecords.length + 1,
+            deviceId: device.id,
+            orgId: selectedOrg.value.id,
+            userId: device.owner,
+            action: 'unassign',
+            time: generateTime(),
+            operator: 'admin'
+          });
           ElementPlus.ElMessage.success('移除成功');
         }
       }
+    };
+
+    const editDeviceOwnerDialogVisible = ref(false);
+    const editingDevice = ref(null);
+    const editingOwner = ref(null);
+
+    const editDeviceOwner = (row) => {
+      editingDevice.value = row;
+      editingOwner.value = row.owner;
+      editDeviceOwnerDialogVisible.value = true;
+    };
+
+    const saveDeviceOwner = () => {
+      if (!editingDevice.value) return;
+      const idx = devices.findIndex(d => d.id === editingDevice.value.id);
+      if (idx > -1) {
+        devices[idx].owner = editingOwner.value;
+        assignRecords.push({
+          id: assignRecords.length + 1,
+          deviceId: editingDevice.value.id,
+          orgId: editingDevice.value.orgId,
+          userId: editingOwner.value,
+          action: 'assign',
+          time: generateTime(),
+          operator: 'admin'
+        });
+        ElementPlus.ElMessage.success('负责人设置成功');
+      }
+      editDeviceOwnerDialogVisible.value = false;
     };
 
     return { ...shared, organizations, positions, users, orgUsers, roles, products, devices,
@@ -1037,15 +1205,18 @@ const app = createApp({
       bindUserDialogVisible, bindPositionUserDialogVisible, currentPosition,
       selectedBindUsers, selectedBindPositionUsers,
       assetAssignDialogVisible, assetAssignType, batchConfig, batchPermissions,
-      deviceSelectMode, selectedProducts, selectedDevices, selectedOrgDevices,
+      deviceSelectMode, selectedProducts, selectedDevices, selectedOrgDevices, selectedOwner,
       orgTreeData, orgListForDevice,
       assignedProducts, availableProducts, assignedDevices, availableDevices, allDevices,
+      deviceAssignRecords,
+      editDeviceOwnerDialogVisible, editingOwner,
       handleOrgClick, openAddOrg, openEditOrg, saveOrg, deleteOrg,
       openAddPosition, savePosition, deletePosition,
       openBindUser, confirmBindUser, bindUserToPosition, confirmBindPositionUser,
       handleUserSelection, unbindUser, batchUnbindUser,
       openAssetAssign, confirmAssetAssign, unassignAsset,
-      handleProductSelection, handleDeviceSelection, handleOrgDeviceSelection
+      handleProductSelection, handleDeviceSelection, handleOrgDeviceSelection,
+      editDeviceOwner, saveDeviceOwner
     };
   }
 });
