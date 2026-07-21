@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>智慧灯杆运营大屏 · 云创智慧平台</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+<style>
+  :root {
+    --bs-bg: #020b18;
+    --bs-panel: rgba(6, 28, 52, 0.82);
+    --bs-border: rgba(0, 196, 255, 0.35);
+    --bs-border-soft: rgba(0, 160, 220, 0.18);
+    --bs-cyan: #00d4ff;
+    --bs-green: #3dd68c;
+    --bs-orange: #faad14;
+    --bs-orange-deep: #ff7a45;
+    --bs-red: #ff5a6a;
+    --bs-offline: #8a9bb0;
+    --bs-inactive: #5a6a7a;
+    --bs-text: #d8eefc;
+    --bs-muted: rgba(160, 200, 230, 0.72);
+    --bs-title: #7ee9ff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    font-family: 'DIN Alternate', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  }
+
+  .bs-viewport {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: var(--bs-bg);
+  }
+
+  .big-screen {
+    position: relative;
+    flex-shrink: 0;
+    width: 1920px;
+    height: 1080px;
+    overflow: hidden;
+    color: var(--bs-text);
+    background: radial-gradient(ellipse at center, #0a2744 0%, var(--bs-bg) 70%);
+    transform-origin: center center;
+  }
+
+  /* ---------- 地图（静态示意，无地图 SDK 依赖） ---------- */
+  .bs-map {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    overflow: hidden;
+    background: #041222;
+  }
+  .bs-map-grid {
+    position: absolute;
+    inset: -2px;
+    background-image:
+      linear-gradient(rgba(0, 180, 230, 0.10) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 180, 230, 0.10) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse at 55% 45%, #000 0%, transparent 72%);
+  }
+  .bs-map-glow {
+    position: absolute;
+    top: 18%;
+    left: 30%;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(ellipse at center, rgba(0, 160, 220, 0.22) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .bs-map-ring {
+    position: absolute;
+    top: 50%;
+    left: 55%;
+    border: 1px solid rgba(0, 212, 255, 0.18);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    animation: bs-ring-pulse 4s ease-out infinite;
+  }
+  @keyframes bs-ring-pulse {
+    0% { opacity: .8; }
+    100% { opacity: 0; }
+  }
+  .bs-marker {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    margin: -5px 0 0 -5px;
+    border-radius: 50%;
+    cursor: pointer;
+    box-shadow: 0 0 6px 2px currentColor;
+  }
+  .bs-marker::after {
+    content: '';
+    position: absolute;
+    inset: -6px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    opacity: 0.5;
+    animation: bs-marker-pulse 2.4s ease-out infinite;
+  }
+  .bs-marker--online { background: var(--bs-green); color: var(--bs-green); }
+  .bs-marker--offline { background: var(--bs-offline); color: var(--bs-offline); }
+  .bs-marker--alarm { background: var(--bs-red); color: var(--bs-red); animation: bs-marker-blink 1s step-start infinite; }
+  .bs-marker--inactive { background: var(--bs-inactive); color: var(--bs-inactive); }
+  @keyframes bs-marker-pulse {
+    0% { transform: scale(0.6); opacity: 0.7; }
+    100% { transform: scale(1.8); opacity: 0; }
+  }
+  @keyframes bs-marker-blink {
+    50% { opacity: 0.35; }
+  }
+
+  /* ---------- 顶栏 ---------- */
+  .bs-header {
+    position: absolute;
+    top: 0; right: 0; left: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 72px;
+    padding: 0 28px;
+    background: linear-gradient(180deg, rgba(2, 16, 36, 0.92) 0%, rgba(2, 16, 36, 0.35) 70%, transparent 100%);
+    pointer-events: none;
+  }
+  .bs-header > * { pointer-events: auto; }
+  .bs-header__time { min-width: 220px; font-size: 15px; letter-spacing: 1px; color: var(--bs-muted); }
+  .bs-header__title {
+    position: relative;
+    padding: 0 48px;
+    font-size: 30px;
+    font-weight: 700;
+    letter-spacing: 6px;
+    color: #e8f7ff;
+    text-shadow: 0 0 18px rgba(0, 212, 255, 0.45);
+  }
+  .bs-header__title::before,
+  .bs-header__title::after {
+    position: absolute;
+    top: 50%;
+    width: 56px;
+    height: 2px;
+    content: '';
+    background: linear-gradient(90deg, transparent, var(--bs-cyan));
+  }
+  .bs-header__title::before { right: 100%; transform: translateY(-50%); }
+  .bs-header__title::after { left: 100%; background: linear-gradient(90deg, var(--bs-cyan), transparent); transform: translateY(-50%); }
+  .bs-header__actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; min-width: 220px; }
+  .bs-action-btn {
+    height: 32px;
+    padding: 0 14px;
+    font-size: 13px;
+    color: var(--bs-text);
+    cursor: pointer;
+    background: rgba(0, 120, 180, 0.25);
+    border: 1px solid var(--bs-border);
+    border-radius: 2px;
+    transition: all 0.2s;
+  }
+  .bs-action-btn:hover { color: #fff; background: rgba(0, 180, 230, 0.35); box-shadow: 0 0 12px rgba(0, 212, 255, 0.25); }
+
+  /* ---------- 图例 ---------- */
+  .bs-legend {
+    position: absolute;
+    top: 84px;
+    left: 50%;
+    z-index: 16;
+    display: flex;
+    gap: 16px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--bs-muted);
+    background: rgba(6, 28, 52, 0.72);
+    border: 1px solid var(--bs-border-soft);
+    border-radius: 20px;
+    transform: translateX(-50%);
+    backdrop-filter: blur(4px);
+  }
+  .bs-legend__item { display: flex; gap: 6px; align-items: center; }
+  .bs-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .bs-dot--online { background: var(--bs-green); }
+  .bs-dot--offline { background: var(--bs-offline); }
+  .bs-dot--alarm { background: var(--bs-red); }
+  .bs-dot--inactive { background: var(--bs-inactive); }
+
+  /* ---------- 侧栏 & 底部 ---------- */
+  .bs-side {
+    position: absolute;
+    top: 84px;
+    bottom: 240px;
+    z-index: 15;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    width: 360px;
+    pointer-events: none;
+  }
+  .bs-side > * { pointer-events: auto; }
+  .bs-side > *:nth-child(1) { flex: 0 0 auto; }
+  .bs-side > *:nth-child(2) { flex: 1.1; min-height: 160px; }
+  .bs-side > *:nth-child(3) { flex: 1; min-height: 140px; }
+  .bs-side--left { left: 16px; }
+  .bs-side--right { right: 16px; }
+  .bs-side--right > *:nth-child(1) { flex: 0 0 auto; }
+  .bs-side--right > *:nth-child(2),
+  .bs-side--right > *:nth-child(3) { flex: 1; min-height: 120px; }
+
+  .bs-bottom {
+    position: absolute;
+    right: 392px;
+    bottom: 16px;
+    left: 392px;
+    z-index: 15;
+    height: 210px;
+    pointer-events: none;
+  }
+  .bs-bottom > * { height: 100%; pointer-events: auto; }
+
+  /* ---------- 面板通用 ---------- */
+  .bs-panel {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: var(--bs-panel);
+    border: 1px solid var(--bs-border-soft);
+    border-radius: 4px;
+    box-shadow: inset 0 0 24px rgba(0, 160, 220, 0.08), 0 8px 24px rgba(0, 0, 0, 0.35);
+    backdrop-filter: blur(6px);
+  }
+  .bs-panel__corner {
+    position: absolute;
+    z-index: 2;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    border: 2px solid var(--bs-cyan);
+    opacity: 0.9;
+    filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.5));
+  }
+  .bs-panel__corner--tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+  .bs-panel__corner--tr { top: 0; right: 0; border-bottom: none; border-left: none; }
+  .bs-panel__corner--bl { bottom: 0; left: 0; border-top: none; border-right: none; }
+  .bs-panel__corner--br { right: 0; bottom: 0; border-top: none; border-left: none; }
+
+  .bs-panel__header {
+    position: relative;
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    justify-content: space-between;
+    height: 40px;
+    padding: 0 14px;
+    overflow: hidden;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--bs-title);
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--bs-border-soft);
+    background: linear-gradient(90deg, rgba(0, 160, 220, 0.18), transparent 70%);
+  }
+  .bs-panel__header::after {
+    position: absolute;
+    bottom: -1px;
+    left: -30%;
+    width: 30%;
+    height: 1px;
+    content: '';
+    background: linear-gradient(90deg, transparent, var(--bs-cyan), transparent);
+    animation: bs-panel-scan 3.2s linear infinite;
+  }
+  @keyframes bs-panel-scan { 0% { left: -30%; } 100% { left: 100%; } }
+  .bs-panel__header .hint { font-size: 11px; font-weight: 400; color: rgba(160, 200, 230, 0.55); }
+  .bs-panel__body { flex: 1; min-height: 0; padding: 12px 14px; overflow: auto; }
+
+  /* ---------- KPI ---------- */
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .kpi-item { padding: 10px 8px; text-align: center; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
+  .kpi-label { margin-bottom: 6px; font-size: 12px; color: var(--bs-muted); }
+  .kpi-value { font-size: 22px; font-weight: 700; color: #e8f7ff; letter-spacing: 0.5px; }
+  .kpi-value.is-green { color: var(--bs-green); }
+  .kpi-value.is-orange { color: var(--bs-orange); }
+  .kpi-value.is-cyan { color: var(--bs-cyan); }
+  .kpi-value.is-muted { color: var(--bs-offline); }
+
+  /* ---------- 设备类型分布 ---------- */
+  .type-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .type-bar-row:last-child { margin-bottom: 0; }
+  .type-bar-name { flex: 0 0 72px; font-size: 12px; color: var(--bs-muted); text-align: right; }
+  .type-bar-track { flex: 1; height: 12px; background: rgba(0, 160, 220, 0.08); border-radius: 2px; overflow: hidden; }
+  .type-bar-fill { height: 100%; border-radius: 0 4px 4px 0; }
+  .type-bar-value { flex: 0 0 30px; font-size: 12px; color: #e8f7ff; }
+
+  /* ---------- 告警 ---------- */
+  .empty { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 80px; font-size: 13px; color: var(--bs-muted); }
+  .alarm-list { display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; list-style: none; }
+  .alarm-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: rgba(255, 90, 106, 0.06); border: 1px solid rgba(255, 90, 106, 0.18); border-radius: 4px; }
+  .alarm-level { flex-shrink: 0; padding: 2px 6px; font-size: 11px; font-weight: 700; color: #fff; background: var(--bs-red); border-radius: 2px; }
+  .alarm-level.lv-1 { background: var(--bs-orange); }
+  .alarm-level.lv-2 { background: var(--bs-orange-deep); }
+  .alarm-level.lv-3 { background: var(--bs-red); }
+  .alarm-name { font-size: 13px; color: #e8f7ff; }
+  .alarm-meta { display: flex; gap: 12px; margin-top: 2px; font-size: 11px; color: var(--bs-muted); }
+
+  /* ---------- 筛选 ---------- */
+  .filter-form { display: flex; flex-direction: column; gap: 12px; }
+  .filter-row { display: flex; flex-direction: column; gap: 6px; }
+  .filter-row label { font-size: 12px; color: var(--bs-muted); }
+  .filter-select { width: 100%; }
+  .filter-actions { display: flex; gap: 8px; margin-top: 4px; }
+  .el-select__wrapper { background: rgba(0, 40, 70, 0.55) !important; box-shadow: 0 0 0 1px rgba(0, 160, 220, 0.3) inset !important; }
+  .el-select__placeholder, .el-select__selected-item, .el-tag { color: #d8eefc !important; }
+
+  /* ---------- 分组统计 ---------- */
+  .summary-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
+  .summary-row .label { flex-shrink: 0; width: 36px; color: var(--bs-muted); }
+  .summary-row .value { flex: 1; color: #e8f7ff; word-break: break-all; }
+  .summary-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
+  .metric { padding: 8px 4px; text-align: center; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
+  .metric-val { font-size: 18px; font-weight: 700; color: #e8f7ff; }
+  .metric-val.is-green { color: var(--bs-green); }
+  .metric-val.is-cyan { color: var(--bs-cyan); }
+  .metric-val.is-orange { color: var(--bs-orange); }
+  .metric-label { margin-top: 4px; font-size: 11px; color: var(--bs-muted); }
+
+  /* ---------- 电气摘要 ---------- */
+  .elec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .elec-item { padding: 12px 10px; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
+  .elec-label { margin-bottom: 6px; font-size: 12px; color: var(--bs-muted); }
+  .elec-value { font-size: 22px; font-weight: 700; color: var(--bs-cyan); }
+  .elec-value .unit { margin-left: 2px; font-size: 12px; font-weight: 400; color: var(--bs-muted); }
+  .elec-hint { margin: 10px 0 0; font-size: 11px; color: rgba(160, 200, 230, 0.55); }
+
+  .echart { width: 100%; }
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+
+<script>
+const { createApp, ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } = Vue;
+
+/* ---------------- 静态示例数据（对应原 Vue 页面的接口返回结构） ---------------- */
+
+const GROUPS = [
+  { id: 1, name: '中心城区' },
+  { id: 2, name: '开发区' },
+  { id: 3, name: '滨江路' },
+  { id: 4, name: '高新园区' }
+];
+
+const PRODUCTS = [
+  { id: 1, name: '智慧路灯' },
+  { id: 2, name: '监控杆' },
+  { id: 3, name: '广播音柱' },
+  { id: 4, name: '环境传感器' }
+];
+
+const TYPE_COLORS = ['#00d4ff', '#3dd68c', '#faad14', '#a78bfa', '#ff5a6a', '#38bdf8', '#f472b6', '#34d399'];
+
+const TYPE_DIST = [
+  { name: '智慧路灯', value: 486, color: TYPE_COLORS[0] },
+  { name: '监控杆', value: 214, color: TYPE_COLORS[1] },
+  { name: '广播音柱', value: 96, color: TYPE_COLORS[2] },
+  { name: '环境传感器', value: 58, color: TYPE_COLORS[3] }
+];
+
+const ALARMS = [
+  { id: 1, name: '灯杆离线超阈值', level: 3, deviceId: 10231, processStatus: false },
+  { id: 2, name: '电压异常波动', level: 2, deviceId: 10087, processStatus: false },
+  { id: 3, name: '亮灯率低于阈值', level: 1, deviceId: 10456, processStatus: true },
+  { id: 4, name: '通信超时', level: 2, deviceId: 10192, processStatus: false },
+  { id: 5, name: '功率突增告警', level: 3, deviceId: 10078, processStatus: true }
+];
+
+const TREND_HOURS = Array.from({ length: 12 }, (_, i) => {
+  const h = (i * 2).toString().padStart(2, '0');
+  return `${h}:00`;
+});
+const TREND_POINTS = TREND_HOURS.map((hour, i) => ({
+  hour,
+  onlineRate: Math.round(88 + Math.sin(i / 2) * 6 + (i % 3)),
+  lightRate: Math.round(60 + Math.cos(i / 3) * 20 + (i % 2 ? 4 : -4))
+}));
+
+const KPI = { total: 854, online: 812, offline: 42, lightOn: 536, onlineRate: 95.1, lightRate: 62.8, mappedTotal: 854 };
+
+/* 地图点位以设计画布内的相对百分比坐标定位，模拟真实地图分布 */
+function genMarkers() {
+  const statuses = ['online', 'online', 'online', 'online', 'offline', 'alarm', 'inactive'];
+  const markers = [];
+  let seed = 42;
+  const rand = () => {
+    seed = (seed * 9301 + 49297) % 233280;
+    return seed / 233280;
+  };
+  for (let i = 0; i < 90; i++) {
+    const group = GROUPS[Math.floor(rand() * GROUPS.length)];
+    const product = PRODUCTS[Math.floor(rand() * PRODUCTS.length)];
+    markers.push({
+      id: i + 1,
+      deviceId: 10000 + i,
+      name: `${group.name}-${String(i + 1).padStart(3, '0')}号灯杆`,
+      status: statuses[Math.floor(rand() * statuses.length)],
+      groupIds: [group.id],
+      groupName: group.name,
+      productId: product.id,
+      productName: product.name,
+      left: 8 + rand() * 78,
+      top: 14 + rand() * 68,
+      switchOn: rand() > 0.35,
+      brightness: Math.round(40 + rand() * 60),
+      power: Math.round(80 + rand() * 60),
+      voltage: Math.round((215 + rand() * 10) * 10) / 10
+    });
+  }
+  return markers;
+}
+const MARKERS = genMarkers();
+
+/* ---------------- 数字滚动动效（对应 useNumberTicker） ---------------- */
+function useNumberTicker(getValue, decimals = 0) {
+  const display = ref(0);
+  let raf = null;
+  const animate = (from, to) => {
+    const duration = 600;
+    const start = performance.now();
+    if (raf) cancelAnimationFrame(raf);
+    const step = (now) => {
+      const p = Math.min(1, (now - start) / duration);
+      const eased = 1 - Math.pow(1 - p, 3);
+      const val = from + (to - from) * eased;
+      display.value = decimals ? Math.round(val * 10 ** decimals) / 10 ** decimals : Math.round(val);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+  };
+  animate(0, getValue());
+  return { display, animate };
+}
+
+const App = {
+  setup() {
+    const scale = ref(1);
+    const nowText = ref('');
+    const isFullscreen = ref(false);
+    const selectedGroupIds = ref([]);
+    const selectedProductIds = ref([]);
+    let clockTimer = null;
+
+    const updateScale = () => {
+      const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      scale.value = Math.max(s, 0.35);
+    };
+
+    const updateClock = () => {
+      const d = new Date();
+      const pad = (n) => String(n).padStart(2, '0');
+      nowText.value = `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+    };
+
+    const toggleFullscreen = async () => {
+      try {
+        if (!document.fullscreenElement) {
+          await document.documentElement.requestFullscreen();
+          isFullscreen.value = true;
+        } else {
+          await document.exitFullscreen();
+          isFullscreen.value = false;
+        }
+      } catch (e) {
+        ElementPlus.ElMessage.warning('当前浏览器不支持全屏');
+      }
+    };
+    const onFullscreenChange = () => { isFullscreen.value = !!document.fullscreenElement; };
+
+    const goAdmin = () => { window.location.href = 'index.html'; };
+
+    /* ---- 筛选后的点位 / KPI / 摘要 ---- */
+    const filteredMarkers = computed(() => {
+      return MARKERS.filter((m) => {
+        const groupOk = !selectedGroupIds.value.length || m.groupIds.some((g) => selectedGroupIds.value.includes(g));
+        const productOk = !selectedProductIds.value.length || selectedProductIds.value.includes(m.productId);
+        return groupOk && productOk;
+      });
+    });
+
+    const filterSummary = computed(() => {
+      const list = filteredMarkers.value;
+      const online = list.filter((m) => m.status === 'online').length;
+      const lightOn = list.filter((m) => m.switchOn).length;
+      return {
+        deviceCount: list.length,
+        onlineCount: online,
+        onlineRate: list.length ? Math.round((online / list.length) * 1000) / 10 : 0,
+        lightOnCount: lightOn,
+        groupLabel: selectedGroupIds.value.length
+          ? GROUPS.filter((g) => selectedGroupIds.value.includes(g.id)).map((g) => g.name).join('、')
+          : '全部分组',
+        typeLabel: selectedProductIds.value.length
+          ? PRODUCTS.filter((p) => selectedProductIds.value.includes(p.id)).map((p) => p.name).join('、')
+          : '全部类型'
+      };
+    });
+
+    const elecSummary = computed(() => {
+      const list = filteredMarkers.value;
+      if (!list.length) return { avgPower: null, avgBrightness: null, avgVoltage: null, sampleCount: 0 };
+      const sum = (key) => list.reduce((acc, m) => acc + m[key], 0);
+      return {
+        avgPower: Math.round((sum('power') / list.length) * 10) / 10,
+        avgBrightness: Math.round((sum('brightness') / list.length) * 10) / 10,
+        avgVoltage: Math.round((sum('voltage') / list.length) * 10) / 10,
+        sampleCount: list.length
+      };
+    });
+
+    /* ---- KPI 数字滚动 ---- */
+    const kpiTickers = {
+      total: useNumberTicker(() => KPI.total),
+      online: useNumberTicker(() => KPI.online),
+      offline: useNumberTicker(() => KPI.offline),
+      lightOn: useNumberTicker(() => KPI.lightOn),
+      onlineRate: useNumberTicker(() => KPI.onlineRate, 1),
+      lightRate: useNumberTicker(() => KPI.lightRate, 1)
+    };
+
+    const summaryTickers = reactive({
+      deviceCount: useNumberTicker(() => filterSummary.value.deviceCount),
+      onlineCount: useNumberTicker(() => filterSummary.value.onlineCount),
+      onlineRate: useNumberTicker(() => filterSummary.value.onlineRate, 1),
+      lightOnCount: useNumberTicker(() => filterSummary.value.lightOnCount)
+    });
+
+    watch(filterSummary, (val) => {
+      summaryTickers.deviceCount.animate(summaryTickers.deviceCount.display.value, val.deviceCount);
+      summaryTickers.onlineCount.animate(summaryTickers.onlineCount.display.value, val.onlineCount);
+      summaryTickers.onlineRate.animate(summaryTickers.onlineRate.display.value, val.onlineRate);
+      summaryTickers.lightOnCount.animate(summaryTickers.lightOnCount.display.value, val.lightOnCount);
+    });
+
+    /* ---- 设备类型分布条形图（简化为原生 DOM 横条，避免额外依赖体积） ---- */
+    const typeDistMax = Math.max(...TYPE_DIST.map((i) => i.value));
+
+    /* ---- ECharts：趋势图 ---- */
+    let trendChart = null;
+    const trendRef = ref(null);
+    const renderTrendChart = () => {
+      if (!trendRef.value) return;
+      trendChart = trendChart || echarts.init(trendRef.value);
+      trendChart.setOption({
+        tooltip: {
+          trigger: 'axis',
+          backgroundColor: 'rgba(8, 28, 48, 0.92)',
+          borderColor: 'rgba(0, 200, 255, 0.35)',
+          textStyle: { color: '#d6eefc', fontSize: 12 }
+        },
+        legend: {
+          data: ['在线率', '亮灯率'],
+          right: 8,
+          top: 0,
+          itemWidth: 12,
+          itemHeight: 8,
+          textStyle: { fontSize: 12, color: 'rgba(160, 200, 230, 0.65)' }
+        },
+        grid: { left: 44, right: 20, top: 36, bottom: 28 },
+        xAxis: {
+          type: 'category',
+          boundaryGap: false,
+          data: TREND_POINTS.map((p) => p.hour),
+          axisLabel: { fontSize: 11, color: 'rgba(160, 200, 230, 0.65)' },
+          axisLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
+        },
+        yAxis: {
+          type: 'value',
+          min: 0,
+          max: 100,
+          axisLabel: { formatter: '{value}%', fontSize: 11, color: 'rgba(160, 200, 230, 0.65)' },
+          splitLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
+        },
+        series: [
+          {
+            name: '在线率',
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            data: TREND_POINTS.map((p) => p.onlineRate),
+            lineStyle: { width: 2, color: '#13c2c2' },
+            areaStyle: { color: 'rgba(19, 194, 194, 0.18)' }
+          },
+          {
+            name: '亮灯率',
+            type: 'line',
+            smooth: true,
+            symbol: 'none',
+            data: TREND_POINTS.map((p) => p.lightRate),
+            lineStyle: { width: 2, color: '#faad14' },
+            areaStyle: { color: 'rgba(250, 173, 20, 0.14)' }
+          }
+        ]
+      });
+    };
+
+    const applyFilter = async () => {
+      if (!filteredMarkers.value.length) {
+        ElementPlus.ElMessage.warning('当前筛选条件下没有可展示的设备点位');
+        return;
+      }
+      ElementPlus.ElMessage.success(`已定位到 ${filteredMarkers.value.length} 个设备`);
+    };
+
+    const resetFilter = () => {
+      selectedGroupIds.value = [];
+      selectedProductIds.value = [];
+      ElementPlus.ElMessage.info('已重置筛选条件');
+    };
+
+    const markerColor = (status) => ({
+      online: '#3dd68c',
+      offline: '#8a9bb0',
+      alarm: '#ff5a6a',
+      inactive: '#5a6a7a'
+    }[status]);
+
+    const onResize = () => {
+      updateScale();
+      trendChart && trendChart.resize();
+    };
+
+    onMounted(async () => {
+      updateScale();
+      updateClock();
+      clockTimer = setInterval(updateClock, 1000);
+      window.addEventListener('resize', onResize);
+      document.addEventListener('fullscreenchange', onFullscreenChange);
+      await nextTick();
+      renderTrendChart();
+    });
+
+    onBeforeUnmount(() => {
+      if (clockTimer) clearInterval(clockTimer);
+      window.removeEventListener('resize', onResize);
+      document.removeEventListener('fullscreenchange', onFullscreenChange);
+      trendChart && trendChart.dispose();
+    });
+
+    return {
+      scale, nowText, isFullscreen, toggleFullscreen, goAdmin,
+      GROUPS, PRODUCTS, TYPE_DIST, typeDistMax, ALARMS,
+      selectedGroupIds, selectedProductIds,
+      filteredMarkers, filterSummary, elecSummary,
+      kpiTickers, summaryTickers,
+      applyFilter, resetFilter, markerColor,
+      trendRef, KPI
+    };
+  },
+  template: `
+  <div class="bs-viewport">
+    <div class="big-screen" :style="{ transform: 'scale(' + scale + ')' }">
+
+      <!-- 地图底层（静态示意图，无需外部地图 SDK / Key） -->
+      <div class="bs-map">
+        <div class="bs-map-grid"></div>
+        <div class="bs-map-glow"></div>
+        <div class="bs-map-ring" v-for="r in [120,220,320]" :key="r" :style="{ width: r+'px', height: r+'px', animationDelay: (r/160)+'s' }"></div>
+        <div
+          v-for="m in filteredMarkers" :key="m.id"
+          class="bs-marker" :class="'bs-marker--' + m.status"
+          :style="{ left: m.left + '%', top: m.top + '%' }"
+          :title="m.name"
+        ></div>
+      </div>
+
+      <!-- 顶栏 -->
+      <header class="bs-header">
+        <div class="bs-header__time">{{ nowText }}</div>
+        <div class="bs-header__title">智慧灯杆运营大屏</div>
+        <div class="bs-header__actions">
+          <button type="button" class="bs-action-btn" @click="toggleFullscreen">{{ isFullscreen ? '退出全屏' : '全屏' }}</button>
+          <button type="button" class="bs-action-btn" @click="goAdmin">管理系统</button>
+        </div>
+      </header>
+
+      <!-- 图例 -->
+      <div class="bs-legend">
+        <span class="bs-legend__item"><i class="bs-dot bs-dot--online"></i>在线</span>
+        <span class="bs-legend__item"><i class="bs-dot bs-dot--offline"></i>离线</span>
+        <span class="bs-legend__item"><i class="bs-dot bs-dot--alarm"></i>告警</span>
+        <span class="bs-legend__item"><i class="bs-dot bs-dot--inactive"></i>未激活</span>
+      </div>
+
+      <!-- 左侧面板 -->
+      <aside class="bs-side bs-side--left">
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>灯杆运行总览</span></div>
+          <div class="bs-panel__body">
+            <div class="kpi-grid">
+              <div class="kpi-item"><div class="kpi-label">灯杆总数（含坐标 {{ KPI.mappedTotal }}）</div><div class="kpi-value">{{ kpiTickers.total.display.value }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">在线</div><div class="kpi-value is-green">{{ kpiTickers.online.display.value }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">离线</div><div class="kpi-value is-muted">{{ kpiTickers.offline.display.value }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">亮灯数</div><div class="kpi-value is-orange">{{ kpiTickers.lightOn.display.value }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">在线率</div><div class="kpi-value is-cyan">{{ kpiTickers.onlineRate.display.value }}%</div></div>
+              <div class="kpi-item"><div class="kpi-label">亮灯率</div><div class="kpi-value is-orange">{{ kpiTickers.lightRate.display.value }}%</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>设备类型分布</span></div>
+          <div class="bs-panel__body">
+            <div v-if="!TYPE_DIST.length" class="empty">暂无类型数据</div>
+            <template v-else>
+              <div class="type-bar-row" v-for="t in TYPE_DIST" :key="t.name">
+                <span class="type-bar-name">{{ t.name }}</span>
+                <span class="type-bar-track"><span class="type-bar-fill" :style="{ width: (t.value/typeDistMax*100)+'%', background: t.color }"></span></span>
+                <span class="type-bar-value">{{ t.value }}</span>
+              </div>
+            </template>
+          </div>
+        </div>
+
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>实时告警</span></div>
+          <div class="bs-panel__body">
+            <div v-if="!ALARMS.length" class="empty">暂无告警</div>
+            <ul v-else class="alarm-list">
+              <li v-for="item in ALARMS" :key="item.id" class="alarm-item">
+                <span class="alarm-level" :class="'lv-'+item.level">L{{ item.level }}</span>
+                <div class="alarm-main">
+                  <div class="alarm-name">{{ item.name }}</div>
+                  <div class="alarm-meta">
+                    <span>设备 #{{ item.deviceId ?? '--' }}</span>
+                    <span>{{ item.processStatus ? '已处理' : '待处理' }}</span>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 右侧面板 -->
+      <aside class="bs-side bs-side--right">
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>筛选条件</span></div>
+          <div class="bs-panel__body">
+            <div class="filter-form">
+              <div class="filter-row">
+                <label>设备分组</label>
+                <el-select v-model="selectedGroupIds" multiple collapse-tags collapse-tags-tooltip clearable filterable placeholder="全部分组" class="filter-select">
+                  <el-option v-for="g in GROUPS" :key="g.id" :label="g.name" :value="g.id" />
+                </el-select>
+              </div>
+              <div class="filter-row">
+                <label>设备类型</label>
+                <el-select v-model="selectedProductIds" multiple collapse-tags collapse-tags-tooltip clearable filterable placeholder="全部类型" class="filter-select">
+                  <el-option v-for="p in PRODUCTS" :key="p.id" :label="p.name" :value="p.id" />
+                </el-select>
+              </div>
+              <div class="filter-actions">
+                <button type="button" class="bs-action-btn" @click="applyFilter">应用筛选</button>
+                <button type="button" class="bs-action-btn" @click="resetFilter">重置</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>当前筛选摘要</span></div>
+          <div class="bs-panel__body">
+            <div class="summary">
+              <div class="summary-row"><span class="label">分组</span><span class="value">{{ filterSummary.groupLabel }}</span></div>
+              <div class="summary-row"><span class="label">类型</span><span class="value">{{ filterSummary.typeLabel }}</span></div>
+              <div class="summary-metrics">
+                <div class="metric"><div class="metric-val">{{ summaryTickers.deviceCount.display.value }}</div><div class="metric-label">设备数</div></div>
+                <div class="metric"><div class="metric-val is-green">{{ summaryTickers.onlineCount.display.value }}</div><div class="metric-label">在线</div></div>
+                <div class="metric"><div class="metric-val is-cyan">{{ summaryTickers.onlineRate.display.value }}%</div><div class="metric-label">在线率</div></div>
+                <div class="metric"><div class="metric-val is-orange">{{ summaryTickers.lightOnCount.display.value }}</div><div class="metric-label">亮灯</div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>电气运行摘要</span></div>
+          <div class="bs-panel__body">
+            <div class="elec-grid">
+              <div class="elec-item"><div class="elec-label">平均功率</div><div class="elec-value">{{ elecSummary.avgPower ?? '--' }}<span class="unit">W</span></div></div>
+              <div class="elec-item"><div class="elec-label">平均亮度</div><div class="elec-value">{{ elecSummary.avgBrightness ?? '--' }}<span class="unit">%</span></div></div>
+              <div class="elec-item"><div class="elec-label">平均电压</div><div class="elec-value">{{ elecSummary.avgVoltage ?? '--' }}<span class="unit">V</span></div></div>
+              <div class="elec-item"><div class="elec-label">样本数</div><div class="elec-value">{{ elecSummary.sampleCount }}</div></div>
+            </div>
+            <p class="elec-hint">基于当前筛选范围内有上报值的灯杆聚合</p>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 底部趋势 -->
+      <div class="bs-bottom">
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header">
+            <span>运行趋势（在线率 / 亮灯率）</span>
+            <span class="hint">基于当前会话真实采样，非历史统计；每 60s 采一个点</span>
+          </div>
+          <div class="bs-panel__body" style="display:flex;flex-direction:column;padding-top:8px;">
+            <div ref="trendRef" class="echart" style="height:150px;"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  `
+};
+
+const app = createApp(App);
+app.use(ElementPlus);
+app.mount('#app');
+</script>
+</body>
+</html>
