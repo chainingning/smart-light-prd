@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css" />
   <style>
     :root {
       /* ----- brand & status ----- */
@@ -560,6 +561,7 @@
             <el-select v-model="stForm.timezone" placeholder="请选择" style="width:100%">
               <el-option v-for="tz in timezoneOptions" :key="tz.value" :label="tz.label" :value="tz.value"></el-option>
             </el-select>
+            <div style="margin-top:6px"><el-button link type="primary" size="small" :icon="MapLocation" @click="toggleMapPicker(stForm)">地图选点，自动判断时区</el-button></div>
           </el-form-item>
           <el-form-item label="备注"><el-input v-model="stForm.remark" type="textarea" :rows="2" placeholder="请输入备注"></el-input></el-form-item>
         </el-form>
@@ -648,6 +650,7 @@
             <el-select v-model="stEditForm.timezone" placeholder="请选择" style="width:100%">
               <el-option v-for="tz in timezoneOptions" :key="tz.value" :label="tz.label" :value="tz.value"></el-option>
             </el-select>
+            <div style="margin-top:6px"><el-button link type="primary" size="small" :icon="MapLocation" @click="toggleMapPicker(stEditForm)">地图选点，自动判断时区</el-button></div>
           </el-form-item>
           <el-form-item label="备注"><el-input v-model="stEditForm.remark" type="textarea" :rows="2" placeholder="请输入备注"></el-input></el-form-item>
         </el-form>
@@ -874,11 +877,26 @@
       <el-button type="primary" @click="saveCmd">确 定</el-button>
     </template>
   </el-dialog>
+  <!-- ============ 地图选点时区 ============ -->
+  <el-dialog v-model="mapPickerVisible" title="地图选点 - 自动判断时区" width="680px" :close-on-click-modal="false" destroy-on-close @opened="onMapDialogOpened">
+    <div style="display:flex; flex-direction:column; gap:12px">
+      <div ref="mapContainer" style="width:100%; height:360px; border-radius:var(--r-md); border:1px solid var(--line);"></div>
+      <div style="display:flex; align-items:center; gap:12px; font-size:var(--fs-sm); color:var(--ink-2)">
+        <span>点击地图任意位置标点，系统自动根据经纬度判断时区。</span>
+        <el-tag v-if="mapDetectedTz" size="small" type="success" effect="dark">检测到时区：{{ timezoneOptions.find(t=>t.value===mapDetectedTz)?.label || mapDetectedTz }}</el-tag>
+      </div>
+    </div>
+    <template #footer>
+      <el-button @click="mapPickerVisible = false">取 消</el-button>
+      <el-button type="primary" :disabled="!mapDetectedTz" @click="applyDetectedTz">应用该时区</el-button>
+    </template>
+  </el-dialog>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 /* ====================== 数据 ====================== */
 const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
@@ -1154,6 +1172,49 @@ const app = createApp({
       if (cmdIndex.value === -1) cmdActionsHost.value.actions.push(item); else cmdActionsHost.value.actions.splice(cmdIndex.value, 1, item);
       cmdDialog.value = false;
     };
+    /* ===== 地图选点时区 ===== */
+    const mapPickerVisible = ref(false);
+    const mapContainer = ref(null);
+    const mapDetectedTz = ref('');
+    const mapPickerHost = ref(null);
+    let mapInstance = null;
+    let mapMarker = null;
+    const detectTimezoneFromCoords = (lng, lat) => {
+      // 基于矩形包围盒的时区检测（简化版）
+      if (lng >= 73 && lng <= 135 && lat >= 18 && lat <= 54) return 'Asia/Shanghai';
+      if (lng >= 129 && lng <= 146 && lat >= 30 && lat <= 46) return 'Asia/Tokyo';
+      if (lng >= 68 && lng <= 97 && lat >= 6 && lat <= 37) return 'Asia/Kolkata';
+      if (lng >= -11 && lng <= 2 && lat >= 49 && lat <= 61) return 'Europe/London';
+      if (lng >= -125 && lng <= -114 && lat >= 32 && lat <= 49) return 'America/Los_Angeles';
+      if (lng >= -81 && lng <= -66 && lat >= 24 && lat <= 47) return 'America/New_York';
+      const offset = Math.round(lng / 15);
+      const tzMap = { 8: 'Asia/Shanghai', 0: 'Europe/London', 5: 'Asia/Kolkata', 6: 'Asia/Kolkata', 9: 'Asia/Tokyo', -8: 'America/Los_Angeles', -7: 'America/Los_Angeles', -5: 'America/New_York', -4: 'America/New_York' };
+      return tzMap[offset] || 'Asia/Shanghai';
+    };
+    const toggleMapPicker = (host) => {
+      mapPickerHost.value = host;
+      mapDetectedTz.value = '';
+      mapPickerVisible.value = true;
+    };
+    const onMapDialogOpened = () => {
+      if (!mapContainer.value) return;
+      if (mapInstance) { mapInstance.remove(); mapInstance = null; }
+      mapInstance = L.map(mapContainer.value).setView([31.2304, 121.4737], 4);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapInstance);
+      if (mapMarker) { mapMarker.remove(); mapMarker = null; }
+      mapInstance.on('click', (e) => {
+        const { lat, lng } = e.latlng;
+        if (mapMarker) mapMarker.setLatLng([lat, lng]); else mapMarker = L.marker([lat, lng]).addTo(mapInstance);
+        mapDetectedTz.value = detectTimezoneFromCoords(lng, lat);
+      });
+    };
+    const applyDetectedTz = () => {
+      if (mapPickerHost.value && mapDetectedTz.value) {
+        mapPickerHost.value.timezone = mapDetectedTz.value;
+        ElementPlus.ElMessage.success('时区已更新');
+      }
+      mapPickerVisible.value = false;
+    };
     const formatLightStart = (a) => {
       const off = a.startOffset || 0;
       const offText = off ? `${off > 0 ? '+' : ''}${off}分钟` : '';
@@ -1177,7 +1238,8 @@ const app = createApp({
       stAddProductFilter, stAddGroupFilter, stAddPoleSearch, stAddSelectedIds, filteredAddPoles, toggleAddPole,
       strategyEditDialog, stEditForm, stEditProductFilter, stEditGroupFilter, stEditPoleSearch, stEditSelectedIds, filteredEditPoles, toggleEditPole, onEditDeviceChange, openEditStrategy, saveStrategyEdit,
       cmdDialog, cmd, openCmd, editAction, saveCmd, pad2, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
-      Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, CirclePlus: ElementPlusIconsVue?.CirclePlus,
+      mapPickerVisible, mapContainer, mapDetectedTz, toggleMapPicker, onMapDialogOpened, applyDetectedTz,
+      Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, CirclePlus: ElementPlusIconsVue?.CirclePlus, MapLocation: ElementPlusIconsVue?.MapLocation,
     };
   }
 });
