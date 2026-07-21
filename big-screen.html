@@ -88,35 +88,16 @@
     0% { opacity: .8; }
     100% { opacity: 0; }
   }
-  .bs-marker {
+  .bs-lamp-marker {
     position: absolute;
-    width: 10px;
-    height: 10px;
-    margin: -5px 0 0 -5px;
-    border-radius: 50%;
+    width: 20px;
+    height: 30px;
+    transform: translate(-50%, -100%);
     cursor: pointer;
-    box-shadow: 0 0 6px 2px currentColor;
   }
-  .bs-marker::after {
-    content: '';
-    position: absolute;
-    inset: -6px;
-    border-radius: 50%;
-    border: 1px solid currentColor;
-    opacity: 0.5;
-    animation: bs-marker-pulse 2.4s ease-out infinite;
-  }
-  .bs-marker--online { background: var(--bs-green); color: var(--bs-green); }
-  .bs-marker--offline { background: var(--bs-offline); color: var(--bs-offline); }
-  .bs-marker--alarm { background: var(--bs-red); color: var(--bs-red); animation: bs-marker-blink 1s step-start infinite; }
-  .bs-marker--inactive { background: var(--bs-inactive); color: var(--bs-inactive); }
-  @keyframes bs-marker-pulse {
-    0% { transform: scale(0.6); opacity: 0.7; }
-    100% { transform: scale(1.8); opacity: 0; }
-  }
-  @keyframes bs-marker-blink {
-    50% { opacity: 0.35; }
-  }
+  .bs-lamp-marker svg { display: block; width: 100%; height: 100%; overflow: visible; }
+  .bs-lamp-bulb--on { filter: drop-shadow(0 0 5px rgba(250, 210, 80, 0.9)); }
+  .bs-lamp-bulb--off { opacity: 0.85; }
 
   /* ---------- 顶栏 ---------- */
   .bs-header {
@@ -185,11 +166,7 @@
     backdrop-filter: blur(4px);
   }
   .bs-legend__item { display: flex; gap: 6px; align-items: center; }
-  .bs-dot { width: 8px; height: 8px; border-radius: 50%; }
-  .bs-dot--online { background: var(--bs-green); }
-  .bs-dot--offline { background: var(--bs-offline); }
-  .bs-dot--alarm { background: var(--bs-red); }
-  .bs-dot--inactive { background: var(--bs-inactive); }
+  .bs-legend__lamp { width: 12px; height: 17px; }
 
   /* ---------- 侧栏 & 底部 ---------- */
   .bs-side {
@@ -219,10 +196,12 @@
     bottom: 16px;
     left: 392px;
     z-index: 15;
+    display: flex;
+    gap: 14px;
     height: 210px;
     pointer-events: none;
   }
-  .bs-bottom > * { height: 100%; pointer-events: auto; }
+  .bs-bottom > * { flex: 1; height: 100%; min-width: 0; pointer-events: auto; }
 
   /* ---------- 面板通用 ---------- */
   .bs-panel {
@@ -292,14 +271,6 @@
   .kpi-value.is-cyan { color: var(--bs-cyan); }
   .kpi-value.is-muted { color: var(--bs-offline); }
 
-  /* ---------- 设备类型分布 ---------- */
-  .type-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-  .type-bar-row:last-child { margin-bottom: 0; }
-  .type-bar-name { flex: 0 0 72px; font-size: 12px; color: var(--bs-muted); text-align: right; }
-  .type-bar-track { flex: 1; height: 12px; background: rgba(0, 160, 220, 0.08); border-radius: 2px; overflow: hidden; }
-  .type-bar-fill { height: 100%; border-radius: 0 4px 4px 0; }
-  .type-bar-value { flex: 0 0 30px; font-size: 12px; color: #e8f7ff; }
-
   /* ---------- 告警 ---------- */
   .empty { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 80px; font-size: 13px; color: var(--bs-muted); }
   .alarm-list { display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; list-style: none; }
@@ -332,13 +303,19 @@
   .metric-val.is-orange { color: var(--bs-orange); }
   .metric-label { margin-top: 4px; font-size: 11px; color: var(--bs-muted); }
 
-  /* ---------- 电气摘要 ---------- */
+  /* ---------- 能耗类数值网格（节能数据统计 / 用电计划）---------- */
   .elec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .elec-item { padding: 12px 10px; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
   .elec-label { margin-bottom: 6px; font-size: 12px; color: var(--bs-muted); }
   .elec-value { font-size: 22px; font-weight: 700; color: var(--bs-cyan); }
   .elec-value .unit { margin-left: 2px; font-size: 12px; font-weight: 400; color: var(--bs-muted); }
-  .elec-hint { margin: 10px 0 0; font-size: 11px; color: rgba(160, 200, 230, 0.55); }
+
+  /* ---------- 用电计划 ---------- */
+  .plan-policy { display: flex; flex-direction: column; gap: 6px; padding: 10px; margin-bottom: 12px; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
+  .plan-row { display: flex; gap: 8px; font-size: 12px; }
+  .plan-row .label { flex-shrink: 0; width: 64px; color: var(--bs-muted); }
+  .plan-row .value { flex: 1; color: #e8f7ff; }
+  .plan-row .value.is-status { color: var(--bs-green); font-weight: 600; }
 
   .echart { width: 100%; }
 </style>
@@ -369,15 +346,6 @@ const PRODUCTS = [
   { id: 4, name: '环境传感器' }
 ];
 
-const TYPE_COLORS = ['#00d4ff', '#3dd68c', '#faad14', '#a78bfa', '#ff5a6a', '#38bdf8', '#f472b6', '#34d399'];
-
-const TYPE_DIST = [
-  { name: '智慧路灯', value: 486, color: TYPE_COLORS[0] },
-  { name: '监控杆', value: 214, color: TYPE_COLORS[1] },
-  { name: '广播音柱', value: 96, color: TYPE_COLORS[2] },
-  { name: '环境传感器', value: 58, color: TYPE_COLORS[3] }
-];
-
 const ALARMS = [
   { id: 1, name: '灯杆离线超阈值', level: 3, deviceId: 10231, processStatus: false },
   { id: 2, name: '电压异常波动', level: 2, deviceId: 10087, processStatus: false },
@@ -386,21 +354,33 @@ const ALARMS = [
   { id: 5, name: '功率突增告警', level: 3, deviceId: 10078, processStatus: true }
 ];
 
-const TREND_HOURS = Array.from({ length: 12 }, (_, i) => {
-  const h = (i * 2).toString().padStart(2, '0');
-  return `${h}:00`;
-});
-const TREND_POINTS = TREND_HOURS.map((hour, i) => ({
-  hour,
-  onlineRate: Math.round(88 + Math.sin(i / 2) * 6 + (i % 3)),
-  lightRate: Math.round(60 + Math.cos(i / 3) * 20 + (i % 2 ? 4 : -4))
-}));
-
 const KPI = { total: 854, online: 812, offline: 42, lightOn: 536, onlineRate: 95.1, lightRate: 62.8, mappedTotal: 854 };
+
+/* 节能数据统计 */
+const ENERGY_STATS = { monthSaving: 1862, savingRate: 18.6, totalSaving: 21540, co2Reduction: 12500 };
+
+/* 用电计划：当前生效策略 + 计划/实际用电量对比 */
+const POWER_PLAN = {
+  strategyName: '冬季经济模式',
+  timeRange: '18:30 - 06:00（分时调光）',
+  status: '执行中',
+  planKwh: 9600,
+  actualKwh: 8720,
+  completionRate: 90.8
+};
+
+/* 年度能耗趋势（近 12 个月，单位 kWh） */
+const YEARLY_ENERGY = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+  .map((month, i) => ({ month, kwh: Math.round(7200 + Math.sin(i / 2) * 1400 + (i % 4) * 200) }));
+
+/* 月度能耗趋势（本月每日，单位 kWh） */
+const MONTHLY_ENERGY = Array.from({ length: 30 }, (_, i) => ({
+  day: `${i + 1}日`,
+  kwh: Math.round(260 + Math.sin(i / 3) * 60 + (i % 5 === 0 ? 30 : 0))
+}));
 
 /* 地图点位以设计画布内的相对百分比坐标定位，模拟真实地图分布 */
 function genMarkers() {
-  const statuses = ['online', 'online', 'online', 'online', 'offline', 'alarm', 'inactive'];
   const markers = [];
   let seed = 42;
   const rand = () => {
@@ -414,17 +394,15 @@ function genMarkers() {
       id: i + 1,
       deviceId: 10000 + i,
       name: `${group.name}-${String(i + 1).padStart(3, '0')}号灯杆`,
-      status: statuses[Math.floor(rand() * statuses.length)],
+      /* 设备通信在线状态，用于 KPI/筛选摘要统计，与地图图标的开关灯状态是两回事 */
+      online: rand() > 0.08,
       groupIds: [group.id],
       groupName: group.name,
       productId: product.id,
       productName: product.name,
       left: 8 + rand() * 78,
       top: 14 + rand() * 68,
-      switchOn: rand() > 0.35,
-      brightness: Math.round(40 + rand() * 60),
-      power: Math.round(80 + rand() * 60),
-      voltage: Math.round((215 + rand() * 10) * 10) / 10
+      switchOn: rand() > 0.35
     });
   }
   return markers;
@@ -500,7 +478,7 @@ const App = {
 
     const filterSummary = computed(() => {
       const list = filteredMarkers.value;
-      const online = list.filter((m) => m.status === 'online').length;
+      const online = list.filter((m) => m.online).length;
       const lightOn = list.filter((m) => m.switchOn).length;
       return {
         deviceCount: list.length,
@@ -513,18 +491,6 @@ const App = {
         typeLabel: selectedProductIds.value.length
           ? PRODUCTS.filter((p) => selectedProductIds.value.includes(p.id)).map((p) => p.name).join('、')
           : '全部类型'
-      };
-    });
-
-    const elecSummary = computed(() => {
-      const list = filteredMarkers.value;
-      if (!list.length) return { avgPower: null, avgBrightness: null, avgVoltage: null, sampleCount: 0 };
-      const sum = (key) => list.reduce((acc, m) => acc + m[key], 0);
-      return {
-        avgPower: Math.round((sum('power') / list.length) * 10) / 10,
-        avgBrightness: Math.round((sum('brightness') / list.length) * 10) / 10,
-        avgVoltage: Math.round((sum('voltage') / list.length) * 10) / 10,
-        sampleCount: list.length
       };
     });
 
@@ -552,66 +518,65 @@ const App = {
       summaryTickers.lightOnCount.animate(summaryTickers.lightOnCount.display.value, val.lightOnCount);
     });
 
-    /* ---- 设备类型分布条形图（简化为原生 DOM 横条，避免额外依赖体积） ---- */
-    const typeDistMax = Math.max(...TYPE_DIST.map((i) => i.value));
+    /* ---- ECharts：年度 / 月度能耗趋势 ---- */
+    let yearlyChart = null;
+    let monthlyChart = null;
+    const yearlyRef = ref(null);
+    const monthlyRef = ref(null);
 
-    /* ---- ECharts：趋势图 ---- */
-    let trendChart = null;
-    const trendRef = ref(null);
-    const renderTrendChart = () => {
-      if (!trendRef.value) return;
-      trendChart = trendChart || echarts.init(trendRef.value);
-      trendChart.setOption({
-        tooltip: {
-          trigger: 'axis',
-          backgroundColor: 'rgba(8, 28, 48, 0.92)',
-          borderColor: 'rgba(0, 200, 255, 0.35)',
-          textStyle: { color: '#d6eefc', fontSize: 12 }
-        },
-        legend: {
-          data: ['在线率', '亮灯率'],
-          right: 8,
-          top: 0,
-          itemWidth: 12,
-          itemHeight: 8,
-          textStyle: { fontSize: 12, color: 'rgba(160, 200, 230, 0.65)' }
-        },
-        grid: { left: 44, right: 20, top: 36, bottom: 28 },
-        xAxis: {
-          type: 'category',
-          boundaryGap: false,
-          data: TREND_POINTS.map((p) => p.hour),
-          axisLabel: { fontSize: 11, color: 'rgba(160, 200, 230, 0.65)' },
-          axisLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
-        },
-        yAxis: {
-          type: 'value',
-          min: 0,
-          max: 100,
-          axisLabel: { formatter: '{value}%', fontSize: 11, color: 'rgba(160, 200, 230, 0.65)' },
-          splitLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
-        },
-        series: [
-          {
-            name: '在线率',
-            type: 'line',
-            smooth: true,
-            symbol: 'none',
-            data: TREND_POINTS.map((p) => p.onlineRate),
-            lineStyle: { width: 2, color: '#13c2c2' },
-            areaStyle: { color: 'rgba(19, 194, 194, 0.18)' }
-          },
-          {
-            name: '亮灯率',
-            type: 'line',
-            smooth: true,
-            symbol: 'none',
-            data: TREND_POINTS.map((p) => p.lightRate),
-            lineStyle: { width: 2, color: '#faad14' },
-            areaStyle: { color: 'rgba(250, 173, 20, 0.14)' }
-          }
-        ]
-      });
+    const energyChartOption = (categories, values, color, areaColor) => ({
+      tooltip: {
+        trigger: 'axis',
+        backgroundColor: 'rgba(8, 28, 48, 0.92)',
+        borderColor: 'rgba(0, 200, 255, 0.35)',
+        textStyle: { color: '#d6eefc', fontSize: 12 },
+        valueFormatter: (v) => `${v} kWh`
+      },
+      grid: { left: 48, right: 16, top: 16, bottom: 28 },
+      xAxis: {
+        type: 'category',
+        boundaryGap: false,
+        data: categories,
+        axisLabel: { fontSize: 11, color: 'rgba(160, 200, 230, 0.65)', interval: Math.ceil(categories.length / 10) - 1 },
+        axisLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
+      },
+      yAxis: {
+        type: 'value',
+        axisLabel: { fontSize: 11, color: 'rgba(160, 200, 230, 0.65)' },
+        splitLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
+      },
+      series: [
+        {
+          type: 'line',
+          smooth: true,
+          symbol: 'none',
+          data: values,
+          lineStyle: { width: 2, color },
+          areaStyle: { color: areaColor }
+        }
+      ]
+    });
+
+    const renderYearlyChart = () => {
+      if (!yearlyRef.value) return;
+      yearlyChart = yearlyChart || echarts.init(yearlyRef.value);
+      yearlyChart.setOption(energyChartOption(
+        YEARLY_ENERGY.map((p) => p.month),
+        YEARLY_ENERGY.map((p) => p.kwh),
+        '#00d4ff',
+        'rgba(0, 212, 255, 0.18)'
+      ));
+    };
+
+    const renderMonthlyChart = () => {
+      if (!monthlyRef.value) return;
+      monthlyChart = monthlyChart || echarts.init(monthlyRef.value);
+      monthlyChart.setOption(energyChartOption(
+        MONTHLY_ENERGY.map((p) => p.day),
+        MONTHLY_ENERGY.map((p) => p.kwh),
+        '#faad14',
+        'rgba(250, 173, 20, 0.16)'
+      ));
     };
 
     const applyFilter = async () => {
@@ -628,16 +593,12 @@ const App = {
       ElementPlus.ElMessage.info('已重置筛选条件');
     };
 
-    const markerColor = (status) => ({
-      online: '#3dd68c',
-      offline: '#8a9bb0',
-      alarm: '#ff5a6a',
-      inactive: '#5a6a7a'
-    }[status]);
+    const lampBulbColor = (m) => (m.switchOn ? '#ffd666' : '#8a95a1');
 
     const onResize = () => {
       updateScale();
-      trendChart && trendChart.resize();
+      yearlyChart && yearlyChart.resize();
+      monthlyChart && monthlyChart.resize();
     };
 
     onMounted(async () => {
@@ -647,24 +608,26 @@ const App = {
       window.addEventListener('resize', onResize);
       document.addEventListener('fullscreenchange', onFullscreenChange);
       await nextTick();
-      renderTrendChart();
+      renderYearlyChart();
+      renderMonthlyChart();
     });
 
     onBeforeUnmount(() => {
       if (clockTimer) clearInterval(clockTimer);
       window.removeEventListener('resize', onResize);
       document.removeEventListener('fullscreenchange', onFullscreenChange);
-      trendChart && trendChart.dispose();
+      yearlyChart && yearlyChart.dispose();
+      monthlyChart && monthlyChart.dispose();
     });
 
     return {
       scale, nowText, isFullscreen, toggleFullscreen, goAdmin,
-      GROUPS, PRODUCTS, TYPE_DIST, typeDistMax, ALARMS,
+      GROUPS, PRODUCTS, ALARMS, ENERGY_STATS, POWER_PLAN,
       selectedGroupIds, selectedProductIds,
-      filteredMarkers, filterSummary, elecSummary,
+      filteredMarkers, filterSummary,
       kpiTickers, summaryTickers,
-      applyFilter, resetFilter, markerColor,
-      trendRef, KPI
+      applyFilter, resetFilter, lampBulbColor,
+      yearlyRef, monthlyRef, KPI
     };
   },
   template: `
@@ -678,10 +641,17 @@ const App = {
         <div class="bs-map-ring" v-for="r in [120,220,320]" :key="r" :style="{ width: r+'px', height: r+'px', animationDelay: (r/160)+'s' }"></div>
         <div
           v-for="m in filteredMarkers" :key="m.id"
-          class="bs-marker" :class="'bs-marker--' + m.status"
+          class="bs-lamp-marker"
           :style="{ left: m.left + '%', top: m.top + '%' }"
           :title="m.name"
-        ></div>
+        >
+          <svg viewBox="0 0 20 28">
+            <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" />
+            <ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
+            <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
+            <circle cx="5" cy="6" r="4" :fill="lampBulbColor(m)" :class="m.switchOn ? 'bs-lamp-bulb--on' : 'bs-lamp-bulb--off'" />
+          </svg>
+        </div>
       </div>
 
       <!-- 顶栏 -->
@@ -696,10 +666,22 @@ const App = {
 
       <!-- 图例 -->
       <div class="bs-legend">
-        <span class="bs-legend__item"><i class="bs-dot bs-dot--online"></i>在线</span>
-        <span class="bs-legend__item"><i class="bs-dot bs-dot--offline"></i>离线</span>
-        <span class="bs-legend__item"><i class="bs-dot bs-dot--alarm"></i>告警</span>
-        <span class="bs-legend__item"><i class="bs-dot bs-dot--inactive"></i>未激活</span>
+        <span class="bs-legend__item">
+          <svg class="bs-legend__lamp" viewBox="0 0 20 28">
+            <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" /><ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
+            <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
+            <circle cx="5" cy="6" r="4" fill="#ffd666" class="bs-lamp-bulb--on" />
+          </svg>
+          开灯
+        </span>
+        <span class="bs-legend__item">
+          <svg class="bs-legend__lamp" viewBox="0 0 20 28">
+            <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" /><ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
+            <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
+            <circle cx="5" cy="6" r="4" fill="#8a95a1" />
+          </svg>
+          关灯
+        </span>
       </div>
 
       <!-- 左侧面板 -->
@@ -723,23 +705,7 @@ const App = {
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>设备类型分布</span></div>
-          <div class="bs-panel__body">
-            <div v-if="!TYPE_DIST.length" class="empty">暂无类型数据</div>
-            <template v-else>
-              <div class="type-bar-row" v-for="t in TYPE_DIST" :key="t.name">
-                <span class="type-bar-name">{{ t.name }}</span>
-                <span class="type-bar-track"><span class="type-bar-fill" :style="{ width: (t.value/typeDistMax*100)+'%', background: t.color }"></span></span>
-                <span class="type-bar-value">{{ t.value }}</span>
-              </div>
-            </template>
-          </div>
-        </div>
-
-        <div class="bs-panel">
-          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
-          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>实时告警</span></div>
+          <div class="bs-panel__header"><span>设备故障报警</span></div>
           <div class="bs-panel__body">
             <div v-if="!ALARMS.length" class="empty">暂无告警</div>
             <ul v-else class="alarm-list">
@@ -754,6 +720,20 @@ const App = {
                 </div>
               </li>
             </ul>
+          </div>
+        </div>
+
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>节能数据统计</span></div>
+          <div class="bs-panel__body">
+            <div class="elec-grid">
+              <div class="elec-item"><div class="elec-label">本月节电量</div><div class="elec-value">{{ ENERGY_STATS.monthSaving }}<span class="unit">kWh</span></div></div>
+              <div class="elec-item"><div class="elec-label">节能率</div><div class="elec-value">{{ ENERGY_STATS.savingRate }}<span class="unit">%</span></div></div>
+              <div class="elec-item"><div class="elec-label">累计节电量</div><div class="elec-value">{{ ENERGY_STATS.totalSaving }}<span class="unit">kWh</span></div></div>
+              <div class="elec-item"><div class="elec-label">CO₂ 减排</div><div class="elec-value">{{ ENERGY_STATS.co2Reduction }}<span class="unit">kg</span></div></div>
+            </div>
           </div>
         </div>
       </aside>
@@ -789,6 +769,24 @@ const App = {
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>用电计划</span></div>
+          <div class="bs-panel__body">
+            <div class="plan-policy">
+              <div class="plan-row"><span class="label">当前策略</span><span class="value">{{ POWER_PLAN.strategyName }}</span></div>
+              <div class="plan-row"><span class="label">计划时段</span><span class="value">{{ POWER_PLAN.timeRange }}</span></div>
+              <div class="plan-row"><span class="label">执行状态</span><span class="value is-status">{{ POWER_PLAN.status }}</span></div>
+            </div>
+            <div class="elec-grid">
+              <div class="elec-item"><div class="elec-label">计划用电量</div><div class="elec-value">{{ POWER_PLAN.planKwh }}<span class="unit">kWh</span></div></div>
+              <div class="elec-item"><div class="elec-label">实际用电量</div><div class="elec-value">{{ POWER_PLAN.actualKwh }}<span class="unit">kWh</span></div></div>
+              <div class="elec-item" style="grid-column: span 2;"><div class="elec-label">完成率</div><div class="elec-value">{{ POWER_PLAN.completionRate }}<span class="unit">%</span></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
           <div class="bs-panel__header"><span>当前筛选摘要</span></div>
           <div class="bs-panel__body">
             <div class="summary">
@@ -803,34 +801,24 @@ const App = {
             </div>
           </div>
         </div>
-
-        <div class="bs-panel">
-          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
-          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>电气运行摘要</span></div>
-          <div class="bs-panel__body">
-            <div class="elec-grid">
-              <div class="elec-item"><div class="elec-label">平均功率</div><div class="elec-value">{{ elecSummary.avgPower ?? '--' }}<span class="unit">W</span></div></div>
-              <div class="elec-item"><div class="elec-label">平均亮度</div><div class="elec-value">{{ elecSummary.avgBrightness ?? '--' }}<span class="unit">%</span></div></div>
-              <div class="elec-item"><div class="elec-label">平均电压</div><div class="elec-value">{{ elecSummary.avgVoltage ?? '--' }}<span class="unit">V</span></div></div>
-              <div class="elec-item"><div class="elec-label">样本数</div><div class="elec-value">{{ elecSummary.sampleCount }}</div></div>
-            </div>
-            <p class="elec-hint">基于当前筛选范围内有上报值的灯杆聚合</p>
-          </div>
-        </div>
       </aside>
 
-      <!-- 底部趋势 -->
+      <!-- 底部能耗趋势 -->
       <div class="bs-bottom">
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header">
-            <span>运行趋势（在线率 / 亮灯率）</span>
-            <span class="hint">基于当前会话真实采样，非历史统计；每 60s 采一个点</span>
-          </div>
+          <div class="bs-panel__header"><span>年度能耗趋势</span></div>
           <div class="bs-panel__body" style="display:flex;flex-direction:column;padding-top:8px;">
-            <div ref="trendRef" class="echart" style="height:150px;"></div>
+            <div ref="yearlyRef" class="echart" style="height:150px;"></div>
+          </div>
+        </div>
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>月度能耗趋势</span></div>
+          <div class="bs-panel__body" style="display:flex;flex-direction:column;padding-top:8px;">
+            <div ref="monthlyRef" class="echart" style="height:150px;"></div>
           </div>
         </div>
       </div>
