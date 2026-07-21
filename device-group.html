@@ -773,7 +773,7 @@
     </div>
     <div class="pick-hint">
       <span>没有需要的策略？</span>
-      <el-link type="primary" class="ph-link" :underline="false" @click="poleStrategyDialogVisible = false; openMenu('策略管理')">去策略管理配置 →</el-link>
+      <!-- <el-link type="primary" class="ph-link" :underline="false" @click="poleStrategyDialogVisible = false; openMenu('策略管理')">去策略管理配置 →</el-link> -->
     </div>
     <template #footer>
       <el-button @click="poleStrategyDialogVisible = false">取消</el-button>
@@ -892,7 +892,7 @@ const { createApp, ref, reactive, computed, watch } = Vue;
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['策略管理','资产分配','策略下发日志'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
@@ -906,7 +906,6 @@ const MENU_HREF = {
   '首页': 'index.html',
   '设备分组': 'device-group.html',
   '设备管理': 'device-management.html',
-  '策略管理': 'strategy.html',
   '灯杆管理': 'pole-management.html',
   '灯控策略': 'light-strategy.html',
   '资产分配': 'asset-assign.html',

@@ -569,7 +569,7 @@ const { createApp, ref, reactive, computed, watch } = Vue;
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['策略管理','资产分配','策略下发日志'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
@@ -583,7 +583,6 @@ const MENU_HREF = {
   '首页': 'index.html',
   '设备分组': 'device-group.html',
   '设备管理': 'device-management.html',
-  '策略管理': 'strategy.html',
   '灯杆管理': 'pole-management.html',
   '灯控策略': 'light-strategy.html',
   '资产分配': 'asset-assign.html',
@@ -656,7 +655,6 @@ const app = createApp({
     const quickLinks = [
       { menu: '设备分组', href: 'device-group.html', desc: '按类型管理分组', icon: 'Folder' },
       { menu: '设备管理', href: 'device-management.html', desc: '查看设备运行状态', icon: 'Cpu' },
-      { menu: '策略管理', href: 'strategy.html', desc: '配置自动化策略', icon: 'SetUp' },
       { menu: '灯杆管理', href: 'pole-management.html', desc: '管理智慧灯杆', icon: 'Sunny' },
     ];
     const openMenu = (m) => { const href = MENU_HREF[m]; if (href) window.location.href = href; };
