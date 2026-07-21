@@ -1188,7 +1188,7 @@ const app = createApp({
       if (lng >= -125 && lng <= -114 && lat >= 32 && lat <= 49) return 'America/Los_Angeles';
       if (lng >= -81 && lng <= -66 && lat >= 24 && lat <= 47) return 'America/New_York';
       const offset = Math.round(lng / 15);
-      const tzMap = { 8: 'Asia/Shanghai', 0: 'Europe/London', 5: 'Asia/Kolkata', 6: 'Asia/Kolkata', 9: 'Asia/Tokyo', -8: 'America/Los_Angeles', -7: 'America/Los_Angeles', -5: 'America/New_York', -4: 'America/New_York' };
+      const tzMap = { 8: 'Asia/Shanghai', 0: 'Europe/London', 5: 'Asia/Kolkata', 6: 'Asia/Kolkata', 9: 'Asia/Tokyo', '-8': 'America/Los_Angeles', '-7': 'America/Los_Angeles', '-5': 'America/New_York', '-4': 'America/New_York' };
       return tzMap[offset] || 'Asia/Shanghai';
     };
     const toggleMapPicker = (host) => {
