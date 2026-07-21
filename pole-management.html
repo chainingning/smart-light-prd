@@ -172,6 +172,9 @@
     }
     .top-actions .ico:hover { color: var(--brand); background: var(--brand-soft); }
     .top-actions .ico .mini { font-size: 12px; opacity: .7; }
+    .top-actions .tenant-switcher { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 8px !important; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+    .top-actions .tenant-switcher:hover { border-color: var(--brand); }
+    .top-actions .tenant-switcher .tenant-name { font-size: 13px; font-weight: 500; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .top-actions .user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 0 8px 0 6px; height: 36px; border-radius: var(--r-md); transition: background .15s; }
     .top-actions .user:hover { background: var(--surface-2); }
     .top-actions .user .av {
@@ -431,6 +434,20 @@
         </div>
         <div class="spacer"></div>
         <div class="top-actions">
+          <el-dropdown trigger="click" @command="switchTenant">
+            <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+              <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+              <span class="tenant-name">{{ currentTenantName }}</span>
+              <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+            </span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+                <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>
+                {{ t.name }}
+                <span style="color:var(--ink-3); font-size:12px; margin-left:6px">配额 {{ SharedData.getTenantQuota(t.id)?.poleTotal || 0 }}灯</span>
+              </el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
           <el-popover v-model:visible="searchPop" trigger="click" :width="280" placement="bottom-end">
             <template #reference><span class="ico"><el-icon><Search></Search></el-icon></span></template>
             <el-input v-model="navQuery" placeholder="搜索菜单…" size="small" clearable :prefix-icon="Search"></el-input>
@@ -840,6 +857,7 @@
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="js/shared-data.js"></script>
 <script>
 /* ====================== 数据 ====================== */
 const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
@@ -887,14 +905,18 @@ const strategiesSeed = [
   { id:10, name:'11', deviceType:'信息发布LED', remark:'', createTime:'2026-03-10 10:47:02', actions:[] },
 ];
 
+const poleProjectMap = { '智慧园区照明项目': 1, '城市道路改造项目': 2, '滨江路景观照明': 3 };
 const poleProjectOptionsSeed = ['智慧园区照明项目','城市道路改造项目','滨江路景观照明'];
 const poleProductOptionsSeed = ['智慧灯杆-标准型','智慧灯杆-经济型','智慧灯杆-旗舰型'];
 const poleLampTypesSeed = ['LED路灯','投光灯','庭院灯','高杆灯'];
 const poleTiltsSeed = ['normal','slight','severe'];
 const polesSeed = [];
 for (let i = 1; i <= 42; i++) {
+  const projectName = poleProjectOptionsSeed[i % poleProjectOptionsSeed.length];
   polesSeed.push({
     id: i,
+    tenantId: 'T1',
+    projectId: poleProjectMap[projectName],
     name: '灯杆-' + String(i).padStart(3, '0'),
     sn: 'LP2026' + String(100000 + i),
     address: '上海市浦东新区示范路' + i + '号',
@@ -926,7 +948,7 @@ const { createApp, ref, reactive, computed, watch } = Vue;
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
@@ -943,7 +965,7 @@ const MENU_HREF = {
   '灯杆管理': 'pole-management.html',
   '灯控策略': 'light-strategy.html',
   '资产分配': 'asset-assign.html',
-  '组织管理': 'organization-management.html',
+  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
 };
 
 function createSharedSetup(activeMenuName) {
@@ -981,9 +1003,25 @@ function createSharedSetup(activeMenuName) {
     if (!href) { e.preventDefault(); placeholder(item); }
     // 有 href 时，放行默认跳转，不 prevent
   };
+  /* ===== 租户切换 ===== */
+  const savedTenant = localStorage.getItem('currentTenantId');
+  const currentTenantId = ref(savedTenant || 'T1');
+  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
+  const currentTenantName = computed(() => {
+    const t = availableTenants.value.find(t => t.id === currentTenantId.value);
+    return t ? t.name : '未知租户';
+  });
+  const switchTenant = (id) => {
+    if (id === currentTenantId.value) return;
+    currentTenantId.value = id;
+    localStorage.setItem('currentTenantId', id);
+    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
+    setTimeout(() => window.location.reload(), 600);
+  };
   return {
     collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
     searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
+    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData,
   };
 }
 
@@ -1145,6 +1183,7 @@ const app = createApp({
       Search: ElementPlusIconsVue?.Search, RefreshRight: ElementPlusIconsVue?.RefreshRight, Plus: ElementPlusIconsVue?.Plus,
       Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, Download: ElementPlusIconsVue?.Download,
       Cpu: ElementPlusIconsVue?.Cpu, Connection: ElementPlusIconsVue?.Connection, Offline: ElementPlusIconsVue?.Offline, UserFilled: ElementPlusIconsVue?.UserFilled,
+      OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
     };
   }
 });

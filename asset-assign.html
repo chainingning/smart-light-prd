@@ -334,6 +334,20 @@
               <div class="empty-cell" v-if="!navMatches.length">未找到匹配项</div>
             </div>
           </div>
+          <el-dropdown trigger="click" @command="switchTenant">
+            <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+              <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+              <span class="tenant-name">{{ currentTenantName }}</span>
+              <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+            </span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+                <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>
+                {{ t.name }}
+                <span style="color:var(--ink-3); font-size:12px; margin-left:6px">配额 {{ SharedData.getTenantQuota(t.id)?.poleTotal || 0 }}灯</span>
+              </el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
           <div class="user-menu">
             <div class="user-menu-avatar">管</div>
           </div>
@@ -507,6 +521,7 @@
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="js/shared-data.js"></script>
   <script>
 const { ref, reactive, computed, createApp } = Vue;
 
@@ -514,7 +529,7 @@ const MENU_DATA = [
   { title: '首页', icon: 'HomeFilled', open: true, items: ['首页'] },
   { title: '设备管理', icon: 'Monitor', open: true, items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny', open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '综合运维', icon: 'SetUp', open: true, items: ['资产分配','策略下发日志'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp', open: true, items: ['资产分配','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '会员中心', icon: 'User', open: false, items: ['会员列表'] },
@@ -528,7 +543,7 @@ const MENU_HREF = {
   '灯杆管理': 'pole-management.html',
   '灯控策略': 'light-strategy.html',
   '资产分配': 'asset-assign.html',
-  '组织管理': 'organization-management.html',
+  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
 };
 const MENU_ICON_MAP = {
   '首页': 'HomeFilled', '产品分类': 'Grid', '产品管理': 'Package', '设备管理': 'Monitor', '设备分组': 'Collection',
@@ -575,6 +590,22 @@ function createSharedSetup(activeMenuName) {
   const getMenuIcon = (name) => {
     const iconName = MENU_ICON_MAP[name];
     return iconName ? window.ElementPlusIconsVue?.[iconName] : window.ElementPlusIconsVue?.CircleDot;
+  };
+
+  /* ===== 租户切换 ===== */
+  const savedTenant = localStorage.getItem('currentTenantId');
+  const currentTenantId = ref(savedTenant || 'T1');
+  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
+  const currentTenantName = computed(() => {
+    const t = availableTenants.value.find(t => t.id === currentTenantId.value);
+    return t ? t.name : '未知租户';
+  });
+  const switchTenant = (id) => {
+    if (id === currentTenantId.value) return;
+    currentTenantId.value = id;
+    localStorage.setItem('currentTenantId', id);
+    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
+    setTimeout(() => window.location.reload(), 600);
   };
   return {
     collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,

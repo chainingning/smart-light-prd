@@ -431,6 +431,21 @@
         </div>
         <div class="spacer"></div>
         <div class="top-actions">
+          <el-dropdown trigger="click" @command="switchTenant">
+            <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+              <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+              <span class="tenant-name">{{ currentTenantName }}</span>
+              <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+            </span>
+            <template #dropdown><el-dropdown-menu>
+              <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+                <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>
+                {{ t.name }}
+                <span style="color:var(--ink-3); font-size:12px; margin-left:6px">配额 {{ SharedData.getTenantQuota(t.id)?.poleTotal || 0 }}灯</span>
+              </el-dropdown-item>
+            </el-dropdown-menu></template>
+          </el-dropdown>
+
           <el-popover v-model:visible="searchPop" trigger="click" :width="280" placement="bottom-end">
             <template #reference><span class="ico"><el-icon><Search></Search></el-icon></span></template>
             <el-input v-model="navQuery" placeholder="搜索菜单…" size="small" clearable :prefix-icon="Search"></el-input>
@@ -808,6 +823,7 @@
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="js/shared-data.js"></script>
 <script>
 /* ====================== 数据 ====================== */
 const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
@@ -823,7 +839,7 @@ const groupsSeed = [
   { id: 9, name: 'UFO',      seq: 116, created: '2026-06-03', owner: 'bsyg', remark: '' },
   { id: 10, name: '金叶',    seq: 115, created: '2026-06-03', owner: 'bsyg', remark: '' },
 ];
-for (let i = 11; i <= 58; i++) groupsSeed.push({ id: i, name: '分组' + i, seq: 100 + (i % 30), created: '2026-05-' + String((i % 28) + 1).padStart(2,'0'), owner: 'bsyg', remark: '' });
+for (let i = 11; i <= 58; i++) groupsSeed.push({ id: i, name: '分组' + i, seq: 100 + (i % 30), created: '2026-05-' + String((i % 28) + 1).padStart(2,'0'), owner: 'bsyg', remark: '', tenantId: 'T1' });
 
 const deviceCodes = ['862041074724346','862041074848699','865743082867622','865743082882522','866522075609640','866522075661187','869978083918950','869978083926847','869978083928090','869978084012712','869978084012803','869978084253662'];
 const devicesSeed = [];
@@ -892,7 +908,7 @@ const { createApp, ref, reactive, computed, watch } = Vue;
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
@@ -909,7 +925,7 @@ const MENU_HREF = {
   '灯杆管理': 'pole-management.html',
   '灯控策略': 'light-strategy.html',
   '资产分配': 'asset-assign.html',
-  '组织管理': 'organization-management.html',
+  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
 };
 
 function createSharedSetup(activeMenuName) {
@@ -947,9 +963,26 @@ function createSharedSetup(activeMenuName) {
     if (!href) { e.preventDefault(); placeholder(item); }
     // 有 href 时，放行默认跳转，不 prevent
   };
+
+  /* ===== 租户切换 ===== */
+  const savedTenant = localStorage.getItem('currentTenantId');
+  const currentTenantId = ref(savedTenant || 'T1');
+  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
+  const currentTenantName = computed(() => {
+    const t = availableTenants.value.find(t => t.id === currentTenantId.value);
+    return t ? t.name : '未知租户';
+  });
+  const switchTenant = (id) => {
+    if (id === currentTenantId.value) return;
+    currentTenantId.value = id;
+    localStorage.setItem('currentTenantId', id);
+    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
+    setTimeout(() => window.location.reload(), 600);
+  };
   return {
     collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
-    searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
+    searchPop, navQuery, navMatches, jumpMenu, toggleFull,
+    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData, placeholder, onMenuClick,
   };
 }
 

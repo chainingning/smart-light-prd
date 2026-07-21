@@ -123,6 +123,9 @@
     }
     .topbar .ico { font-size: 18px; color: var(--ink-2); cursor: pointer; padding: 8px; border-radius: var(--r-sm); transition: background .15s; }
     .topbar .ico:hover { background: rgba(16,24,40,.05); }
+    .topbar .tenant-switcher { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 8px !important; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+    .topbar .tenant-switcher:hover { border-color: var(--brand); }
+    .topbar .tenant-switcher .tenant-name { font-size: 13px; font-weight: 500; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .crumb { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); }
     .crumb .sep { opacity: .5; }
     .crumb .cur { color: var(--ink); font-weight: 500; }
@@ -236,6 +239,20 @@
           <span class="sep">/</span><span class="cur">组织管理</span>
         </div>
         <div class="spacer"></div>
+        <el-dropdown trigger="click" @command="switchTenant">
+          <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+            <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+            <span class="tenant-name">{{ currentTenantName }}</span>
+            <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+          </span>
+          <template #dropdown><el-dropdown-menu>
+            <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+              <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>
+              {{ t.name }}
+              <span style="color:var(--ink-3); font-size:12px; margin-left:6px">配额 {{ SharedData.getTenantQuota(t.id)?.poleTotal || 0 }}灯</span>
+            </el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
       </header>
         <main class="content">
           <div class="panel">
@@ -580,13 +597,14 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+  <script src="js/shared-data.js"></script>
   <script>
 const { ref, reactive, computed, createApp } = Vue;
 
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['资产分配','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: true,  items: ['组织管理','用户管理','角色管理','菜单管理'] },
 ];
@@ -598,7 +616,7 @@ const MENU_HREF = {
   '灯杆管理': 'pole-management.html',
   '灯控策略': 'light-strategy.html',
   '资产分配': 'asset-assign.html',
-  '组织管理': 'organization-management.html',
+  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
 };
 
 function createSharedSetup(activeMenuName) {
@@ -620,17 +638,33 @@ function createSharedSetup(activeMenuName) {
     const href = menuHref[item];
     if (href) { window.location.href = href; }
   };
-  return { activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick, collapsed, mobileNav };
+  /* ===== 租户切换 ===== */
+  const savedTenant = localStorage.getItem('currentTenantId');
+  const currentTenantId = ref(savedTenant || 'T1');
+  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
+  const currentTenantName = computed(() => {
+    const t = availableTenants.value.find(t => t.id === currentTenantId.value);
+    return t ? t.name : '未知租户';
+  });
+  const switchTenant = (id) => {
+    if (id === currentTenantId.value) return;
+    currentTenantId.value = id;
+    localStorage.setItem('currentTenantId', id);
+    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
+    setTimeout(() => window.location.reload(), 600);
+  };
+  return { activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick, collapsed, mobileNav,
+    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData };
 }
 
 const organizationsSeed = [
-  { id: 1, name: '云创科技集团', parentId: null, sort: 1 },
-  { id: 2, name: '华东分公司', parentId: 1, sort: 1 },
-  { id: 3, name: '上海办事处', parentId: 2, sort: 1 },
-  { id: 4, name: '苏州办事处', parentId: 2, sort: 2 },
-  { id: 5, name: '华南分公司', parentId: 1, sort: 2 },
-  { id: 6, name: '广州办事处', parentId: 5, sort: 1 },
-  { id: 7, name: '深圳办事处', parentId: 5, sort: 2 },
+  { id: 1, tenantId: 'T1', name: '云创科技集团', parentId: null, sort: 1 },
+  { id: 2, tenantId: 'T1', name: '华东分公司', parentId: 1, sort: 1 },
+  { id: 3, tenantId: 'T1', name: '上海办事处', parentId: 2, sort: 1 },
+  { id: 4, tenantId: 'T1', name: '苏州办事处', parentId: 2, sort: 2 },
+  { id: 5, tenantId: 'T1', name: '华南分公司', parentId: 1, sort: 2 },
+  { id: 6, tenantId: 'T1', name: '广州办事处', parentId: 5, sort: 1 },
+  { id: 7, tenantId: 'T1', name: '深圳办事处', parentId: 5, sort: 2 },
 ];
 const positionsSeed = [
   { id: 1, orgId: 1, code: 'admin', name: '管理员', roleId: 1, parentId: null, description: '系统管理员' },
