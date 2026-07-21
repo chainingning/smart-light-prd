@@ -483,9 +483,8 @@
                             <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
                               <el-tag size="small" effect="plain" class="tag-soft">{{ a.action }}</el-tag>
                               <el-tag size="small" effect="plain" type="info">{{ a.triggerType === 'sunrise' ? '日出触发' : a.triggerType === 'sunset' ? '日落触发' : '定时触发' }}</el-tag>
-                              <span style="font-size:var(--fs-sm); color:var(--ink-2);">结束 {{ formatLightEnd(a) }} ({{ a.action === '开关灯' ? (a.endOn ? '开':'关') : '亮度'+a.endBright+'%' }})</span>
+                              <span style="font-size:var(--fs-sm); color:var(--ink-2);">开始：{{ a.action === '开关灯' ? (a.startOn ? '开' : '关') : '亮度 ' + a.startBright + '%' }} → 结束：{{ formatLightEnd(a) }} ({{ a.action === '开关灯' ? (a.endOn ? '开' : '关') : '亮度 ' + a.endBright + '%' }})</span>
                             </div>
-                            <div style="margin-top:4px; font-size:var(--fs-sm); color:var(--ink-2);">开始状态：{{ a.action === '开关灯' ? (a.startOn ? '开':'关') : '亮度'+a.startBright+'%' }}</div>
                           </el-timeline-item>
                         </el-timeline>
                       </template>
