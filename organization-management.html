@@ -94,6 +94,14 @@
       transition: all .15s; white-space: nowrap; margin: 1px 0;
     }
     .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+    .nav-item .ni-ic { font-size: 14px; flex: 0 0 auto; opacity: .8; }
+    .nav-item .ni-txt { flex: 1; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-item:hover .ni-ic { opacity: 1; }
+    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+    .nav-item.active .dot { opacity: 1; background: #6f9bff; }
+    .nav-item.active .ni-ic { opacity: 1; color: #6f9bff; }
     .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
     .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
     .nav-item.active .dot { opacity: 1; background: #6f9bff; }
@@ -206,10 +214,10 @@
       <nav class="nav">
         <div v-for="g in menuGroups" :key="g.title" class="nav-group"
              :class="{ open: g.open, 'has-active': g.items.includes(activeMenu) }">
-          <div class="nav-title" @click="toggleGroup(g)">
-            <el-icon class="ng-ic"><component :is="g.icon"></component></el-icon>
+          <div class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
             <span class="ng-txt">{{ g.title }}</span>
-            <el-icon class="caret"><ArrowDown></ArrowDown></el-icon>
+            <el-icon v-if="!g.singleLink" class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
           </div>
           <div class="nav-children" v-show="g.open">
             <a v-for="item in g.items" :key="item"
@@ -224,7 +232,7 @@
       </nav>
       <div class="sb-foot">
         <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
-          <el-icon><component :is="collapsed ? 'Expand' : 'Fold'"></component></el-icon>
+          <el-icon><component :is="iconComp(collapsed ? 'Expand' : 'Fold')"></component></el-icon>
           <span v-if="!collapsed">收起菜单</span>
         </div>
       </div>
@@ -597,6 +605,7 @@
   </div>
   <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
   <script src="js/shared-data.js"></script>
   <script>
 const { ref, reactive, computed, createApp } = Vue;
@@ -653,8 +662,14 @@ function createSharedSetup(activeMenuName) {
     ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
     setTimeout(() => window.location.reload(), 600);
   };
+
+  /* 图标查找 */
+  const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
+  const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
   return { activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick, collapsed, mobileNav,
-    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData };
+    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData ,
+    iconComp, submenuIcon,
+  };
 }
 
 const organizationsSeed = [
@@ -1254,6 +1269,9 @@ const app = createApp({
   }
 });
 app.use(ElementPlus);
+if (window.ElementPlusIconsVue) {
+  for (const [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+}
 app.mount('#app');
 </script>
 </body>

@@ -98,6 +98,70 @@
     return PROJECTS.filter(p => p.tenantId === tenantId);
   }
 
+  /* ============== 统一菜单定义 ==============
+   * 数据结构：每个 group 含 title/icon/open/items
+   * items 数组中可混用字符串（旧格式，自动查 SUBMENU_ICONS）和 { name, icon, href } 对象
+   * 通过 getMenuGroups() 获取统一菜单；getSubmenuIcon(name) 查子菜单图标
+   */
+  const SUBMENU_ICONS = {
+    '首页': 'HomeFilled',
+    '产品分类': 'Collection',
+    '产品管理': 'Goods',
+    '设备管理': 'Cpu',
+    '设备分组': 'Folder',
+    '灯杆管理': 'Sunny',
+    '灯控策略': 'Clock',
+    '项目列表': 'Files',
+    '项目分配': 'Share',
+    '配额看板': 'DataAnalysis',
+    '分配流水': 'Document',
+    '租户列表': 'OfficeBuilding',
+    '配额管理': 'Histogram',
+    '邀请码': 'Promotion',
+    '资产分配': 'Share',
+    '策略下发日志': 'Document',
+    '组织管理': 'OfficeBuilding',
+    '用户管理': 'User',
+    '角色管理': 'UserFilled',
+    '菜单管理': 'Menu',
+    '区域管理': 'Location',
+    '点位管理': 'LocationInformation',
+    '流程定义': 'Connection',
+    '我的待办': 'Tickets',
+    '会员列表': 'User',
+    '商品管理': 'Goods',
+    '订单管理': 'List',
+    '菜单配置': 'ChatDotRound',
+    '运维概览': 'Monitor',
+    '日志管理': 'Document',
+    '监控告警': 'Warning',
+    '策略管理': 'SetUp',
+  };
+
+  const MENU_GROUPS = [
+    { title: '首页', icon: 'HomeFilled', open: true, items: ['首页'], singleLink: true },
+    { title: '设备管理', icon: 'Monitor', open: true, items: ['产品分类','产品管理','设备管理','设备分组'] },
+    { title: '智慧灯杆', icon: 'Sunny', open: true, items: ['灯杆管理','灯控策略'] },
+    { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
+    { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },
+    { title: '综合运维', icon: 'SetUp', open: true, items: ['资产分配','策略下发日志'] },
+    { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
+    { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
+    { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
+    { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
+    { title: '会员中心', icon: 'User', open: false, items: ['会员列表'] },
+    { title: '商城系统', icon: 'ShoppingCart', open: false, items: ['商品管理','订单管理'] },
+    { title: '公众号管理', icon: 'ChatDotRound', open: false, items: ['菜单配置'] },
+  ];
+
+  function getSubmenuIcon(name) {
+    return SUBMENU_ICONS[name] || null;
+  }
+
+  function getMenuGroups() {
+    return MENU_GROUPS;
+  }
+
   /** 递归获取所有子孙组织 ID（含自身） */
   function getDescendantOrgIds(orgId, orgs) {
     const result = [orgId];
@@ -151,6 +215,8 @@
     ORGANIZATIONS,
     PROJECTS,
     PROJECT_ALLOCATIONS,
+    MENU_GROUPS,
+    SUBMENU_ICONS,
     // 工具函数
     getTenant,
     getTenantQuota,
@@ -164,6 +230,8 @@
     calcProjectPoleUsed,
     calcTenantPoleUsed,
     calcTenantProjectUsed,
+    getSubmenuIcon,
+    getMenuGroups,
   };
 
 })(window);

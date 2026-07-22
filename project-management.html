@@ -114,10 +114,11 @@
               <el-icon class="caret"><ArrowDown></el-icon>
             </div>
             <div class="nav-children" v-show="g.open && !collapsed">
-              <div v-for="item in g.items" :key="item" class="nav-item" :class="{ active: activeMenu === item }" @click="onMenuClick(item, $event)">
-                <span class="dot"></span>
-                <a :href="menuHref[item] || '#'" @click.prevent="onMenuClick(item, $event)" style="color:inherit; text-decoration:none; flex:1">{{ item }}</a>
-              </div>
+              <a v-for="item in g.items" :key="item" :href="menuHref[item] || '#'" class="nav-item" :class="{ active: activeMenu === item }" @click="onMenuClick(item, $event)">
+                <el-icon v-if="submenuIcon(item)" class="ni-ic"><component :is="iconComp(submenuIcon(item))"></component></el-icon>
+                <span v-else class="dot"></span>
+                <span class="ni-txt">{{ item }}</span>
+              </a>
             </div>
           </div>
         </nav>
@@ -467,6 +468,10 @@ const app = createApp({
     const menuHref = MENU_HREF;
     const toggleGroup = (g) => { g.open = !g.open; };
 
+    /* 图标查找 */
+    const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
+    const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
+
     /* 租户切换 */
     const savedTenant = localStorage.getItem('currentTenantId');
     const currentTenantId = ref(savedTenant || 'T1');
@@ -648,6 +653,7 @@ const app = createApp({
       myQuota, grantedQuota, receivedQuota, availableQuota, quotaPercent, quotaStatus, pct, stats,
       childTenants, allocForm, allocError, canSubmitAlloc, submitAllocation, resetAllocForm,
       allocFilter, filteredAllocations, allAllocations, revokeAllocation,
+      iconComp, submenuIcon,
       Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete,
       Search: ElementPlusIconsVue?.Search, Promotion: ElementPlusIconsVue?.Promotion, Right: ElementPlusIconsVue?.Right,
       OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
@@ -659,6 +665,9 @@ const app = createApp({
 });
 
 app.use(ElementPlus);
+if (window.ElementPlusIconsVue) {
+  for (const [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+}
 app.mount('#app');
 </script>
 </body>

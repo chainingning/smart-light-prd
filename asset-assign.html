@@ -623,6 +623,10 @@ function createSharedSetup(activeMenuName) {
     ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
     setTimeout(() => window.location.reload(), 600);
   };
+
+  /* 图标查找（直接用组件对象） */
+  const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
+  const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
   return {
     collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
     searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
