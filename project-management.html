@@ -2,25 +2,664 @@
 <html lang="zh-CN">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>项目管理 · 云创智慧平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
   <style>
-    body { margin: 0; font-family: "Inter", "PingFang SC", sans-serif; background: #f4f6fb; }
+    :root {
+      --brand: #2f6bff; --brand-deep: #1f4fd6; --brand-soft: #ebf1ff;
+      --ok: #16a36a; --off: #ef4d5e; --warn: #e6952c;
+      --bg: #f4f6fb; --surface: #ffffff; --surface-2: #f8fafc;
+      --line: #e6eaf2; --line-soft: #eef1f7;
+      --ink: #1b2533; --ink-2: #586273; --ink-3: #7c8696;
+      --side: #1b2330; --side-2: #12171f;
+      --r-sm: 8px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
+      --fs-cap: 12px; --fs-sm: 13px; --fs: 14px; --fs-md: 16px; --fs-lg: 20px; --fs-xl: 26px;
+      --sh-sm: 0 1px 2px rgba(16,24,40,.05);
+      --sh-md: 0 6px 20px rgba(16,24,40,.07);
+      --sb-w: 226px; --sb-w-collapsed: 64px;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { font-family: "Inter", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif; background: var(--bg); color: var(--ink); font-size: var(--fs); }
     #app { height: 100vh; }
-    .placeholder { display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:#7c8696; }
-    .placeholder h1 { color:#1b2533; font-size:24px; margin:0 0 12px; }
-    .placeholder p { margin:6px 0; }
-    .placeholder a { margin-top:24px; color:#2f6bff; text-decoration:none; }
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+    .sidebar { width: var(--sb-w); flex: 0 0 var(--sb-w); background: linear-gradient(180deg, var(--side), var(--side-2)); color: #c3ccd9; display: flex; flex-direction: column; transition: flex-basis .22s ease, width .22s ease, transform .25s ease; }
+    .sidebar.collapsed { width: var(--sb-w-collapsed); flex-basis: var(--sb-w-collapsed); }
+    .brand { height: 60px; display: flex; align-items: center; gap: 11px; padding: 0 20px; color: #fff; font-weight: 700; font-size: var(--fs-md); border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap; }
+    .brand .logo { width: 30px; height: 30px; border-radius: var(--r-md); background: linear-gradient(135deg, #5b8bff, #2f6bff); display: grid; place-items: center; font-size: 15px; }
+    .version-tag { display: inline-flex; align-items: center; font-size: 10px; background: rgba(255,255,255,.15); color: rgba(255,255,255,.7); padding: 1px 5px; border-radius: 4px; margin-left: 4px; }
+    .sidebar.collapsed .version-tag, .sidebar.collapsed .brand-txt { display: none; }
+    .nav { flex: 1; overflow-y: auto; padding: 10px; }
+    .nav::-webkit-scrollbar { width: 6px; }
+    .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: var(--r-pill); }
+    .nav-group { margin-bottom: 2px; }
+    .nav-group > .nav-title { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: var(--r-md); font-size: var(--fs-sm); color: #aab4c3; cursor: pointer; user-select: none; }
+    .nav-title .ng-ic { font-size: 16px; }
+    .nav-title .ng-txt { flex: 1; }
+    .nav-title .caret { font-size: 13px; opacity: .55; transition: transform .2s; }
+    .nav-group.open > .nav-title .caret { transform: rotate(180deg); }
+    .nav-title:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-group.open > .nav-title, .nav-group.has-active > .nav-title { color: #fff; }
+    .nav-children { overflow: hidden; padding: 2px 0 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 38px; font-size: var(--fs-sm); color: #aab4c3; cursor: pointer; position: relative; border-radius: var(--r-md); margin: 1px 0; }
+    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+    .nav-item.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: var(--r-pill); background: var(--brand); }
+    .sidebar.collapsed .nav-title { justify-content: center; padding: 13px 0; }
+    .sidebar.collapsed .nav-title .ng-txt, .sidebar.collapsed .nav-title .caret { display: none; }
+    .sidebar.collapsed .nav-children { display: none !important; }
+    .sb-foot { border-top: 1px solid rgba(255,255,255,.07); padding: 10px; }
+    .sb-collapse { width: 100%; height: 36px; border-radius: var(--r-md); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: #aab4c3; font-size: var(--fs-sm); }
+    .sb-collapse:hover { color: #fff; background: rgba(255,255,255,.07); }
+    .main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .topbar { height: 60px; background: var(--surface); display: flex; align-items: center; padding: 0 18px; gap: 14px; border-bottom: 1px solid var(--line); }
+    .crumb { display: flex; align-items: center; gap: 8px; color: var(--ink-2); font-size: var(--fs); }
+    .crumb .sep { color: var(--ink-3); }
+    .crumb .cur { color: var(--ink); font-weight: 600; }
+    .topbar .spacer { flex: 1; }
+    .top-actions { display: flex; align-items: center; gap: 4px; color: var(--ink-2); font-size: var(--fs-sm); }
+    .top-actions .ico { font-size: 18px; color: var(--ink-2); cursor: pointer; padding: 8px; border-radius: var(--r-sm); }
+    .top-actions .ico:hover { color: var(--brand); background: var(--brand-soft); }
+    .top-actions .ico .mini { font-size: 12px; opacity: .7; }
+    .top-actions .tenant-switcher { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 8px !important; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+    .top-actions .tenant-switcher:hover { border-color: var(--brand); }
+    .top-actions .tenant-switcher .tenant-name { font-size: 13px; font-weight: 500; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .content { flex: 1; overflow-y: auto; padding: 20px; }
+    .panel { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; }
+    .page-head { padding: 18px 20px; border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; justify-content: space-between; }
+    .ph-title { font-size: var(--fs-lg); font-weight: 600; color: var(--ink); }
+    .ph-sub { font-size: var(--fs-sm); color: var(--ink-3); margin-left: 8px; }
+    .table-zone { padding: 0; }
+    .empty-cell { padding: 40px 20px; text-align: center; color: var(--ink-3); font-size: var(--fs-sm); }
+    .stat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 16px; }
+    .stat-card { background: var(--surface); border-radius: var(--r-lg); padding: 18px; box-shadow: var(--sh-sm); display: flex; align-items: center; gap: 14px; }
+    .stat-icon { width: 44px; height: 44px; border-radius: var(--r-md); display: grid; place-items: center; color: #fff; font-size: 20px; }
+    .stat-v { font-size: 24px; font-weight: 700; line-height: 1.1; }
+    .stat-k { font-size: var(--fs-sm); color: var(--ink-3); margin-top: 4px; }
+    .filter-bar { padding: 16px 20px; border-bottom: 1px solid var(--line-soft); display: flex; gap: 10px; align-items: center; }
+    .quota-panel { padding: 24px; }
+    .quota-bar { display: flex; align-items: center; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--line-soft); }
+    .quota-bar:last-child { border-bottom: none; }
+    .quota-label { width: 100px; font-size: var(--fs); color: var(--ink-2); }
+    .quota-track { flex: 1; }
+    .quota-value { width: 180px; text-align: right; font-size: var(--fs-sm); color: var(--ink-2); }
+    .quota-value .v-num { font-size: 18px; font-weight: 700; color: var(--ink); }
+    .warn-badge { display: inline-block; padding: 2px 8px; border-radius: var(--r-pill); font-size: 11px; font-weight: 500; margin-left: 8px; }
+    .warn-ok { background: rgba(22,163,106,.1); color: var(--ok); }
+    .warn-mid { background: rgba(230,149,44,.1); color: var(--warn); }
+    .warn-high { background: rgba(239,77,94,.1); color: var(--off); }
+    .org-tag { display: inline-block; padding: 2px 8px; background: var(--brand-soft); color: var(--brand); border-radius: 4px; font-size: 12px; }
+    .quota-cell { display: flex; flex-direction: column; gap: 2px; }
+    .quota-cell .quota-num { font-weight: 600; }
+    .quota-cell .quota-bar-mini { width: 80px; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+    .quota-cell .quota-bar-mini > span { display: block; height: 100%; background: var(--brand); }
+    .el-tabs__nav-wrap::after { background: var(--line-soft) !important; }
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="placeholder">
-      <h1>📁 项目管理</h1>
-      <p>阶段 1 骨架已完成，阶段 2 将实现完整 CRUD</p>
-      <p style="font-size:13px">预计包含：项目列表 / 项目分配 / 配额看板 / 分配流水</p>
-      <a href="index.html">← 返回首页</a>
+    <div class="shell">
+      <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+        <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
+        <nav class="nav">
+          <div v-for="g in menuGroups" :key="g.title" class="nav-group" :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
+            <div class="nav-title" @click="toggleGroup(g)">
+              <el-icon class="ng-ic"><component :is="g.icon"></component></el-icon>
+              <span class="ng-txt">{{ g.title }}</span>
+              <el-icon class="caret"><ArrowDown></el-icon>
+            </div>
+            <div class="nav-children" v-show="g.open && !collapsed">
+              <div v-for="item in g.items" :key="item" class="nav-item" :class="{ active: activeMenu === item }" @click="onMenuClick(item, $event)">
+                <span class="dot"></span>
+                <a :href="menuHref[item] || '#'" @click.prevent="onMenuClick(item, $event)" style="color:inherit; text-decoration:none; flex:1">{{ item }}</a>
+              </div>
+            </div>
+          </div>
+        </nav>
+        <div class="sb-foot">
+          <div class="sb-collapse" @click="collapsed = !collapsed">
+            <el-icon><Expand v-if="!collapsed"></Expand><Fold v-else></el-icon>
+            <span v-if="!collapsed">收起菜单</span>
+          </div>
+        </div>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Menu></Menu></el-icon></span>
+          <div class="crumb">
+            <span><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
+            <span class="sep">/</span><span>项目管理</span>
+            <span class="sep">/</span><span class="cur">{{ activeMenu }}</span>
+          </div>
+          <div class="spacer"></div>
+          <div class="top-actions">
+            <el-dropdown trigger="click" @command="switchTenant">
+              <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+                <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+                <span class="tenant-name">{{ currentTenantName }}</span>
+                <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+              </span>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+                  <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>
+                  {{ t.name }}
+                  <span style="color:var(--ink-3); font-size:12px; margin-left:6px">路灯 {{ SharedData.getTenantQuota(t.id)?.poleTotal || 0 }} / 项目 {{ SharedData.getTenantQuota(t.id)?.projectTotal || 0 }}</span>
+                </el-dropdown-item>
+              </el-dropdown-menu></template>
+            </el-dropdown>
+          </div>
+        </header>
+        <main class="content">
+          <!-- 顶部统计卡 -->
+          <div class="stat-grid">
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#5b8bff,#2f6bff)"><el-icon><Folder></Folder></el-icon></div><div><div class="stat-v">{{ stats.projectCount }}</div><div class="stat-k">项目总数</div></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#1fd29a,#16a36a)"><el-icon><Sunny></Sunny></el-icon></div><div><div class="stat-v">{{ stats.poleUsed }}<span style="font-size:14px;color:var(--ink-3);font-weight:400">/{{ stats.poleQuota }}</span></div><div class="stat-k">路灯用量/可用</div></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#ffb74d,#fb8c00)"><el-icon><Share></Share></el-icon></div><div><div class="stat-v">{{ stats.grantedPole }}</div><div class="stat-k">已分出路灯配额</div></div></div>
+            <div class="stat-card"><div class="stat-icon" style="background:linear-gradient(135deg,#a78bfa,#7c5cfc)"><el-icon><Promotion></Promotion></el-icon></div><div><div class="stat-v">{{ stats.receivedPole }}</div><div class="stat-k">收到路灯配额</div></div></div>
+          </div>
+
+          <div class="panel">
+            <el-tabs v-model="activeTab" class="page-head" style="padding:0 20px; border-bottom:none">
+              <el-tab-pane label="项目列表" name="list"></el-tab-pane>
+              <el-tab-pane label="项目分配" name="allocate"></el-tab-pane>
+              <el-tab-pane label="配额看板" name="quota"></el-tab-pane>
+              <el-tab-pane label="分配流水" name="flow"></el-tab-pane>
+            </el-tabs>
+
+            <!-- 项目列表 Tab -->
+            <div v-show="activeTab === 'list'">
+              <div class="filter-bar">
+                <el-select v-model="filterOrgId" placeholder="按组织筛选" clearable size="default" style="width:240px">
+                  <el-option v-for="o in currentOrgs" :key="o.id" :label="o.name" :value="o.id"></el-option>
+                </el-select>
+                <el-input v-model="filterKeyword" placeholder="搜索项目名称/编码" size="default" clearable style="width:200px" :prefix-icon="Search"></el-input>
+                <div style="flex:1"></div>
+                <el-button type="primary" :icon="Plus" @click="openAddProject">新增项目</el-button>
+              </div>
+              <div class="table-zone">
+                <el-table :data="filteredProjects" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+                  <el-table-column type="index" width="50" align="center"></el-table-column>
+                  <el-table-column prop="name" label="项目名称" min-width="160" show-overflow-tooltip></el-table-column>
+                  <el-table-column prop="code" label="项目编码" width="140"></el-table-column>
+                  <el-table-column label="所属组织" width="160">
+                    <template #default="{ row }"><span class="org-tag">{{ orgName(row.orgId) }}</span></template>
+                  </el-table-column>
+                  <el-table-column label="路灯配额" width="180">
+                    <template #default="{ row }">
+                      <div class="quota-cell">
+                        <div class="quota-num">{{ row.poleUsed }} / {{ row.poleQuota }}</div>
+                        <div class="quota-bar-mini"><span :style="{width: row.poleQuota > 0 ? Math.min(100, row.poleUsed/row.poleQuota*100) + '%' : '0%', background: row.poleQuota > 0 && row.poleUsed/row.poleQuota > 0.9 ? '#ef4d5e' : row.poleQuota > 0 && row.poleUsed/row.poleQuota > 0.8 ? '#e6952c' : '#2f6bff'}"></span></div>
+                      </div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="状态" width="90" align="center">
+                    <template #default="{ row }"><el-tag size="small" :type="row.status === 'active' ? 'success' : 'info'" effect="plain">{{ row.status === 'active' ? '启用' : '停用' }}</el-tag></template>
+                  </el-table-column>
+                  <el-table-column prop="remark" label="备注" min-width="140" show-overflow-tooltip></el-table-column>
+                  <el-table-column prop="createdAt" label="创建时间" width="170"></el-table-column>
+                  <el-table-column label="操作" width="150" align="center" fixed="right">
+                    <template #default="{ row }">
+                      <el-button link type="primary" :icon="Edit" size="small" @click="openEditProject(row)">编辑</el-button>
+                      <el-button link type="danger" :icon="Delete" size="small" @click="deleteProject(row)">删除</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+                <div class="empty-cell" v-if="!filteredProjects.length">暂无项目</div>
+              </div>
+            </div>
+
+            <!-- 项目分配 Tab -->
+            <div v-show="activeTab === 'allocate'">
+              <div style="padding:24px; display:grid; grid-template-columns: 1fr 1fr; gap:24px">
+                <!-- 左侧：当前租户可用配额 -->
+                <div class="panel" style="box-shadow:none; border:1px solid var(--line)">
+                  <div class="page-head" style="padding:14px 18px">
+                    <div class="ph-title" style="font-size:15px">我的可用配额</div>
+                    <div class="ph-sub">{{ currentTenantName }}</div>
+                  </div>
+                  <div class="quota-panel">
+                    <div class="quota-bar">
+                      <div class="quota-label">路灯配额</div>
+                      <div class="quota-track">
+                        <el-progress :percentage="quotaPercent('pole')" :status="quotaStatus('pole')" :stroke-width="14"></el-progress>
+                      </div>
+                      <div class="quota-value">
+                        <div class="v-num">{{ availableQuota.pole }}</div>
+                        <div>已用 {{ myQuota.poleUsed }} / 总 {{ myQuota.poleTotal }}</div>
+                      </div>
+                    </div>
+                    <div class="quota-bar">
+                      <div class="quota-label">项目配额</div>
+                      <div class="quota-track">
+                        <el-progress :percentage="quotaPercent('project')" :status="quotaStatus('project')" :stroke-width="14"></el-progress>
+                      </div>
+                      <div class="quota-value">
+                        <div class="v-num">{{ availableQuota.project }}</div>
+                        <div>已用 {{ myQuota.projectUsed }} / 总 {{ myQuota.projectTotal }}</div>
+                      </div>
+                    </div>
+                    <div style="margin-top:18px; padding-top:18px; border-top:1px dashed var(--line)">
+                      <div style="font-size:13px; color:var(--ink-3); margin-bottom:6px">⚠ 注意：分配给下级租户后，对方可在其配额内自由使用</div>
+                      <div style="font-size:13px; color:var(--ink-3)">撤销分配时，对方<strong>未使用</strong>部分自动返还</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 右侧：分配表单 + 列表 -->
+                <div>
+                  <div class="panel" style="box-shadow:none; border:1px solid var(--line); margin-bottom:16px">
+                    <div class="page-head" style="padding:14px 18px">
+                      <div class="ph-title" style="font-size:15px">分配给下级租户</div>
+                    </div>
+                    <div style="padding:18px">
+                      <el-form :model="allocForm" label-width="100px" size="default">
+                        <el-form-item label="目标租户" required>
+                          <el-select v-model="allocForm.toTenantId" placeholder="选择下级租户" style="width:100%">
+                            <el-option v-for="t in childTenants" :key="t.id" :label="t.name" :value="t.id">
+                              <span>{{ t.name }}</span>
+                              <span style="float:right; color:var(--ink-3); font-size:12px">路灯 {{ t.poleTotal }} / 项目 {{ t.projectTotal }}</span>
+                            </el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item label="路灯配额" required>
+                          <el-input-number v-model="allocForm.poleQuota" :min="0" :max="availableQuota.pole" style="width:100%"></el-input-number>
+                        </el-form-item>
+                        <el-form-item label="项目配额" required>
+                          <el-input-number v-model="allocForm.projectQuota" :min="0" :max="availableQuota.project" style="width:100%"></el-input-number>
+                        </el-form-item>
+                        <el-form-item label="备注"><el-input v-model="allocForm.remark" placeholder="可选"></el-input></el-form-item>
+                        <el-form-item>
+                          <div v-if="allocError" style="color:var(--off); font-size:13px; margin-bottom:8px">⚠ {{ allocError }}</div>
+                          <el-button type="primary" :icon="Promotion" @click="submitAllocation" :disabled="!canSubmitAlloc">确认分配</el-button>
+                          <el-button @click="resetAllocForm">重置</el-button>
+                        </el-form-item>
+                      </el-form>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 我发出的分配记录 -->
+              <div style="padding:0 24px 24px">
+                <div class="panel" style="box-shadow:none; border:1px solid var(--line)">
+                  <div class="page-head" style="padding:14px 18px">
+                    <div class="ph-title" style="font-size:15px">我已分配的配额</div>
+                    <el-radio-group v-model="allocFilter" size="small">
+                      <el-radio-button label="out">我发出的</el-radio-button>
+                      <el-radio-button label="in">我收到的</el-radio-button>
+                    </el-radio-group>
+                  </div>
+                  <el-table :data="filteredAllocations" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+                    <el-table-column label="方向" width="90" align="center">
+                      <template #default="{ row }">
+                        <el-tag size="small" :type="row.fromTenantId === currentTenantId ? 'primary' : 'success'" effect="plain">
+                          {{ row.fromTenantId === currentTenantId ? '→ ' + tenantName(row.toTenantId) : '← ' + tenantName(row.fromTenantId) }}
+                        </el-tag>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="路灯配额" width="160">
+                      <template #default="{ row }">
+                        <div class="quota-cell">
+                          <div class="quota-num">{{ row.poleUsed }} / {{ row.poleQuota }}</div>
+                          <div class="quota-bar-mini"><span :style="{width: row.poleQuota > 0 ? Math.min(100, row.poleUsed/row.poleQuota*100)+'%' : '0%'}"></span></div>
+                        </div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="项目配额" width="160">
+                      <template #default="{ row }">
+                        <div class="quota-cell">
+                          <div class="quota-num">{{ row.projectUsed }} / {{ row.projectQuota }}</div>
+                          <div class="quota-bar-mini"><span :style="{width: row.projectQuota > 0 ? Math.min(100, row.projectUsed/projectQuota*100)+'%' : '0%', background:'#a78bfa'}"></span></div>
+                        </div>
+                      </template>
+                    </el-table-column>
+                    <el-table-column label="状态" width="100" align="center">
+                      <template #default="{ row }"><el-tag size="small" :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '生效中' : '已撤销' }}</el-tag></template>
+                    </el-table-column>
+                    <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
+                    <el-table-column prop="createdAt" label="分配时间" width="170"></el-table-column>
+                    <el-table-column label="操作" width="100" align="center" fixed="right">
+                      <template #default="{ row }">
+                        <el-button v-if="row.status === 'active' && row.fromTenantId === currentTenantId" link type="danger" size="small" @click="revokeAllocation(row)">撤销</el-button>
+                      </template>
+                    </el-table-column>
+                  </el-table>
+                  <div class="empty-cell" v-if="!filteredAllocations.length">暂无分配记录</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 配额看板 Tab -->
+            <div v-show="activeTab === 'quota'">
+              <div style="padding:24px">
+                <div class="panel" style="box-shadow:none; border:1px solid var(--line)">
+                  <div class="page-head" style="padding:14px 18px">
+                    <div class="ph-title" style="font-size:15px">配额总览 · {{ currentTenantName }}</div>
+                  </div>
+                  <div class="quota-panel">
+                    <div class="quota-bar">
+                      <div class="quota-label"><el-icon><Sunny></el-icon> 路灯</div>
+                      <div class="quota-track">
+                        <div style="display:flex; height:24px; border-radius:6px; overflow:hidden; background:var(--line-soft)">
+                          <div :style="{width: pct(myQuota.poleUsed, myQuota.poleTotal) + '%', background:'#2f6bff'}" :title="'已用 ' + myQuota.poleUsed" style="display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600">{{ myQuota.poleUsed > 0 ? myQuota.poleUsed : '' }}</div>
+                          <div :style="{width: pct(grantedQuota.pole, myQuota.poleTotal) + '%', background:'#7c5cfc'}" :title="'分出 ' + grantedQuota.pole" style="display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px">{{ grantedQuota.pole > 0 ? grantedQuota.pole : '' }}</div>
+                        </div>
+                      </div>
+                      <div class="quota-value">
+                        <div class="v-num">{{ myQuota.poleTotal }}</div>
+                        <div>原始配额</div>
+                      </div>
+                    </div>
+                    <div style="display:flex; gap:20px; font-size:12px; color:var(--ink-3); padding:0 0 16px 116px">
+                      <span><span style="display:inline-block;width:10px;height:10px;background:#2f6bff;border-radius:2px;margin-right:4px"></span>本租户已用</span>
+                      <span><span style="display:inline-block;width:10px;height:10px;background:#7c5cfc;border-radius:2px;margin-right:4px"></span>已分给下级</span>
+                    </div>
+                    <div class="quota-bar">
+                      <div class="quota-label"><el-icon><Folder></Folder></el-icon> 项目</div>
+                      <div class="quota-track">
+                        <div style="display:flex; height:24px; border-radius:6px; overflow:hidden; background:var(--line-soft)">
+                          <div :style="{width: pct(myQuota.projectUsed, myQuota.projectTotal) + '%', background:'#16a36a'}" :title="'已用 ' + myQuota.projectUsed" style="display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px; font-weight:600">{{ myQuota.projectUsed > 0 ? myQuota.projectUsed : '' }}</div>
+                          <div :style="{width: pct(grantedQuota.project, myQuota.projectTotal) + '%', background:'#7c5cfc'}" :title="'分出 ' + grantedQuota.project" style="display:flex; align-items:center; justify-content:center; color:#fff; font-size:12px">{{ grantedQuota.project > 0 ? grantedQuota.project : '' }}</div>
+                        </div>
+                      </div>
+                      <div class="quota-value">
+                        <div class="v-num">{{ myQuota.projectTotal }}</div>
+                        <div>原始配额</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div style="margin-top:16px; padding:14px 18px; background:rgba(230,149,44,.08); border:1px solid rgba(230,149,44,.3); border-radius:var(--r-md); color:#7a5318; font-size:13px">
+                  <strong>配额预警阈值：</strong>路灯用量超过 80% 显示橙色，超过 90% 显示红色。项目同理。
+                </div>
+              </div>
+            </div>
+
+            <!-- 分配流水 Tab -->
+            <div v-show="activeTab === 'flow'">
+              <div class="table-zone" style="padding:8px 0 0">
+                <el-table :data="allAllocations" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+                  <el-table-column type="index" width="50" align="center"></el-table-column>
+                  <el-table-column label="分配方向" width="200">
+                    <template #default="{ row }">
+                      <span style="color:var(--ink-2)">{{ tenantName(row.fromTenantId) }}</span>
+                      <el-icon style="margin:0 6px; color:var(--brand)"><Right v-if="row.status === 'active'"></Right></el-icon>
+                      <span style="font-weight:600">{{ tenantName(row.toTenantId) }}</span>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="路灯" width="100" align="center">{{ row => row.poleQuota }}</el-table-column>
+                  <el-table-column label="项目" width="100" align="center">{{ row => row.projectQuota }}</el-table-column>
+                  <el-table-column label="状态" width="100" align="center">
+                    <template #default="{ row }"><el-tag size="small" :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '生效中' : '已撤销' }}</el-tag></template>
+                  </el-table-column>
+                  <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
+                  <el-table-column prop="createdAt" label="时间" width="170"></el-table-column>
+                </el-table>
+                <div class="empty-cell" v-if="!allAllocations.length">暂无分配流水</div>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
     </div>
   </div>
+
+  <!-- 项目编辑弹窗 -->
+  <el-dialog v-model="projectDialog" :title="projectEditing ? '编辑项目' : '新增项目'" width="520px">
+    <el-form :model="projectForm" label-width="100px" :rules="projectRules" ref="projectFormRef">
+      <el-form-item label="项目名称" prop="name"><el-input v-model="projectForm.name" placeholder="请输入项目名称"></el-input></el-form-item>
+      <el-form-item label="项目编码"><el-input v-model="projectForm.code" placeholder="可选，自动生成"></el-input></el-form-item>
+      <el-form-item label="所属组织" prop="orgId">
+        <el-select v-model="projectForm.orgId" placeholder="选择组织" style="width:100%" filterable>
+          <el-option v-for="o in currentOrgs" :key="o.id" :label="o.name" :value="o.id"></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="路灯配额" prop="poleQuota">
+        <el-input-number v-model="projectForm.poleQuota" :min="0" :max="99999" style="width:100%"></el-input-number>
+        <div style="font-size:12px; color:var(--ink-3); margin-top:4px">从租户路灯配额中扣减（可用：{{ availableQuota.pole }}）</div>
+      </el-form-item>
+      <el-form-item label="状态"><el-radio-group v-model="projectForm.status"><el-radio label="active">启用</el-radio><el-radio label="inactive">停用</el-radio></el-radio-group></el-form-item>
+      <el-form-item label="备注"><el-input v-model="projectForm.remark" type="textarea" :rows="2"></el-input></el-form-item>
+    </el-form>
+    <template #footer>
+      <el-button @click="projectDialog = false">取消</el-button>
+      <el-button type="primary" @click="saveProject">确定</el-button>
+    </template>
+  </el-dialog>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="js/shared-data.js"></script>
+<script>
+const { createApp, ref, reactive, computed, watch } = Vue;
+
+const MENU_DATA = [
+  { title: '首页', icon: 'HomeFilled', open: true, items: [] },
+  { title: '设备管理', icon: 'Monitor', open: false, items: ['产品分类','产品管理','设备管理','设备分组'] },
+  { title: '智慧灯杆', icon: 'Sunny', open: false, items: ['灯杆管理','灯控策略'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
+  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },
+  { title: '综合运维', icon: 'SetUp', open: false, items: ['资产分配','策略下发日志'] },
+  { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
+  { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
+];
+const MENU_HREF = {
+  '首页': 'index.html', '产品分类': '#', '产品管理': '#', '设备管理': 'device-management.html', '设备分组': 'device-group.html',
+  '灯杆管理': 'pole-management.html', '灯控策略': 'light-strategy.html',
+  '项目列表': 'project-management.html', '项目分配': 'project-management.html', '配额看板': 'project-management.html', '分配流水': 'project-management.html',
+  '租户列表': 'tenant-management.html', '配额管理': 'tenant-management.html', '邀请码': 'tenant-management.html',
+  '资产分配': 'asset-assign.html', '组织管理': 'organization-management.html',
+};
+
+const app = createApp({
+  setup() {
+    const SD = window.SharedData;
+    const collapsed = ref(false);
+    const mobileNav = ref(false);
+    const activeMenu = ref('项目列表');
+    const menuGroups = reactive(MENU_DATA);
+    const menuHref = MENU_HREF;
+    const toggleGroup = (g) => { g.open = !g.open; };
+
+    /* 租户切换 */
+    const savedTenant = localStorage.getItem('currentTenantId');
+    const currentTenantId = ref(savedTenant || 'T1');
+    const availableTenants = computed(() => SD.TENANTS);
+    const currentTenantName = computed(() => SD.TENANTS.find(t => t.id === currentTenantId.value)?.name || '未知租户');
+    const switchTenant = (id) => {
+      if (id === currentTenantId.value) return;
+      currentTenantId.value = id;
+      localStorage.setItem('currentTenantId', id);
+      ElementPlus.ElMessage.success('已切换到租户：' + (SD.TENANTS.find(t => t.id === id)?.name || id));
+      setTimeout(() => window.location.reload(), 600);
+    };
+
+    /* 当前租户组织 + 分配过滤 */
+    const currentOrgs = computed(() => SD.ORGANIZATIONS.filter(o => o.tenantId === currentTenantId.value));
+    const orgName = (id) => SD.ORGANIZATIONS.find(o => o.id === id)?.name || '-';
+    const tenantName = (id) => SD.TENANTS.find(t => t.id === id)?.name || id;
+
+    /* Tab 切换（菜单点击） */
+    const activeTab = ref('list');
+    const onMenuClick = (item, e) => {
+      const map = { '项目列表': 'list', '项目分配': 'allocate', '配额看板': 'quota', '分配流水': 'flow' };
+      if (map[item]) { activeMenu.value = item; activeTab.value = map[item]; return; }
+      const href = MENU_HREF[item];
+      if (href && href !== '#') window.location.href = href;
+      else if (href === '#') ElementPlus.ElMessage.info(item + ' 模块建设中');
+    };
+
+    /* ===== 项目 CRUD ===== */
+    const filterOrgId = ref(null);
+    const filterKeyword = ref('');
+    const filteredProjects = computed(() => {
+      return SD.PROJECTS.filter(p => p.tenantId === currentTenantId.value)
+        .filter(p => !filterOrgId.value || p.orgId === filterOrgId.value)
+        .filter(p => !filterKeyword.value || p.name.includes(filterKeyword.value) || (p.code && p.code.includes(filterKeyword.value)));
+    });
+    const projectDialog = ref(false);
+    const projectEditing = ref(false);
+    const projectFormRef = ref();
+    const projectForm = reactive({ id: null, name: '', code: '', orgId: null, poleQuota: 0, status: 'active', remark: '' });
+    const projectRules = { name: [{ required: true, message: '请输入项目名称', trigger: 'blur' }], orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }] };
+    const resetProjectForm = () => { Object.assign(projectForm, { id: null, name: '', code: '', orgId: null, poleQuota: 0, status: 'active', remark: '' }); };
+    const openAddProject = () => { resetProjectForm(); projectEditing.value = false; projectDialog.value = true; };
+    const openEditProject = (row) => { Object.assign(projectForm, JSON.parse(JSON.stringify(row))); projectEditing.value = true; projectDialog.value = true; };
+    const saveProject = async () => {
+      try { await projectFormRef.value.validate(); } catch { return; }
+      if (projectEditing.value) {
+        const idx = SD.PROJECTS.findIndex(p => p.id === projectForm.id);
+        if (idx > -1) Object.assign(SD.PROJECTS[idx], projectForm);
+        ElementPlus.ElMessage.success('修改成功');
+      } else {
+        const newId = Math.max(...SD.PROJECTS.map(p => p.id), 0) + 1;
+        const newProj = { ...projectForm, id: newId, tenantId: currentTenantId.value, poleUsed: 0, createdAt: new Date().toISOString().slice(0, 19).replace('T', ' ') };
+        SD.PROJECTS.push(newProj);
+        const q = SD.TENANT_QUOTAS.find(q => q.tenantId === currentTenantId.value);
+        if (q) q.projectUsed += 1;
+        ElementPlus.ElMessage.success('新增成功');
+      }
+      projectDialog.value = false;
+    };
+    const deleteProject = (row) => {
+      ElementPlus.ElMessageBox.confirm(`确认删除项目「${row.name}」吗？`, '提示', { type: 'warning' })
+        .then(() => {
+          if (row.poleUsed > 0) {
+            ElementPlus.ElMessage.error('项目下还有 ' + row.poleUsed + ' 路灯，无法删除');
+            return;
+          }
+          const idx = SD.PROJECTS.findIndex(p => p.id === row.id);
+          if (idx > -1) { SD.PROJECTS.splice(idx, 1); const q = SD.TENANT_QUOTAS.find(q => q.tenantId === currentTenantId.value); if (q) q.projectUsed = Math.max(0, q.projectUsed - 1); ElementPlus.ElMessage.success('删除成功'); }
+        }).catch(() => {});
+    };
+
+    /* ===== 配额计算 ===== */
+    const myQuota = computed(() => SD.TENANT_QUOTAS.find(q => q.tenantId === currentTenantId.value) || { poleTotal: 0, poleUsed: 0, projectTotal: 0, projectUsed: 0 });
+    const grantedQuota = computed(() => {
+      const out = SD.PROJECT_ALLOCATIONS.filter(a => a.fromTenantId === currentTenantId.value && a.status === 'active');
+      return { pole: out.reduce((s, a) => s + a.poleQuota, 0), project: out.reduce((s, a) => s + a.projectQuota, 0) };
+    });
+    const receivedQuota = computed(() => {
+      const inc = SD.PROJECT_ALLOCATIONS.filter(a => a.toTenantId === currentTenantId.value && a.status === 'active');
+      return { pole: inc.reduce((s, a) => s + a.poleQuota, 0), project: inc.reduce((s, a) => s + a.projectQuota, 0) };
+    });
+    const availableQuota = computed(() => {
+      return {
+        pole: myQuota.value.poleTotal - myQuota.value.poleUsed + receivedQuota.value.pole - grantedQuota.value.pole,
+        project: myQuota.value.projectTotal - myQuota.value.projectUsed + receivedQuota.value.project - grantedQuota.value.project,
+      };
+    });
+    const quotaPercent = (kind) => {
+      const total = myQuota.value[kind + 'Total'];
+      const used = myQuota.value[kind + 'Used'] + grantedQuota.value[kind];
+      return total > 0 ? Math.min(100, Math.round(used / total * 100)) : 0;
+    };
+    const quotaStatus = (kind) => {
+      const p = quotaPercent(kind);
+      if (p >= 90) return 'exception';
+      if (p >= 80) return 'warning';
+      return 'success';
+    };
+    const pct = (a, b) => b > 0 ? Math.min(100, a / b * 100) : 0;
+
+    /* ===== 分销授权 ===== */
+    const childTenants = computed(() => {
+      return SD.TENANTS.filter(t => t.id !== currentTenantId.value);
+    });
+    const allocForm = reactive({ toTenantId: null, poleQuota: 0, projectQuota: 0, remark: '' });
+    const allocError = ref('');
+    const canSubmitAlloc = computed(() => {
+      if (!allocForm.toTenantId) return false;
+      if (allocForm.poleQuota < 0 || allocForm.projectQuota < 0) return false;
+      if (allocForm.poleQuota + allocForm.projectQuota === 0) return false;
+      if (allocForm.poleQuota > availableQuota.value.pole) return false;
+      if (allocForm.projectQuota > availableQuota.value.project) return false;
+      return true;
+    });
+    watch(canSubmitAlloc, (v) => {
+      if (!v && allocForm.toTenantId) {
+        if (allocForm.poleQuota > availableQuota.value.pole) allocError.value = '路灯配额超过可用 (' + availableQuota.value.pole + ')';
+        else if (allocForm.projectQuota > availableQuota.value.project) allocError.value = '项目配额超过可用 (' + availableQuota.value.project + ')';
+        else if (allocForm.poleQuota + allocForm.projectQuota === 0) allocError.value = '路灯和项目配额不能同时为 0';
+        else allocError.value = '';
+      } else allocError.value = '';
+    });
+    const resetAllocForm = () => { allocForm.toTenantId = null; allocForm.poleQuota = 0; allocForm.projectQuota = 0; allocForm.remark = ''; allocError.value = ''; };
+    const submitAllocation = () => {
+      if (!canSubmitAlloc.value) { ElementPlus.ElMessage.error(allocError.value || '表单不合法'); return; }
+      const newId = Math.max(...SD.PROJECT_ALLOCATIONS.map(a => a.id), 0) + 1;
+      SD.PROJECT_ALLOCATIONS.push({
+        id: newId,
+        fromTenantId: currentTenantId.value,
+        toTenantId: allocForm.toTenantId,
+        poleQuota: allocForm.poleQuota,
+        poleUsed: 0,
+        projectQuota: allocForm.projectQuota,
+        projectUsed: 0,
+        status: 'active',
+        operator: 'admin',
+        createdAt: new Date().toISOString().slice(0, 19).replace('T', ' '),
+        remark: allocForm.remark,
+      });
+      ElementPlus.ElMessage.success('分配成功');
+      resetAllocForm();
+    };
+    const allocFilter = ref('out');
+    const filteredAllocations = computed(() => {
+      return SD.PROJECT_ALLOCATIONS.filter(a => {
+        if (allocFilter.value === 'out') return a.fromTenantId === currentTenantId.value;
+        return a.toTenantId === currentTenantId.value;
+      });
+    });
+    const allAllocations = computed(() => SD.PROJECT_ALLOCATIONS.slice().sort((a, b) => b.id - a.id));
+    const revokeAllocation = (row) => {
+      ElementPlus.ElMessageBox.confirm(`确认撤销对「${tenantName(row.toTenantId)}」的分配吗？\n已使用部分 ({{ ${row.poleUsed}}路灯 / ${row.projectUsed}项目) 不返还，未使用部分自动恢复。`, '提示', { type: 'warning' })
+        .then(() => {
+          const idx = SD.PROJECT_ALLOCATIONS.findIndex(a => a.id === row.id);
+          if (idx > -1) { SD.PROJECT_ALLOCATIONS[idx].status = 'revoked'; ElementPlus.ElMessage.success('撤销成功'); }
+        }).catch(() => {});
+    };
+
+    /* ===== 统计 ===== */
+    const stats = computed(() => {
+      const projects = SD.PROJECTS.filter(p => p.tenantId === currentTenantId.value);
+      return {
+        projectCount: projects.length,
+        poleUsed: projects.reduce((s, p) => s + p.poleUsed, 0),
+        poleQuota: myQuota.value.poleTotal,
+        grantedPole: grantedQuota.value.pole,
+        receivedPole: receivedQuota.value.pole,
+      };
+    });
+
+    return {
+      collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick,
+      currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: SD,
+      currentOrgs, orgName, tenantName, activeTab,
+      filterOrgId, filterKeyword, filteredProjects,
+      projectDialog, projectEditing, projectForm, projectFormRef, projectRules,
+      openAddProject, openEditProject, saveProject, deleteProject,
+      myQuota, grantedQuota, receivedQuota, availableQuota, quotaPercent, quotaStatus, pct, stats,
+      childTenants, allocForm, allocError, canSubmitAlloc, submitAllocation, resetAllocForm,
+      allocFilter, filteredAllocations, allAllocations, revokeAllocation,
+      Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete,
+      Search: ElementPlusIconsVue?.Search, Promotion: ElementPlusIconsVue?.Promotion, Right: ElementPlusIconsVue?.Right,
+      OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
+      Folder: ElementPlusIconsVue?.Folder, Sunny: ElementPlusIconsVue?.Sunny, Share: ElementPlusIconsVue?.Share,
+      Menu: ElementPlusIconsVue?.Menu, Expand: ElementPlusIconsVue?.Expand, Fold: ElementPlusIconsVue?.Fold,
+      HomeFilled: ElementPlusIconsVue?.HomeFilled, Monitor: ElementPlusIconsVue?.Monitor, SetUp: ElementPlusIconsVue?.SetUp, DataLine: ElementPlusIconsVue?.DataLine, Setting: ElementPlusIconsVue?.Setting,
+    };
+  }
+});
+
+app.use(ElementPlus);
+app.mount('#app');
+</script>
 </body>
 </html>

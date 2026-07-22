@@ -238,6 +238,10 @@
     .act-pill .seg { font-size: var(--fs-sm); color: var(--ink-2); }
     .tag-soft { background: var(--surface-2); border-color: var(--line-soft); }
     .cat-head { font-size: 12px; font-weight: 600; color: var(--ink-3); padding: 8px 0; }
+    .proj-pick { padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--r-md); margin-bottom: 8px; cursor: pointer; transition: all .15s; background: var(--surface); }
+    .proj-pick:hover { border-color: var(--brand); background: rgba(47,107,255,.02); }
+    .proj-pick.active { border-color: var(--brand); background: rgba(47,107,255,.08); }
+    .proj-pick.full { opacity: .55; cursor: not-allowed; }
     .cat-item {
       padding: 8px 10px; border-radius: 6px; cursor: pointer;
       font-size: 13px; display: flex; align-items: center; gap: 8px;
@@ -357,7 +361,7 @@
         <section v-if="activeMenu === '资产分配'">
           <div class="panel">
             <div class="page-head">
-              <div class="ph-title">资产分配 <small>上级组织分配路灯设备给下级组织</small></div>
+              <div class="ph-title">资产分配 <small>分配路灯设备到项目（支持跨项目调拨，配额自动校验）</small></div>
             </div>
             <div class="stat-grid">
               <div class="stat-card">
@@ -465,18 +469,25 @@
         </section>
       </main>
     </div>
-    <el-dialog v-model="assignDialog" title="分配设备" width="1100px" top="5vh" :close-on-click-modal="false" destroy-on-close>
+    <el-dialog v-model="assignDialog" title="分配设备到项目" width="1100px" top="5vh" :close-on-click-modal="false" destroy-on-close>
       <div style="display:flex; gap:20px; min-height:480px">
-        <div style="width:300px; flex:0 0 300px">
-          <div class="cat-head">选择目标组织</div>
-          <el-tree :data="orgTreeData" :props="{ label: 'name', children: 'children' }" node-key="id" :expand-on-click-node="false" highlight-current :default-expand-all="true" @node-click="selectOrg">
-            <template #default="{ node, data }">
-              <div style="display:flex; align-items:center; justify-content:space-between; width:100%">
-                <span>{{ node.label }}</span>
-                <el-radio :model-value="selectedOrgId" :value="data.id" @click.stop="selectedOrgId = data.id"></el-radio>
+        <div style="width:320px; flex:0 0 320px">
+          <div class="cat-head">选择目标项目</div>
+          <div v-for="p in currentTenantProjects" :key="p.id" class="proj-pick" :class="{ active: selectedProjectId === p.id, full: p.poleUsed >= p.poleQuota }" @click="selectProject(p)">
+            <div style="display:flex; align-items:center; justify-content:space-between">
+              <div style="flex:1; min-width:0">
+                <div style="font-weight:600; overflow:hidden; text-overflow:ellipsis; white-space:nowrap">{{ p.name }}</div>
+                <div style="font-size:12px; color:var(--ink-3); margin-top:2px">{{ orgName(p.orgId) }}</div>
+                <div style="font-size:11px; color:var(--ink-3); margin-top:4px">
+                  路灯 {{ p.poleUsed }} / {{ p.poleQuota }}
+                  <span v-if="p.poleUsed >= p.poleQuota" style="color:var(--off); margin-left:6px">已满</span>
+                  <span v-else :style="{color: 'var(--brand)', marginLeft: '6px'}">余 {{ p.poleQuota - p.poleUsed }}</span>
+                </div>
               </div>
-            </template>
-          </el-tree>
+              <el-radio :model-value="selectedProjectId" :value="p.id" @click.stop="selectProject(p)" :disabled="p.poleUsed >= p.poleQuota"></el-radio>
+            </div>
+          </div>
+          <div v-if="!currentTenantProjects.length" class="empty-cell">当前租户暂无项目</div>
         </div>
         <div style="flex:1; min-width:0">
           <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:10px">
@@ -497,12 +508,17 @@
           </div>
           <el-table :data="availableDevices" border size="small" max-height="380" row-key="id">
             <el-table-column width="44" align="center">
-              <template #default="{ row }"><el-checkbox :model-value="selectedDeviceIds.includes(row.id)" @change="(val) => toggleDevice(row.id, val)"></el-checkbox></template>
+              <template #default="{ row }"><el-checkbox :model-value="selectedDeviceIds.includes(row.id)" @change="(val) => toggleDevice(row.id, val)" :disabled="row.projectId && row.projectId !== selectedProjectId && selectedProjectId"></el-checkbox></template>
             </el-table-column>
             <el-table-column prop="name" label="设备名称" min-width="120"></el-table-column>
             <el-table-column prop="sn" label="序列号" min-width="150"></el-table-column>
             <el-table-column prop="groupName" label="分组" width="100"></el-table-column>
-            <el-table-column prop="currentOrgName" label="当前归属" width="120"></el-table-column>
+            <el-table-column label="当前归属" width="160">
+              <template #default="{ row }">
+                <span v-if="row.projectId" class="org-tag">{{ projName(row.projectId) }}</span>
+                <span v-else style="color:var(--ink-3)">未分配</span>
+              </template>
+            </el-table-column>
             <el-table-column prop="status" label="状态" width="100" align="center">
               <template #default="{ row }">
                 <el-tag size="small" :type="row.status === 'online' ? 'success' : row.status === 'offline' ? 'danger' : 'info'">{{ row.status === 'online' ? '在线' : row.status === 'offline' ? '离线' : '未注册' }}</el-tag>
@@ -671,10 +687,16 @@ const app = createApp({
     const page = reactive({ current: 1, size: 10 });
     const userPage = reactive({ current: 1, size: 10 });
     const assignDialog = ref(false);
-    const selectedOrgId = ref(null);
+    const selectedProjectId = ref(null);
     const selectedDeviceIds = ref([]);
     const selectedOwner = ref(null);
     const deviceSearch = reactive({ name: '', sn: '', group: '' });
+    /* 租户与项目映射 */
+    const currentTenantId = ref(localStorage.getItem('currentTenantId') || 'T1');
+    const currentTenantProjects = computed(() => window.SharedData.PROJECTS.filter(p => p.tenantId === currentTenantId.value));
+    const projName = (id) => window.SharedData.PROJECTS.find(p => p.id === id)?.name || '-';
+    const orgName = (id) => window.SharedData.ORGANIZATIONS.find(o => o.id === id)?.name || '-';
+    const selectProject = (p) => { if (p.poleUsed < p.poleQuota) selectedProjectId.value = p.id; };
     
     const orgTreeData = computed(() => {
       const map = new Map();
@@ -757,19 +779,15 @@ const app = createApp({
       const p = n => String(n).padStart(2, '0');
       return `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`;
     };
-    
-    const selectOrg = (data) => {
-      selectedOrgId.value = data.id;
-    };
-    
+
     const toggleDevice = (id, val) => {
       const i = selectedDeviceIds.value.indexOf(id);
       if (val && i === -1) selectedDeviceIds.value.push(id);
       else if (!val && i > -1) selectedDeviceIds.value.splice(i, 1);
     };
-    
+
     const openAssignDialog = () => {
-      selectedOrgId.value = null;
+      selectedProjectId.value = null;
       selectedDeviceIds.value = [];
       selectedOwner.value = null;
       deviceSearch.name = '';
@@ -777,28 +795,46 @@ const app = createApp({
       deviceSearch.group = '';
       assignDialog.value = true;
     };
-    
+
     const confirmAssign = () => {
-      if (!selectedOrgId.value) {
-        ElementPlus.ElMessage.warning('请选择目标组织');
+      if (!selectedProjectId.value) {
+        ElementPlus.ElMessage.warning('请选择目标项目');
         return;
       }
       if (!selectedDeviceIds.value.length) {
         ElementPlus.ElMessage.warning('请选择要分配的设备');
         return;
       }
-      const org = organizations.find(o => o.id === selectedOrgId.value);
-      selectedDeviceIds.value.forEach(deviceId => {
+      const proj = window.SharedData.PROJECTS.find(p => p.id === selectedProjectId.value);
+      // 配额校验：已选设备中可能在别项目，跳过后只算"未分配 + 同项目外移入"
+      const newAssigns = selectedDeviceIds.value.filter(id => {
+        const d = devices.find(x => x.id === id);
+        return d && d.projectId !== selectedProjectId.value;
+      });
+      const freeSlots = proj.poleQuota - proj.poleUsed;
+      if (newAssigns.length > freeSlots) {
+        ElementPlus.ElMessage.error(`项目剩余配额仅 ${freeSlots} 灯，本次需分配 ${newAssigns.length} 台`);
+        return;
+      }
+      newAssigns.forEach(deviceId => {
         const idx = devices.findIndex(d => d.id === deviceId);
         if (idx > -1) {
-          devices[idx].orgId = selectedOrgId.value;
+          const oldProj = devices[idx].projectId;
+          // 从旧项目扣减
+          if (oldProj) {
+            const op = window.SharedData.PROJECTS.find(p => p.id === oldProj);
+            if (op) op.poleUsed = Math.max(0, op.poleUsed - 1);
+          }
+          devices[idx].projectId = selectedProjectId.value;
+          proj.poleUsed += 1;
           if (selectedOwner.value !== null) {
             devices[idx].owner = selectedOwner.value;
           }
           assignRecords.unshift({
             id: assignRecords.length + 1,
             deviceId: deviceId,
-            orgId: selectedOrgId.value,
+            orgId: proj.orgId,
+            projectId: selectedProjectId.value,
             userId: selectedOwner.value,
             action: 'assign',
             time: generateTime(),
@@ -806,12 +842,12 @@ const app = createApp({
           });
         }
       });
-      ElementPlus.ElMessage.success(`成功分配 ${selectedDeviceIds.value.length} 台设备给 ${org.name}`);
+      ElementPlus.ElMessage.success(`成功分配 ${newAssigns.length} 台设备到项目「${proj.name}」`);
       assignDialog.value = false;
     };
-    
+
     const revokeAssign = (row) => {
-      ElementPlus.ElMessageBox.confirm(`确认撤销分配给「${row.orgName}」的设备「${row.deviceName}」吗？`, '提示', {
+      ElementPlus.ElMessageBox.confirm(`确认撤销分配给「${row.projectName || row.orgName}」的设备「${row.deviceName}」吗？`, '提示', {
         type: 'warning',
         confirmButtonText: '确定',
         cancelButtonText: '取消'
@@ -820,13 +856,20 @@ const app = createApp({
         if (idx > -1) {
           const deviceIdx = devices.findIndex(d => d.id === row.deviceId);
           if (deviceIdx > -1) {
-            devices[deviceIdx].orgId = null;
+            // 从项目扣减 poleUsed
+            const oldProj = devices[deviceIdx].projectId;
+            if (oldProj) {
+              const op = window.SharedData.PROJECTS.find(p => p.id === oldProj);
+              if (op) op.poleUsed = Math.max(0, op.poleUsed - 1);
+            }
+            devices[deviceIdx].projectId = null;
             devices[deviceIdx].owner = null;
           }
           assignRecords.unshift({
             id: assignRecords.length + 1,
             deviceId: row.deviceId,
             orgId: row.orgId,
+            projectId: row.projectId,
             userId: row.userId,
             action: 'unassign',
             time: generateTime(),
@@ -854,8 +897,9 @@ const app = createApp({
       query, page, filteredRecords, pagedRecords,
       userPage, orgAssetStats, pagedOrgAssetStats,
       orgTreeData, allGroupNames, unassignedCount,
-      assignDialog, selectedOrgId, selectedDeviceIds, selectedOwner, deviceSearch, availableDevices,
-      selectOrg, toggleDevice, openAssignDialog, confirmAssign, revokeAssign,
+      assignDialog, selectedProjectId, selectedDeviceIds, selectedOwner, deviceSearch, availableDevices,
+      selectProject, toggleDevice, openAssignDialog, confirmAssign, revokeAssign,
+      currentTenantId, currentTenantProjects, projName, orgName,
       doSearch, resetQuery,
       Plus: window.ElementPlusIconsVue?.Plus,
       Search: window.ElementPlusIconsVue?.Search,
