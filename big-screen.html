@@ -1,657 +1,1179 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="zh-CN">
-<head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>智慧灯杆运营大屏 · 云创智慧平台</title>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
-<style>
-  :root {
-    --bs-bg: #020b18;
-    --bs-panel: rgba(6, 28, 52, 0.82);
-    --bs-border: rgba(0, 196, 255, 0.35);
-    --bs-border-soft: rgba(0, 160, 220, 0.18);
-    --bs-cyan: #00d4ff;
-    --bs-green: #3dd68c;
-    --bs-orange: #faad14;
-    --bs-orange-deep: #ff7a45;
-    --bs-red: #ff5a6a;
-    --bs-offline: #8a9bb0;
-    --bs-inactive: #5a6a7a;
-    --bs-text: #d8eefc;
-    --bs-muted: rgba(160, 200, 230, 0.72);
-    --bs-title: #7ee9ff;
-  }
-  * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; }
-  body {
-    font-family: 'DIN Alternate', 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
-  }
-
-  .bs-viewport {
-    position: fixed;
-    inset: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-    background: var(--bs-bg);
-  }
-
-  .big-screen {
-    position: relative;
-    flex-shrink: 0;
-    width: 1920px;
-    height: 1080px;
-    overflow: hidden;
-    color: var(--bs-text);
-    background: radial-gradient(ellipse at center, #0a2744 0%, var(--bs-bg) 70%);
-    transform-origin: center center;
-  }
-
-  /* ---------- 地图（静态示意，无地图 SDK 依赖） ---------- */
-  .bs-map {
-    position: absolute;
-    inset: 0;
-    z-index: 1;
-    overflow: hidden;
-    background: #041222;
-  }
-  .bs-map-grid {
-    position: absolute;
-    inset: -2px;
-    background-image:
-      linear-gradient(rgba(0, 180, 230, 0.10) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 180, 230, 0.10) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse at 55% 45%, #000 0%, transparent 72%);
-  }
-  .bs-map-glow {
-    position: absolute;
-    top: 18%;
-    left: 30%;
-    width: 60%;
-    height: 60%;
-    background: radial-gradient(ellipse at center, rgba(0, 160, 220, 0.22) 0%, transparent 70%);
-    pointer-events: none;
-  }
-  .bs-map-ring {
-    position: absolute;
-    top: 50%;
-    left: 55%;
-    border: 1px solid rgba(0, 212, 255, 0.18);
-    border-radius: 50%;
-    transform: translate(-50%, -50%);
-    animation: bs-ring-pulse 4s ease-out infinite;
-  }
-  @keyframes bs-ring-pulse {
-    0% { opacity: .8; }
-    100% { opacity: 0; }
-  }
-  .bs-lamp-marker {
-    position: absolute;
-    width: 20px;
-    height: 30px;
-    transform: translate(-50%, -100%);
-    cursor: pointer;
-  }
-  .bs-lamp-marker svg { display: block; width: 100%; height: 100%; overflow: visible; }
-  .bs-lamp-bulb--on { filter: drop-shadow(0 0 5px rgba(250, 210, 80, 0.9)); }
-  .bs-lamp-bulb--off { opacity: 0.85; }
-
-  /* ---------- 顶栏 ---------- */
-  .bs-header {
-    position: absolute;
-    top: 0; right: 0; left: 0;
-    z-index: 20;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 72px;
-    padding: 0 28px;
-    background: linear-gradient(180deg, rgba(2, 16, 36, 0.92) 0%, rgba(2, 16, 36, 0.35) 70%, transparent 100%);
-    pointer-events: none;
-  }
-  .bs-header > * { pointer-events: auto; }
-  .bs-header__time { min-width: 220px; font-size: 15px; letter-spacing: 1px; color: var(--bs-muted); }
-  .bs-header__title {
-    position: relative;
-    padding: 0 48px;
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: 6px;
-    color: #e8f7ff;
-    text-shadow: 0 0 18px rgba(0, 212, 255, 0.45);
-  }
-  .bs-header__title::before,
-  .bs-header__title::after {
-    position: absolute;
-    top: 50%;
-    width: 56px;
-    height: 2px;
-    content: '';
-    background: linear-gradient(90deg, transparent, var(--bs-cyan));
-  }
-  .bs-header__title::before { right: 100%; transform: translateY(-50%); }
-  .bs-header__title::after { left: 100%; background: linear-gradient(90deg, var(--bs-cyan), transparent); transform: translateY(-50%); }
-  .bs-header__actions { display: flex; gap: 10px; align-items: center; justify-content: flex-end; min-width: 220px; }
-  .bs-action-btn {
-    height: 32px;
-    padding: 0 14px;
-    font-size: 13px;
-    color: var(--bs-text);
-    cursor: pointer;
-    background: rgba(0, 120, 180, 0.25);
-    border: 1px solid var(--bs-border);
-    border-radius: 2px;
-    transition: all 0.2s;
-  }
-  .bs-action-btn:hover { color: #fff; background: rgba(0, 180, 230, 0.35); box-shadow: 0 0 12px rgba(0, 212, 255, 0.25); }
-
-  /* ---------- 图例 ---------- */
-  .bs-legend {
-    position: absolute;
-    top: 84px;
-    left: 50%;
-    z-index: 16;
-    display: flex;
-    gap: 16px;
-    padding: 6px 14px;
-    font-size: 12px;
-    color: var(--bs-muted);
-    background: rgba(6, 28, 52, 0.72);
-    border: 1px solid var(--bs-border-soft);
-    border-radius: 20px;
-    transform: translateX(-50%);
-    backdrop-filter: blur(4px);
-  }
-  .bs-legend__item { display: flex; gap: 6px; align-items: center; }
-  .bs-legend__lamp { width: 12px; height: 17px; }
-
-  /* ---------- 侧栏 & 底部 ---------- */
-  .bs-side {
-    position: absolute;
-    top: 84px;
-    bottom: 240px;
-    z-index: 15;
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
-    width: 360px;
-    pointer-events: none;
-  }
-  .bs-side > * { pointer-events: auto; }
-  .bs-side > *:nth-child(1) { flex: 0 0 auto; }
-  .bs-side > *:nth-child(2) { flex: 1.1; min-height: 160px; }
-  .bs-side > *:nth-child(3) { flex: 1; min-height: 140px; }
-  .bs-side--left { left: 16px; }
-  .bs-side--right { right: 16px; }
-  .bs-side--right > *:nth-child(1) { flex: 0 0 auto; }
-  .bs-side--right > *:nth-child(2),
-  .bs-side--right > *:nth-child(3) { flex: 1; min-height: 120px; }
-
-  .bs-bottom {
-    position: absolute;
-    right: 392px;
-    bottom: 16px;
-    left: 392px;
-    z-index: 15;
-    display: flex;
-    gap: 14px;
-    height: 210px;
-    pointer-events: none;
-  }
-  .bs-bottom > * { flex: 1; height: 100%; min-width: 0; pointer-events: auto; }
-
-  /* ---------- 面板通用 ---------- */
-  .bs-panel {
-    position: relative;
-    display: flex;
-    flex-direction: column;
-    min-height: 0;
-    overflow: hidden;
-    background: var(--bs-panel);
-    border: 1px solid var(--bs-border-soft);
-    border-radius: 4px;
-    box-shadow: inset 0 0 24px rgba(0, 160, 220, 0.08), 0 8px 24px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(6px);
-  }
-  .bs-panel__corner {
-    position: absolute;
-    z-index: 2;
-    width: 12px;
-    height: 12px;
-    pointer-events: none;
-    border: 2px solid var(--bs-cyan);
-    opacity: 0.9;
-    filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.5));
-  }
-  .bs-panel__corner--tl { top: 0; left: 0; border-right: none; border-bottom: none; }
-  .bs-panel__corner--tr { top: 0; right: 0; border-bottom: none; border-left: none; }
-  .bs-panel__corner--bl { bottom: 0; left: 0; border-top: none; border-right: none; }
-  .bs-panel__corner--br { right: 0; bottom: 0; border-top: none; border-left: none; }
-
-  .bs-panel__header {
-    position: relative;
-    display: flex;
-    flex-shrink: 0;
-    align-items: center;
-    justify-content: space-between;
-    height: 40px;
-    padding: 0 14px;
-    overflow: hidden;
-    font-size: 14px;
-    font-weight: 600;
-    color: var(--bs-title);
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--bs-border-soft);
-    background: linear-gradient(90deg, rgba(0, 160, 220, 0.18), transparent 70%);
-  }
-  .bs-panel__header::after {
-    position: absolute;
-    bottom: -1px;
-    left: -30%;
-    width: 30%;
-    height: 1px;
-    content: '';
-    background: linear-gradient(90deg, transparent, var(--bs-cyan), transparent);
-    animation: bs-panel-scan 3.2s linear infinite;
-  }
-  @keyframes bs-panel-scan { 0% { left: -30%; } 100% { left: 100%; } }
-  .bs-panel__header .hint { font-size: 11px; font-weight: 400; color: rgba(160, 200, 230, 0.55); }
-  .bs-panel__body { flex: 1; min-height: 0; padding: 12px 14px; overflow: auto; }
-
-  /* ---------- KPI ---------- */
-  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-  .kpi-item { padding: 10px 8px; text-align: center; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
-  .kpi-label { margin-bottom: 6px; font-size: 12px; color: var(--bs-muted); }
-  .kpi-value { font-size: 22px; font-weight: 700; color: #e8f7ff; letter-spacing: 0.5px; }
-  .kpi-value.is-green { color: var(--bs-green); }
-  .kpi-value.is-orange { color: var(--bs-orange); }
-  .kpi-value.is-cyan { color: var(--bs-cyan); }
-  .kpi-value.is-muted { color: var(--bs-offline); }
-
-  /* ---------- 告警 ---------- */
-  .empty { display: flex; align-items: center; justify-content: center; height: 100%; min-height: 80px; font-size: 13px; color: var(--bs-muted); }
-  .alarm-list { display: flex; flex-direction: column; gap: 8px; padding: 0; margin: 0; list-style: none; }
-  .alarm-item { display: flex; gap: 10px; align-items: flex-start; padding: 8px 10px; background: rgba(255, 90, 106, 0.06); border: 1px solid rgba(255, 90, 106, 0.18); border-radius: 4px; }
-  .alarm-level { flex-shrink: 0; padding: 2px 6px; font-size: 11px; font-weight: 700; color: #fff; background: var(--bs-red); border-radius: 2px; }
-  .alarm-level.lv-1 { background: var(--bs-orange); }
-  .alarm-level.lv-2 { background: var(--bs-orange-deep); }
-  .alarm-level.lv-3 { background: var(--bs-red); }
-  .alarm-name { font-size: 13px; color: #e8f7ff; }
-  .alarm-meta { display: flex; gap: 12px; margin-top: 2px; font-size: 11px; color: var(--bs-muted); }
-
-  /* ---------- 筛选 ---------- */
-  .filter-form { display: flex; flex-direction: column; gap: 12px; }
-  .filter-row { display: flex; flex-direction: column; gap: 6px; }
-  .filter-row label { font-size: 12px; color: var(--bs-muted); }
-  .filter-select { width: 100%; }
-  .filter-actions { display: flex; gap: 8px; margin-top: 4px; }
-  .el-select__wrapper { background: rgba(0, 40, 70, 0.55) !important; box-shadow: 0 0 0 1px rgba(0, 160, 220, 0.3) inset !important; }
-  .el-select__placeholder, .el-select__selected-item, .el-tag { color: #d8eefc !important; }
-
-  /* ---------- 分组统计 ---------- */
-  .summary-row { display: flex; gap: 8px; margin-bottom: 8px; font-size: 13px; }
-  .summary-row .label { flex-shrink: 0; width: 36px; color: var(--bs-muted); }
-  .summary-row .value { flex: 1; color: #e8f7ff; word-break: break-all; }
-  .summary-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-top: 12px; }
-  .metric { padding: 8px 4px; text-align: center; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
-  .metric-val { font-size: 18px; font-weight: 700; color: #e8f7ff; }
-  .metric-val.is-green { color: var(--bs-green); }
-  .metric-val.is-cyan { color: var(--bs-cyan); }
-  .metric-val.is-orange { color: var(--bs-orange); }
-  .metric-label { margin-top: 4px; font-size: 11px; color: var(--bs-muted); }
-
-  /* ---------- 能耗类数值网格（节能数据统计 / 用电计划）---------- */
-  .elec-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-  .elec-item { padding: 12px 10px; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
-  .elec-label { margin-bottom: 6px; font-size: 12px; color: var(--bs-muted); }
-  .elec-value { font-size: 22px; font-weight: 700; color: var(--bs-cyan); }
-  .elec-value .unit { margin-left: 2px; font-size: 12px; font-weight: 400; color: var(--bs-muted); }
-
-  /* ---------- 用电计划 ---------- */
-  .plan-policy { display: flex; flex-direction: column; gap: 6px; padding: 10px; margin-bottom: 12px; background: rgba(0, 100, 160, 0.12); border: 1px solid rgba(0, 160, 220, 0.15); border-radius: 4px; }
-  .plan-row { display: flex; gap: 8px; font-size: 12px; }
-  .plan-row .label { flex-shrink: 0; width: 64px; color: var(--bs-muted); }
-  .plan-row .value { flex: 1; color: #e8f7ff; }
-  .plan-row .value.is-status { color: var(--bs-green); font-weight: 600; }
-
-  .echart { width: 100%; }
-</style>
-</head>
-<body>
-<div id="app"></div>
-
-<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
-
-<script>
-const { createApp, ref, reactive, computed, onMounted, onBeforeUnmount, watch, nextTick } = Vue;
-
-/* ---------------- 静态示例数据（对应原 Vue 页面的接口返回结构） ---------------- */
-
-const GROUPS = [
-  { id: 1, name: '中心城区' },
-  { id: 2, name: '开发区' },
-  { id: 3, name: '滨江路' },
-  { id: 4, name: '高新园区' }
-];
-
-const PRODUCTS = [
-  { id: 1, name: '智慧路灯' },
-  { id: 2, name: '监控杆' },
-  { id: 3, name: '广播音柱' },
-  { id: 4, name: '环境传感器' }
-];
-
-const ALARMS = [
-  { id: 1, name: '灯杆离线超阈值', level: 3, deviceId: 10231, processStatus: false },
-  { id: 2, name: '电压异常波动', level: 2, deviceId: 10087, processStatus: false },
-  { id: 3, name: '亮灯率低于阈值', level: 1, deviceId: 10456, processStatus: true },
-  { id: 4, name: '通信超时', level: 2, deviceId: 10192, processStatus: false },
-  { id: 5, name: '功率突增告警', level: 3, deviceId: 10078, processStatus: true }
-];
-
-const KPI = { total: 854, online: 812, offline: 42, lightOn: 536, onlineRate: 95.1, lightRate: 62.8, mappedTotal: 854 };
-
-/* 节能数据统计 */
-const ENERGY_STATS = { monthSaving: 1862, savingRate: 18.6, totalSaving: 21540, co2Reduction: 12500 };
-
-/* 用电计划：当前生效策略 + 计划/实际用电量对比 */
-const POWER_PLAN = {
-  strategyName: '冬季经济模式',
-  timeRange: '18:30 - 06:00（分时调光）',
-  status: '执行中',
-  planKwh: 9600,
-  actualKwh: 8720,
-  completionRate: 90.8
-};
-
-/* 年度能耗趋势（近 12 个月，单位 kWh） */
-const YEARLY_ENERGY = ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
-  .map((month, i) => ({ month, kwh: Math.round(7200 + Math.sin(i / 2) * 1400 + (i % 4) * 200) }));
-
-/* 月度能耗趋势（本月每日，单位 kWh） */
-const MONTHLY_ENERGY = Array.from({ length: 30 }, (_, i) => ({
-  day: `${i + 1}日`,
-  kwh: Math.round(260 + Math.sin(i / 3) * 60 + (i % 5 === 0 ? 30 : 0))
-}));
-
-/* 地图点位以设计画布内的相对百分比坐标定位，模拟真实地图分布 */
-function genMarkers() {
-  const markers = [];
-  let seed = 42;
-  const rand = () => {
-    seed = (seed * 9301 + 49297) % 233280;
-    return seed / 233280;
-  };
-  for (let i = 0; i < 90; i++) {
-    const group = GROUPS[Math.floor(rand() * GROUPS.length)];
-    const product = PRODUCTS[Math.floor(rand() * PRODUCTS.length)];
-    markers.push({
-      id: i + 1,
-      deviceId: 10000 + i,
-      name: `${group.name}-${String(i + 1).padStart(3, '0')}号灯杆`,
-      /* 设备通信在线状态，用于 KPI/筛选摘要统计，与地图图标的开关灯状态是两回事 */
-      online: rand() > 0.08,
-      groupIds: [group.id],
-      groupName: group.name,
-      productId: product.id,
-      productName: product.name,
-      left: 8 + rand() * 78,
-      top: 14 + rand() * 68,
-      switchOn: rand() > 0.35
-    });
-  }
-  return markers;
-}
-const MARKERS = genMarkers();
-
-/* ---------------- 数字滚动动效（对应 useNumberTicker） ---------------- */
-function useNumberTicker(getValue, decimals = 0) {
-  const display = ref(0);
-  let raf = null;
-  const animate = (from, to) => {
-    const duration = 600;
-    const start = performance.now();
-    if (raf) cancelAnimationFrame(raf);
-    const step = (now) => {
-      const p = Math.min(1, (now - start) / duration);
-      const eased = 1 - Math.pow(1 - p, 3);
-      const val = from + (to - from) * eased;
-      display.value = decimals ? Math.round(val * 10 ** decimals) / 10 ** decimals : Math.round(val);
-      if (p < 1) raf = requestAnimationFrame(step);
-    };
-    raf = requestAnimationFrame(step);
-  };
-  animate(0, getValue());
-  return { display, animate };
-}
-
-const App = {
-  setup() {
-    const scale = ref(1);
-    const nowText = ref('');
-    const isFullscreen = ref(false);
-    const selectedGroupIds = ref([]);
-    const selectedProductIds = ref([]);
-    let clockTimer = null;
-
-    const updateScale = () => {
-      const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
-      scale.value = Math.max(s, 0.35);
-    };
-
-    const updateClock = () => {
-      const d = new Date();
-      const pad = (n) => String(n).padStart(2, '0');
-      nowText.value = `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
-    };
-
-    const toggleFullscreen = async () => {
-      try {
-        if (!document.fullscreenElement) {
-          await document.documentElement.requestFullscreen();
-          isFullscreen.value = true;
-        } else {
-          await document.exitFullscreen();
-          isFullscreen.value = false;
-        }
-      } catch (e) {
-        ElementPlus.ElMessage.warning('当前浏览器不支持全屏');
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智慧灯杆运营大屏 · 云创智慧平台</title>
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css"
+    />
+    <style>
+      :root {
+        --bs-bg: #020b18;
+        --bs-panel: rgba(6, 28, 52, 0.82);
+        --bs-border: rgba(0, 196, 255, 0.35);
+        --bs-border-soft: rgba(0, 160, 220, 0.18);
+        --bs-cyan: #00d4ff;
+        --bs-green: #3dd68c;
+        --bs-orange: #faad14;
+        --bs-orange-deep: #ff7a45;
+        --bs-red: #ff5a6a;
+        --bs-offline: #8a9bb0;
+        --bs-inactive: #5a6a7a;
+        --bs-text: #d8eefc;
+        --bs-muted: rgba(160, 200, 230, 0.72);
+        --bs-title: #7ee9ff;
       }
-    };
-    const onFullscreenChange = () => { isFullscreen.value = !!document.fullscreenElement; };
+      * {
+        box-sizing: border-box;
+      }
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+      }
+      body {
+        font-family:
+          "DIN Alternate", "Segoe UI", "PingFang SC", "Microsoft YaHei",
+          sans-serif;
+      }
 
-    const goAdmin = () => { window.location.href = 'index.html'; };
+      .bs-viewport {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background: var(--bs-bg);
+      }
 
-    /* ---- 筛选后的点位 / KPI / 摘要 ---- */
-    const filteredMarkers = computed(() => {
-      return MARKERS.filter((m) => {
-        const groupOk = !selectedGroupIds.value.length || m.groupIds.some((g) => selectedGroupIds.value.includes(g));
-        const productOk = !selectedProductIds.value.length || selectedProductIds.value.includes(m.productId);
-        return groupOk && productOk;
-      });
-    });
+      .big-screen {
+        position: relative;
+        flex-shrink: 0;
+        width: 1920px;
+        height: 1080px;
+        overflow: hidden;
+        color: var(--bs-text);
+        background: radial-gradient(
+          ellipse at center,
+          #0a2744 0%,
+          var(--bs-bg) 70%
+        );
+        transform-origin: center center;
+      }
 
-    const filterSummary = computed(() => {
-      const list = filteredMarkers.value;
-      const online = list.filter((m) => m.online).length;
-      const lightOn = list.filter((m) => m.switchOn).length;
-      return {
-        deviceCount: list.length,
-        onlineCount: online,
-        onlineRate: list.length ? Math.round((online / list.length) * 1000) / 10 : 0,
-        lightOnCount: lightOn,
-        groupLabel: selectedGroupIds.value.length
-          ? GROUPS.filter((g) => selectedGroupIds.value.includes(g.id)).map((g) => g.name).join('、')
-          : '全部分组',
-        typeLabel: selectedProductIds.value.length
-          ? PRODUCTS.filter((p) => selectedProductIds.value.includes(p.id)).map((p) => p.name).join('、')
-          : '全部类型'
-      };
-    });
+      /* ---------- 地图（高德 JS API） ---------- */
+      .bs-map {
+        position: absolute;
+        inset: 0;
+        z-index: 1;
+        overflow: hidden;
+        background: #041222;
+      }
+      .bs-amap {
+        width: 100%;
+        height: 100%;
+      }
+      .bs-amap .amap-logo,
+      .bs-amap .amap-copyright {
+        opacity: 0.35 !important;
+      }
+      .bs-lamp-marker {
+        width: 20px;
+        height: 30px;
+        cursor: pointer;
+        pointer-events: auto;
+      }
+      .bs-lamp-marker svg {
+        display: block;
+        width: 100%;
+        height: 100%;
+        overflow: visible;
+      }
+      .bs-lamp-bulb--on {
+        filter: drop-shadow(0 0 5px rgba(250, 210, 80, 0.9));
+      }
+      .bs-lamp-bulb--off {
+        opacity: 0.85;
+      }
 
-    /* ---- KPI 数字滚动 ---- */
-    const kpiTickers = {
-      total: useNumberTicker(() => KPI.total),
-      online: useNumberTicker(() => KPI.online),
-      offline: useNumberTicker(() => KPI.offline),
-      lightOn: useNumberTicker(() => KPI.lightOn),
-      onlineRate: useNumberTicker(() => KPI.onlineRate, 1),
-      lightRate: useNumberTicker(() => KPI.lightRate, 1)
-    };
+      /* ---------- 顶栏 ---------- */
+      .bs-header {
+        position: absolute;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 20;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        height: 72px;
+        padding: 0 28px;
+        background: linear-gradient(
+          180deg,
+          rgba(2, 16, 36, 0.92) 0%,
+          rgba(2, 16, 36, 0.35) 70%,
+          transparent 100%
+        );
+        pointer-events: none;
+      }
+      .bs-header > * {
+        pointer-events: auto;
+      }
+      .bs-header__time {
+        min-width: 220px;
+        font-size: 15px;
+        letter-spacing: 1px;
+        color: var(--bs-muted);
+      }
+      .bs-header__title {
+        position: relative;
+        padding: 0 48px;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: 6px;
+        color: #e8f7ff;
+        text-shadow: 0 0 18px rgba(0, 212, 255, 0.45);
+      }
+      .bs-header__title::before,
+      .bs-header__title::after {
+        position: absolute;
+        top: 50%;
+        width: 56px;
+        height: 2px;
+        content: "";
+        background: linear-gradient(90deg, transparent, var(--bs-cyan));
+      }
+      .bs-header__title::before {
+        right: 100%;
+        transform: translateY(-50%);
+      }
+      .bs-header__title::after {
+        left: 100%;
+        background: linear-gradient(90deg, var(--bs-cyan), transparent);
+        transform: translateY(-50%);
+      }
+      .bs-header__actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        justify-content: flex-end;
+        min-width: 220px;
+      }
+      .bs-action-btn {
+        height: 32px;
+        padding: 0 14px;
+        font-size: 13px;
+        color: var(--bs-text);
+        cursor: pointer;
+        background: rgba(0, 120, 180, 0.25);
+        border: 1px solid var(--bs-border);
+        border-radius: 2px;
+        transition: all 0.2s;
+      }
+      .bs-action-btn:hover {
+        color: #fff;
+        background: rgba(0, 180, 230, 0.35);
+        box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
+      }
 
-    const summaryTickers = reactive({
-      deviceCount: useNumberTicker(() => filterSummary.value.deviceCount),
-      onlineCount: useNumberTicker(() => filterSummary.value.onlineCount),
-      onlineRate: useNumberTicker(() => filterSummary.value.onlineRate, 1),
-      lightOnCount: useNumberTicker(() => filterSummary.value.lightOnCount)
-    });
+      /* ---------- 图例 ---------- */
+      .bs-legend {
+        position: absolute;
+        top: 84px;
+        left: 50%;
+        z-index: 16;
+        display: flex;
+        gap: 16px;
+        padding: 6px 14px;
+        font-size: 12px;
+        color: var(--bs-muted);
+        background: rgba(6, 28, 52, 0.72);
+        border: 1px solid var(--bs-border-soft);
+        border-radius: 20px;
+        transform: translateX(-50%);
+        backdrop-filter: blur(4px);
+      }
+      .bs-legend__item {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+      }
+      .bs-legend__lamp {
+        width: 12px;
+        height: 17px;
+      }
 
-    watch(filterSummary, (val) => {
-      summaryTickers.deviceCount.animate(summaryTickers.deviceCount.display.value, val.deviceCount);
-      summaryTickers.onlineCount.animate(summaryTickers.onlineCount.display.value, val.onlineCount);
-      summaryTickers.onlineRate.animate(summaryTickers.onlineRate.display.value, val.onlineRate);
-      summaryTickers.lightOnCount.animate(summaryTickers.lightOnCount.display.value, val.lightOnCount);
-    });
+      /* ---------- 侧栏 & 底部 ---------- */
+      .bs-side {
+        position: absolute;
+        top: 84px;
+        bottom: 240px;
+        z-index: 15;
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        width: 360px;
+        pointer-events: none;
+      }
+      .bs-side > * {
+        pointer-events: auto;
+      }
+      .bs-side > *:nth-child(1) {
+        flex: 0 0 auto;
+      }
+      .bs-side > *:nth-child(2) {
+        flex: 1.1;
+        min-height: 160px;
+      }
+      .bs-side > *:nth-child(3) {
+        flex: 1;
+        min-height: 140px;
+      }
+      .bs-side--left {
+        left: 16px;
+      }
+      .bs-side--right {
+        right: 16px;
+      }
+      .bs-side--right > *:nth-child(1) {
+        flex: 0 0 auto;
+      }
+      .bs-side--right > *:nth-child(2),
+      .bs-side--right > *:nth-child(3) {
+        flex: 1;
+        min-height: 120px;
+      }
 
-    /* ---- ECharts：年度 / 月度能耗趋势 ---- */
-    let yearlyChart = null;
-    let monthlyChart = null;
-    const yearlyRef = ref(null);
-    const monthlyRef = ref(null);
+      .bs-bottom {
+        position: absolute;
+        right: 392px;
+        bottom: 16px;
+        left: 392px;
+        z-index: 15;
+        display: flex;
+        gap: 14px;
+        height: 210px;
+        pointer-events: none;
+      }
+      .bs-bottom > * {
+        flex: 1;
+        height: 100%;
+        min-width: 0;
+        pointer-events: auto;
+      }
 
-    const energyChartOption = (categories, values, color, areaColor) => ({
-      tooltip: {
-        trigger: 'axis',
-        backgroundColor: 'rgba(8, 28, 48, 0.92)',
-        borderColor: 'rgba(0, 200, 255, 0.35)',
-        textStyle: { color: '#d6eefc', fontSize: 12 },
-        valueFormatter: (v) => `${v} kWh`
-      },
-      grid: { left: 48, right: 16, top: 16, bottom: 28 },
-      xAxis: {
-        type: 'category',
-        boundaryGap: false,
-        data: categories,
-        axisLabel: { fontSize: 11, color: 'rgba(160, 200, 230, 0.65)', interval: Math.ceil(categories.length / 10) - 1 },
-        axisLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
-      },
-      yAxis: {
-        type: 'value',
-        axisLabel: { fontSize: 11, color: 'rgba(160, 200, 230, 0.65)' },
-        splitLine: { lineStyle: { color: 'rgba(64, 120, 160, 0.25)' } }
-      },
-      series: [
+      /* ---------- 面板通用 ---------- */
+      .bs-panel {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        min-height: 0;
+        overflow: hidden;
+        background: var(--bs-panel);
+        border: 1px solid var(--bs-border-soft);
+        border-radius: 4px;
+        box-shadow:
+          inset 0 0 24px rgba(0, 160, 220, 0.08),
+          0 8px 24px rgba(0, 0, 0, 0.35);
+        backdrop-filter: blur(6px);
+      }
+      .bs-panel__corner {
+        position: absolute;
+        z-index: 2;
+        width: 12px;
+        height: 12px;
+        pointer-events: none;
+        border: 2px solid var(--bs-cyan);
+        opacity: 0.9;
+        filter: drop-shadow(0 0 3px rgba(0, 212, 255, 0.5));
+      }
+      .bs-panel__corner--tl {
+        top: 0;
+        left: 0;
+        border-right: none;
+        border-bottom: none;
+      }
+      .bs-panel__corner--tr {
+        top: 0;
+        right: 0;
+        border-bottom: none;
+        border-left: none;
+      }
+      .bs-panel__corner--bl {
+        bottom: 0;
+        left: 0;
+        border-top: none;
+        border-right: none;
+      }
+      .bs-panel__corner--br {
+        right: 0;
+        bottom: 0;
+        border-top: none;
+        border-left: none;
+      }
+
+      .bs-panel__header {
+        position: relative;
+        display: flex;
+        flex-shrink: 0;
+        align-items: center;
+        justify-content: space-between;
+        height: 40px;
+        padding: 0 14px;
+        overflow: hidden;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--bs-title);
+        letter-spacing: 1px;
+        border-bottom: 1px solid var(--bs-border-soft);
+        background: linear-gradient(
+          90deg,
+          rgba(0, 160, 220, 0.18),
+          transparent 70%
+        );
+      }
+      .bs-panel__header::after {
+        position: absolute;
+        bottom: -1px;
+        left: -30%;
+        width: 30%;
+        height: 1px;
+        content: "";
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--bs-cyan),
+          transparent
+        );
+        animation: bs-panel-scan 3.2s linear infinite;
+      }
+      @keyframes bs-panel-scan {
+        0% {
+          left: -30%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+      .bs-panel__header .hint {
+        font-size: 11px;
+        font-weight: 400;
+        color: rgba(160, 200, 230, 0.55);
+      }
+      .bs-panel__body {
+        flex: 1;
+        min-height: 0;
+        padding: 12px 14px;
+        overflow: auto;
+      }
+
+      /* ---------- KPI ---------- */
+      .kpi-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 10px;
+      }
+      .kpi-item {
+        padding: 10px 8px;
+        text-align: center;
+        background: rgba(0, 100, 160, 0.12);
+        border: 1px solid rgba(0, 160, 220, 0.15);
+        border-radius: 4px;
+      }
+      .kpi-label {
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+      .kpi-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: #e8f7ff;
+        letter-spacing: 0.5px;
+      }
+      .kpi-value.is-green {
+        color: var(--bs-green);
+      }
+      .kpi-value.is-orange {
+        color: var(--bs-orange);
+      }
+      .kpi-value.is-cyan {
+        color: var(--bs-cyan);
+      }
+      .kpi-value.is-muted {
+        color: var(--bs-offline);
+      }
+
+      /* ---------- 告警 ---------- */
+      .empty {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        min-height: 80px;
+        font-size: 13px;
+        color: var(--bs-muted);
+      }
+      .alarm-list {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        padding: 0;
+        margin: 0;
+        list-style: none;
+      }
+      .alarm-item {
+        display: flex;
+        gap: 10px;
+        align-items: flex-start;
+        padding: 8px 10px;
+        background: rgba(255, 90, 106, 0.06);
+        border: 1px solid rgba(255, 90, 106, 0.18);
+        border-radius: 4px;
+      }
+      .alarm-level {
+        flex-shrink: 0;
+        padding: 2px 6px;
+        font-size: 11px;
+        font-weight: 700;
+        color: #fff;
+        background: var(--bs-red);
+        border-radius: 2px;
+      }
+      .alarm-level.lv-1 {
+        background: var(--bs-orange);
+      }
+      .alarm-level.lv-2 {
+        background: var(--bs-orange-deep);
+      }
+      .alarm-level.lv-3 {
+        background: var(--bs-red);
+      }
+      .alarm-name {
+        font-size: 13px;
+        color: #e8f7ff;
+      }
+      .alarm-meta {
+        display: flex;
+        gap: 12px;
+        margin-top: 2px;
+        font-size: 11px;
+        color: var(--bs-muted);
+      }
+
+      /* ---------- 筛选 ---------- */
+      .filter-form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .filter-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      .filter-row label {
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+      .filter-select {
+        width: 100%;
+      }
+      .filter-actions {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
+      .el-select__wrapper {
+        background: rgba(0, 40, 70, 0.55) !important;
+        box-shadow: 0 0 0 1px rgba(0, 160, 220, 0.3) inset !important;
+      }
+      .el-select__placeholder,
+      .el-select__selected-item,
+      .el-tag {
+        color: #d8eefc !important;
+      }
+
+      /* ---------- 分组统计 ---------- */
+      .summary-row {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+        font-size: 13px;
+      }
+      .summary-row .label {
+        flex-shrink: 0;
+        width: 36px;
+        color: var(--bs-muted);
+      }
+      .summary-row .value {
+        flex: 1;
+        color: #e8f7ff;
+        word-break: break-all;
+      }
+      .summary-metrics {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .metric {
+        padding: 8px 4px;
+        text-align: center;
+        background: rgba(0, 100, 160, 0.12);
+        border: 1px solid rgba(0, 160, 220, 0.15);
+        border-radius: 4px;
+      }
+      .metric-val {
+        font-size: 18px;
+        font-weight: 700;
+        color: #e8f7ff;
+      }
+      .metric-val.is-green {
+        color: var(--bs-green);
+      }
+      .metric-val.is-cyan {
+        color: var(--bs-cyan);
+      }
+      .metric-val.is-orange {
+        color: var(--bs-orange);
+      }
+      .metric-label {
+        margin-top: 4px;
+        font-size: 11px;
+        color: var(--bs-muted);
+      }
+
+      /* ---------- 能耗类数值网格（节能数据统计 / 用电计划）---------- */
+      .elec-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
+      }
+      .elec-item {
+        padding: 12px 10px;
+        background: rgba(0, 100, 160, 0.12);
+        border: 1px solid rgba(0, 160, 220, 0.15);
+        border-radius: 4px;
+      }
+      .elec-label {
+        margin-bottom: 6px;
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+      .elec-value {
+        font-size: 22px;
+        font-weight: 700;
+        color: var(--bs-cyan);
+      }
+      .elec-value .unit {
+        margin-left: 2px;
+        font-size: 12px;
+        font-weight: 400;
+        color: var(--bs-muted);
+      }
+
+      /* ---------- 用电计划 ---------- */
+      .plan-policy {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        padding: 10px;
+        margin-bottom: 12px;
+        background: rgba(0, 100, 160, 0.12);
+        border: 1px solid rgba(0, 160, 220, 0.15);
+        border-radius: 4px;
+      }
+      .plan-row {
+        display: flex;
+        gap: 8px;
+        font-size: 12px;
+      }
+      .plan-row .label {
+        flex-shrink: 0;
+        width: 64px;
+        color: var(--bs-muted);
+      }
+      .plan-row .value {
+        flex: 1;
+        color: #e8f7ff;
+      }
+      .plan-row .value.is-status {
+        color: var(--bs-green);
+        font-weight: 600;
+      }
+
+      .echart {
+        width: 100%;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+    <script src="https://webapi.amap.com/loader.js"></script>
+
+    <script>
+      const {
+        createApp,
+        ref,
+        reactive,
+        computed,
+        onMounted,
+        onBeforeUnmount,
+        watch,
+        nextTick,
+      } = Vue;
+
+      /* 高德地图 Web 端 Key（若控制台启用了安全密钥，还需配置 window._AMapSecurityConfig.securityJsCode） */
+      const AMAP_KEY = "25233c75f91c4a113c2e2abfbd33eebe";
+      /* 示例点位中心：杭州滨江一带，与分组名称「滨江路」对应 */
+      const MAP_CENTER = [120.21201, 30.20841];
+      const MAP_SPAN_LNG = 0.14;
+      const MAP_SPAN_LAT = 0.09;
+
+      function loadAmap() {
+        return AMapLoader.load({
+          key: AMAP_KEY,
+          version: "2.0",
+          plugins: [],
+        });
+      }
+
+      /* ---------------- 静态示例数据（对应原 Vue 页面的接口返回结构） ---------------- */
+
+      const GROUPS = [
+        { id: 1, name: "中心城区" },
+        { id: 2, name: "开发区" },
+        { id: 3, name: "滨江路" },
+        { id: 4, name: "高新园区" },
+      ];
+
+      const PRODUCTS = [
+        { id: 1, name: "智慧路灯" },
+        { id: 2, name: "监控杆" },
+        { id: 3, name: "广播音柱" },
+        { id: 4, name: "环境传感器" },
+      ];
+
+      const ALARMS = [
         {
-          type: 'line',
-          smooth: true,
-          symbol: 'none',
-          data: values,
-          lineStyle: { width: 2, color },
-          areaStyle: { color: areaColor }
+          id: 1,
+          name: "灯杆离线超阈值",
+          level: 3,
+          deviceId: 10231,
+          processStatus: false,
+        },
+        {
+          id: 2,
+          name: "电压异常波动",
+          level: 2,
+          deviceId: 10087,
+          processStatus: false,
+        },
+        {
+          id: 3,
+          name: "亮灯率低于阈值",
+          level: 1,
+          deviceId: 10456,
+          processStatus: true,
+        },
+        {
+          id: 4,
+          name: "通信超时",
+          level: 2,
+          deviceId: 10192,
+          processStatus: false,
+        },
+        {
+          id: 5,
+          name: "功率突增告警",
+          level: 3,
+          deviceId: 10078,
+          processStatus: true,
+        },
+      ];
+
+      const KPI = {
+        total: 854,
+        online: 812,
+        offline: 42,
+        lightOn: 536,
+        onlineRate: 95.1,
+        lightRate: 62.8,
+        mappedTotal: 854,
+      };
+
+      /* 节能数据统计 */
+      const ENERGY_STATS = {
+        monthSaving: 1862,
+        savingRate: 18.6,
+        totalSaving: 21540,
+        co2Reduction: 12500,
+      };
+
+      /* 用电计划：当前生效策略 + 计划/实际用电量对比 */
+      const POWER_PLAN = {
+        strategyName: "冬季经济模式",
+        timeRange: "18:30 - 06:00（分时调光）",
+        status: "执行中",
+        planKwh: 9600,
+        actualKwh: 8720,
+        completionRate: 90.8,
+      };
+
+      /* 年度能耗趋势（近 12 个月，单位 kWh） */
+      const YEARLY_ENERGY = [
+        "1月",
+        "2月",
+        "3月",
+        "4月",
+        "5月",
+        "6月",
+        "7月",
+        "8月",
+        "9月",
+        "10月",
+        "11月",
+        "12月",
+      ].map((month, i) => ({
+        month,
+        kwh: Math.round(7200 + Math.sin(i / 2) * 1400 + (i % 4) * 200),
+      }));
+
+      /* 月度能耗趋势（本月每日，单位 kWh） */
+      const MONTHLY_ENERGY = Array.from({ length: 30 }, (_, i) => ({
+        day: `${i + 1}日`,
+        kwh: Math.round(260 + Math.sin(i / 3) * 60 + (i % 5 === 0 ? 30 : 0)),
+      }));
+
+      /* 地图点位：由画布相对坐标映射为高德经纬度（示例数据） */
+      function genMarkers() {
+        const markers = [];
+        let seed = 42;
+        const rand = () => {
+          seed = (seed * 9301 + 49297) % 233280;
+          return seed / 233280;
+        };
+        for (let i = 0; i < 90; i++) {
+          const group = GROUPS[Math.floor(rand() * GROUPS.length)];
+          const product = PRODUCTS[Math.floor(rand() * PRODUCTS.length)];
+          const left = 8 + rand() * 78;
+          const top = 14 + rand() * 68;
+          const lng =
+            MAP_CENTER[0] - MAP_SPAN_LNG / 2 + ((left - 8) / 78) * MAP_SPAN_LNG;
+          const lat =
+            MAP_CENTER[1] + MAP_SPAN_LAT / 2 - ((top - 14) / 68) * MAP_SPAN_LAT;
+          markers.push({
+            id: i + 1,
+            deviceId: 10000 + i,
+            name: `${group.name}-${String(i + 1).padStart(3, "0")}号灯杆`,
+            /* 设备通信在线状态，用于 KPI/筛选摘要统计，与地图图标的开关灯状态是两回事 */
+            online: rand() > 0.08,
+            groupIds: [group.id],
+            groupName: group.name,
+            productId: product.id,
+            productName: product.name,
+            lng: Math.round(lng * 1e6) / 1e6,
+            lat: Math.round(lat * 1e6) / 1e6,
+            switchOn: rand() > 0.35,
+          });
         }
-      ]
-    });
-
-    const renderYearlyChart = () => {
-      if (!yearlyRef.value) return;
-      yearlyChart = yearlyChart || echarts.init(yearlyRef.value);
-      yearlyChart.setOption(energyChartOption(
-        YEARLY_ENERGY.map((p) => p.month),
-        YEARLY_ENERGY.map((p) => p.kwh),
-        '#00d4ff',
-        'rgba(0, 212, 255, 0.18)'
-      ));
-    };
-
-    const renderMonthlyChart = () => {
-      if (!monthlyRef.value) return;
-      monthlyChart = monthlyChart || echarts.init(monthlyRef.value);
-      monthlyChart.setOption(energyChartOption(
-        MONTHLY_ENERGY.map((p) => p.day),
-        MONTHLY_ENERGY.map((p) => p.kwh),
-        '#faad14',
-        'rgba(250, 173, 20, 0.16)'
-      ));
-    };
-
-    const applyFilter = async () => {
-      if (!filteredMarkers.value.length) {
-        ElementPlus.ElMessage.warning('当前筛选条件下没有可展示的设备点位');
-        return;
+        return markers;
       }
-      ElementPlus.ElMessage.success(`已定位到 ${filteredMarkers.value.length} 个设备`);
-    };
+      const MARKERS = genMarkers();
 
-    const resetFilter = () => {
-      selectedGroupIds.value = [];
-      selectedProductIds.value = [];
-      ElementPlus.ElMessage.info('已重置筛选条件');
-    };
+      function buildLampMarkerHtml(m) {
+        const color = m.switchOn ? "#ffd666" : "#8a95a1";
+        const bulbClass = m.switchOn ? "bs-lamp-bulb--on" : "bs-lamp-bulb--off";
+        return (
+          `<div class="bs-lamp-marker" title="${m.name}">` +
+          `<svg viewBox="0 0 20 28">` +
+          `<rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" />` +
+          `<ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />` +
+          `<path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />` +
+          `<circle cx="5" cy="6" r="4" fill="${color}" class="${bulbClass}" />` +
+          `</svg></div>`
+        );
+      }
 
-    const lampBulbColor = (m) => (m.switchOn ? '#ffd666' : '#8a95a1');
+      /* ---------------- 数字滚动动效（对应 useNumberTicker） ---------------- */
+      function useNumberTicker(getValue, decimals = 0) {
+        const display = ref(0);
+        let raf = null;
+        const animate = (from, to) => {
+          const duration = 600;
+          const start = performance.now();
+          if (raf) cancelAnimationFrame(raf);
+          const step = (now) => {
+            const p = Math.min(1, (now - start) / duration);
+            const eased = 1 - Math.pow(1 - p, 3);
+            const val = from + (to - from) * eased;
+            display.value = decimals
+              ? Math.round(val * 10 ** decimals) / 10 ** decimals
+              : Math.round(val);
+            if (p < 1) raf = requestAnimationFrame(step);
+          };
+          raf = requestAnimationFrame(step);
+        };
+        animate(0, getValue());
+        return { display, animate };
+      }
 
-    const onResize = () => {
-      updateScale();
-      yearlyChart && yearlyChart.resize();
-      monthlyChart && monthlyChart.resize();
-    };
+      const App = {
+        setup() {
+          const scale = ref(1);
+          const nowText = ref("");
+          const isFullscreen = ref(false);
+          const selectedGroupIds = ref([]);
+          const selectedProductIds = ref([]);
+          let clockTimer = null;
 
-    onMounted(async () => {
-      updateScale();
-      updateClock();
-      clockTimer = setInterval(updateClock, 1000);
-      window.addEventListener('resize', onResize);
-      document.addEventListener('fullscreenchange', onFullscreenChange);
-      await nextTick();
-      renderYearlyChart();
-      renderMonthlyChart();
-    });
+          const updateScale = () => {
+            const s = Math.min(
+              window.innerWidth / 1920,
+              window.innerHeight / 1080,
+            );
+            scale.value = Math.max(s, 0.35);
+          };
 
-    onBeforeUnmount(() => {
-      if (clockTimer) clearInterval(clockTimer);
-      window.removeEventListener('resize', onResize);
-      document.removeEventListener('fullscreenchange', onFullscreenChange);
-      yearlyChart && yearlyChart.dispose();
-      monthlyChart && monthlyChart.dispose();
-    });
+          const updateClock = () => {
+            const d = new Date();
+            const pad = (n) => String(n).padStart(2, "0");
+            nowText.value = `${d.getFullYear()}/${pad(d.getMonth() + 1)}/${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+          };
 
-    return {
-      scale, nowText, isFullscreen, toggleFullscreen, goAdmin,
-      GROUPS, PRODUCTS, ALARMS, ENERGY_STATS, POWER_PLAN,
-      selectedGroupIds, selectedProductIds,
-      filteredMarkers, filterSummary,
-      kpiTickers, summaryTickers,
-      applyFilter, resetFilter, lampBulbColor,
-      yearlyRef, monthlyRef, KPI
-    };
-  },
-  template: `
+          const toggleFullscreen = async () => {
+            try {
+              if (!document.fullscreenElement) {
+                await document.documentElement.requestFullscreen();
+                isFullscreen.value = true;
+              } else {
+                await document.exitFullscreen();
+                isFullscreen.value = false;
+              }
+            } catch (e) {
+              ElementPlus.ElMessage.warning("当前浏览器不支持全屏");
+            }
+          };
+          const onFullscreenChange = () => {
+            isFullscreen.value = !!document.fullscreenElement;
+          };
+
+          const goAdmin = () => {
+            window.location.href = "index.html";
+          };
+
+          /* ---- 筛选后的点位 / KPI / 摘要 ---- */
+          const filteredMarkers = computed(() => {
+            return MARKERS.filter((m) => {
+              const groupOk =
+                !selectedGroupIds.value.length ||
+                m.groupIds.some((g) => selectedGroupIds.value.includes(g));
+              const productOk =
+                !selectedProductIds.value.length ||
+                selectedProductIds.value.includes(m.productId);
+              return groupOk && productOk;
+            });
+          });
+
+          const filterSummary = computed(() => {
+            const list = filteredMarkers.value;
+            const online = list.filter((m) => m.online).length;
+            const lightOn = list.filter((m) => m.switchOn).length;
+            return {
+              deviceCount: list.length,
+              onlineCount: online,
+              onlineRate: list.length
+                ? Math.round((online / list.length) * 1000) / 10
+                : 0,
+              lightOnCount: lightOn,
+              groupLabel: selectedGroupIds.value.length
+                ? GROUPS.filter((g) => selectedGroupIds.value.includes(g.id))
+                    .map((g) => g.name)
+                    .join("、")
+                : "全部分组",
+              typeLabel: selectedProductIds.value.length
+                ? PRODUCTS.filter((p) =>
+                    selectedProductIds.value.includes(p.id),
+                  )
+                    .map((p) => p.name)
+                    .join("、")
+                : "全部类型",
+            };
+          });
+
+          /* ---- KPI 数字滚动 ---- */
+          const kpiTickers = {
+            total: useNumberTicker(() => KPI.total),
+            online: useNumberTicker(() => KPI.online),
+            offline: useNumberTicker(() => KPI.offline),
+            lightOn: useNumberTicker(() => KPI.lightOn),
+            onlineRate: useNumberTicker(() => KPI.onlineRate, 1),
+            lightRate: useNumberTicker(() => KPI.lightRate, 1),
+          };
+
+          const summaryTickers = reactive({
+            deviceCount: useNumberTicker(() => filterSummary.value.deviceCount),
+            onlineCount: useNumberTicker(() => filterSummary.value.onlineCount),
+            onlineRate: useNumberTicker(
+              () => filterSummary.value.onlineRate,
+              1,
+            ),
+            lightOnCount: useNumberTicker(
+              () => filterSummary.value.lightOnCount,
+            ),
+          });
+
+          watch(filterSummary, (val) => {
+            summaryTickers.deviceCount.animate(
+              summaryTickers.deviceCount.display.value,
+              val.deviceCount,
+            );
+            summaryTickers.onlineCount.animate(
+              summaryTickers.onlineCount.display.value,
+              val.onlineCount,
+            );
+            summaryTickers.onlineRate.animate(
+              summaryTickers.onlineRate.display.value,
+              val.onlineRate,
+            );
+            summaryTickers.lightOnCount.animate(
+              summaryTickers.lightOnCount.display.value,
+              val.lightOnCount,
+            );
+          });
+
+          /* ---- 高德地图 ---- */
+          const mapRef = ref(null);
+          let amap = null;
+          let amapMarkers = [];
+          let AMapRef = null;
+
+          const clearAmapMarkers = () => {
+            if (amap && amapMarkers.length) {
+              amap.remove(amapMarkers);
+            }
+            amapMarkers = [];
+          };
+
+          const syncAmapMarkers = (fit = false) => {
+            if (!amap || !AMapRef) return;
+            clearAmapMarkers();
+            amapMarkers = filteredMarkers.value.map(
+              (m) =>
+                new AMapRef.Marker({
+                  position: [m.lng, m.lat],
+                  content: buildLampMarkerHtml(m),
+                  offset: new AMapRef.Pixel(-10, -30),
+                  title: m.name,
+                  extData: m,
+                }),
+            );
+            if (amapMarkers.length) {
+              amap.add(amapMarkers);
+              if (fit) {
+                /* 预留左右侧栏与底部面板空间 */
+                amap.setFitView(amapMarkers, false, [120, 80, 400, 400]);
+              }
+            }
+          };
+
+          const initAmap = async () => {
+            if (!mapRef.value) return;
+            try {
+              AMapRef = await loadAmap();
+              amap = new AMapRef.Map(mapRef.value, {
+                zoom: 13,
+                center: MAP_CENTER,
+                mapStyle: "amap://styles/darkblue",
+                viewMode: "2D",
+                resizeEnable: true,
+                pitch: 0,
+              });
+              amap.on("complete", () => {
+                syncAmapMarkers(true);
+                amap.resize();
+              });
+            } catch (e) {
+              console.error(e);
+              ElementPlus.ElMessage.error(
+                "高德地图加载失败，请检查 Key / 安全密钥 / 域名白名单",
+              );
+            }
+          };
+
+          /* ---- ECharts：年度 / 月度能耗趋势 ---- */
+          let yearlyChart = null;
+          let monthlyChart = null;
+          const yearlyRef = ref(null);
+          const monthlyRef = ref(null);
+
+          const energyChartOption = (categories, values, color, areaColor) => ({
+            tooltip: {
+              trigger: "axis",
+              backgroundColor: "rgba(8, 28, 48, 0.92)",
+              borderColor: "rgba(0, 200, 255, 0.35)",
+              textStyle: { color: "#d6eefc", fontSize: 12 },
+              valueFormatter: (v) => `${v} kWh`,
+            },
+            grid: { left: 48, right: 16, top: 16, bottom: 28 },
+            xAxis: {
+              type: "category",
+              boundaryGap: false,
+              data: categories,
+              axisLabel: {
+                fontSize: 11,
+                color: "rgba(160, 200, 230, 0.65)",
+                interval: Math.ceil(categories.length / 10) - 1,
+              },
+              axisLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
+            },
+            yAxis: {
+              type: "value",
+              axisLabel: { fontSize: 11, color: "rgba(160, 200, 230, 0.65)" },
+              splitLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
+            },
+            series: [
+              {
+                type: "line",
+                smooth: true,
+                symbol: "none",
+                data: values,
+                lineStyle: { width: 2, color },
+                areaStyle: { color: areaColor },
+              },
+            ],
+          });
+
+          const renderYearlyChart = () => {
+            if (!yearlyRef.value) return;
+            yearlyChart = yearlyChart || echarts.init(yearlyRef.value);
+            yearlyChart.setOption(
+              energyChartOption(
+                YEARLY_ENERGY.map((p) => p.month),
+                YEARLY_ENERGY.map((p) => p.kwh),
+                "#00d4ff",
+                "rgba(0, 212, 255, 0.18)",
+              ),
+            );
+          };
+
+          const renderMonthlyChart = () => {
+            if (!monthlyRef.value) return;
+            monthlyChart = monthlyChart || echarts.init(monthlyRef.value);
+            monthlyChart.setOption(
+              energyChartOption(
+                MONTHLY_ENERGY.map((p) => p.day),
+                MONTHLY_ENERGY.map((p) => p.kwh),
+                "#faad14",
+                "rgba(250, 173, 20, 0.16)",
+              ),
+            );
+          };
+
+          const applyFilter = async () => {
+            if (!filteredMarkers.value.length) {
+              ElementPlus.ElMessage.warning(
+                "当前筛选条件下没有可展示的设备点位",
+              );
+              syncAmapMarkers(false);
+              return;
+            }
+            syncAmapMarkers(true);
+            ElementPlus.ElMessage.success(
+              `已定位到 ${filteredMarkers.value.length} 个设备`,
+            );
+          };
+
+          const resetFilter = () => {
+            selectedGroupIds.value = [];
+            selectedProductIds.value = [];
+            nextTick(() => {
+              syncAmapMarkers(true);
+            });
+            ElementPlus.ElMessage.info("已重置筛选条件");
+          };
+
+          watch(filteredMarkers, () => {
+            syncAmapMarkers(false);
+          });
+
+          const onResize = () => {
+            updateScale();
+            yearlyChart && yearlyChart.resize();
+            monthlyChart && monthlyChart.resize();
+            nextTick(() => {
+              amap && amap.resize();
+            });
+          };
+
+          onMounted(async () => {
+            updateScale();
+            updateClock();
+            clockTimer = setInterval(updateClock, 1000);
+            window.addEventListener("resize", onResize);
+            document.addEventListener("fullscreenchange", onFullscreenChange);
+            await nextTick();
+            renderYearlyChart();
+            renderMonthlyChart();
+            await initAmap();
+          });
+
+          onBeforeUnmount(() => {
+            if (clockTimer) clearInterval(clockTimer);
+            window.removeEventListener("resize", onResize);
+            document.removeEventListener(
+              "fullscreenchange",
+              onFullscreenChange,
+            );
+            yearlyChart && yearlyChart.dispose();
+            monthlyChart && monthlyChart.dispose();
+            clearAmapMarkers();
+            if (amap) {
+              amap.destroy();
+              amap = null;
+            }
+          });
+
+          return {
+            scale,
+            nowText,
+            isFullscreen,
+            toggleFullscreen,
+            goAdmin,
+            GROUPS,
+            PRODUCTS,
+            ALARMS,
+            ENERGY_STATS,
+            POWER_PLAN,
+            selectedGroupIds,
+            selectedProductIds,
+            filteredMarkers,
+            filterSummary,
+            kpiTickers,
+            summaryTickers,
+            applyFilter,
+            resetFilter,
+            mapRef,
+            yearlyRef,
+            monthlyRef,
+            KPI,
+          };
+        },
+        template: `
   <div class="bs-viewport">
     <div class="big-screen" :style="{ transform: 'scale(' + scale + ')' }">
 
-      <!-- 地图底层（静态示意图，无需外部地图 SDK / Key） -->
+      <!-- 地图底层：高德 JS API -->
       <div class="bs-map">
-        <div class="bs-map-grid"></div>
-        <div class="bs-map-glow"></div>
-        <div class="bs-map-ring" v-for="r in [120,220,320]" :key="r" :style="{ width: r+'px', height: r+'px', animationDelay: (r/160)+'s' }"></div>
-        <div
-          v-for="m in filteredMarkers" :key="m.id"
-          class="bs-lamp-marker"
-          :style="{ left: m.left + '%', top: m.top + '%' }"
-          :title="m.name"
-        >
-          <svg viewBox="0 0 20 28">
-            <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" />
-            <ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
-            <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
-            <circle cx="5" cy="6" r="4" :fill="lampBulbColor(m)" :class="m.switchOn ? 'bs-lamp-bulb--on' : 'bs-lamp-bulb--off'" />
-          </svg>
-        </div>
+        <div ref="mapRef" class="bs-amap"></div>
       </div>
 
       <!-- 顶栏 -->
@@ -825,12 +1347,12 @@ const App = {
 
     </div>
   </div>
-  `
-};
+  `,
+      };
 
-const app = createApp(App);
-app.use(ElementPlus);
-app.mount('#app');
-</script>
-</body>
+      const app = createApp(App);
+      app.use(ElementPlus);
+      app.mount("#app");
+    </script>
+  </body>
 </html>
