@@ -41,15 +41,15 @@
   /* ============== 项目 Seed ============== */
   const PROJECTS = [
     // T1 项目
-    { id: 1, tenantId: 'T1', orgId: 3, name: '智慧园区照明项目', code: 'PRJ-T1-001', status: 'active', poleQuota: 300, poleUsed: 280, remark: '上海园区一期', createdAt: '2024-03-01 10:00:00' },
-    { id: 2, tenantId: 'T1', orgId: 6, name: '城市道路改造项目', code: 'PRJ-T1-002', status: 'active', poleQuota: 200, poleUsed: 150, remark: '广州滨江路',   createdAt: '2024-05-15 14:20:00' },
-    { id: 3, tenantId: 'T1', orgId: 4, name: '滨江路景观照明',   code: 'PRJ-T1-003', status: 'active', poleQuota: 100, poleUsed: 100, remark: '苏州河段',     createdAt: '2024-08-10 09:30:00' },
-    { id: 4, tenantId: 'T1', orgId: 7, name: '深圳前海智慧路',   code: 'PRJ-T1-004', status: 'active', poleQuota: 50,  poleUsed: 50,  remark: '前海合作区',   createdAt: '2025-01-20 11:15:00' },
+    { id: 1, tenantId: 'T1', orgId: 3, name: '智慧园区照明项目', code: 'PRJ-T1-001', status: 'active', poleQuota: 300, poleUsed: 280, remark: '上海园区一期', lng: 121.473701, lat: 31.230416, createdAt: '2024-03-01 10:00:00' },
+    { id: 2, tenantId: 'T1', orgId: 6, name: '城市道路改造项目', code: 'PRJ-T1-002', status: 'active', poleQuota: 200, poleUsed: 150, remark: '广州滨江路',   lng: 113.324480, lat: 23.106600, createdAt: '2024-05-15 14:20:00' },
+    { id: 3, tenantId: 'T1', orgId: 4, name: '滨江路景观照明',   code: 'PRJ-T1-003', status: 'active', poleQuota: 100, poleUsed: 100, remark: '苏州河段',     lng: 120.585315, lat: 31.298886, createdAt: '2024-08-10 09:30:00' },
+    { id: 4, tenantId: 'T1', orgId: 7, name: '深圳前海智慧路',   code: 'PRJ-T1-004', status: 'active', poleQuota: 50,  poleUsed: 50,  remark: '前海合作区',   lng: 113.895000, lat: 22.524000, createdAt: '2025-01-20 11:15:00' },
     { id: 5, tenantId: 'T1', orgId: 3, name: '园区二期扩建',     code: 'PRJ-T1-005', status: 'active', poleQuota: 0,   poleUsed: 0,   remark: '筹备中',       createdAt: '2025-06-01 16:00:00' },
     // T2 项目
-    { id: 6, tenantId: 'T2', orgId: 10, name: '上海试点项目',     code: 'PRJ-T2-001', status: 'active', poleQuota: 200, poleUsed: 0,   remark: '从 T1 分得配额', createdAt: '2025-07-15 10:00:00' },
-    { id: 7, tenantId: 'T2', orgId: 12, name: '广州试点项目',     code: 'PRJ-T2-002', status: 'active', poleQuota: 150, poleUsed: 0,   remark: '从 T1 分得配额', createdAt: '2025-08-20 14:30:00' },
-    { id: 8, tenantId: 'T2', orgId: 10, name: '上海二期项目',     code: 'PRJ-T2-003', status: 'active', poleQuota: 50,  poleUsed: 0,   remark: '筹备中',         createdAt: '2026-01-10 09:00:00' },
+    { id: 6, tenantId: 'T2', orgId: 10, name: '上海试点项目',     code: 'PRJ-T2-001', status: 'active', poleQuota: 200, poleUsed: 0,   remark: '从 T1 分得配额', lng: 121.473701, lat: 31.230416, createdAt: '2025-07-15 10:00:00' },
+    { id: 7, tenantId: 'T2', orgId: 12, name: '广州试点项目',     code: 'PRJ-T2-002', status: 'active', poleQuota: 150, poleUsed: 0,   remark: '从 T1 分得配额', lng: 113.264435, lat: 23.129110, createdAt: '2025-08-20 14:30:00' },
+    { id: 8, tenantId: 'T2', orgId: 10, name: '上海二期项目',     code: 'PRJ-T2-003', status: 'active', poleQuota: 50,  poleUsed: 0,   remark: '筹备中',         lng: 121.473701, lat: 31.230416, createdAt: '2026-01-10 09:00:00' },
   ];
 
   /* ============== 分销授权记录 Seed ============== */

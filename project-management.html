@@ -175,16 +175,21 @@
             <!-- 项目列表 Tab -->
             <div v-show="activeTab === 'list'">
               <div class="filter-bar">
-                <el-select v-model="filterOrgId" placeholder="按组织筛选" clearable size="default" style="width:240px">
+                <el-select v-model="filterOrgId" placeholder="按组织筛选" clearable size="default" style="width:200px">
                   <el-option v-for="o in currentOrgs" :key="o.id" :label="o.name" :value="o.id"></el-option>
                 </el-select>
                 <el-input v-model="filterKeyword" placeholder="搜索项目名称/编码" size="default" clearable style="width:200px" :prefix-icon="Search"></el-input>
+                <el-select v-model="filterStatus" placeholder="状态" clearable size="default" style="width:120px">
+                  <el-option label="启用" value="active"></el-option>
+                  <el-option label="停用" value="inactive"></el-option>
+                </el-select>
+                <el-button :icon="Refresh" @click="resetListFilter">重置</el-button>
                 <div style="flex:1"></div>
                 <el-button type="primary" :icon="Plus" @click="openAddProject">新增项目</el-button>
               </div>
               <div class="table-zone">
-                <el-table :data="filteredProjects" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
-                  <el-table-column type="index" width="50" align="center"></el-table-column>
+                <el-table :data="pagedProjects" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+                  <el-table-column type="index" width="50" align="center" :index="(i)=>(listPage-1)*listPageSize+i+1"></el-table-column>
                   <el-table-column prop="name" label="项目名称" min-width="160" show-overflow-tooltip></el-table-column>
                   <el-table-column prop="code" label="项目编码" width="140"></el-table-column>
                   <el-table-column label="所属组织" width="160">
@@ -196,6 +201,12 @@
                         <div class="quota-num">{{ row.poleUsed }} / {{ row.poleQuota }}</div>
                         <div class="quota-bar-mini"><span :style="{width: row.poleQuota > 0 ? Math.min(100, row.poleUsed/row.poleQuota*100) + '%' : '0%', background: row.poleQuota > 0 && row.poleUsed/row.poleQuota > 0.9 ? '#ef4d5e' : row.poleQuota > 0 && row.poleUsed/row.poleQuota > 0.8 ? '#e6952c' : '#2f6bff'}"></span></div>
                       </div>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="项目位置" width="160">
+                    <template #default="{ row }">
+                      <span v-if="row.lng != null && row.lat != null" style="font-size:12px; color:var(--ink-2); font-variant-numeric:tabular-nums">{{ Number(row.lng).toFixed(4) }}, {{ Number(row.lat).toFixed(4) }}</span>
+                      <span v-else style="color:var(--ink-3)">—</span>
                     </template>
                   </el-table-column>
                   <el-table-column label="状态" width="90" align="center">
@@ -211,6 +222,9 @@
                   </el-table-column>
                 </el-table>
                 <div class="empty-cell" v-if="!filteredProjects.length">暂无项目</div>
+                <div style="padding:12px 20px; display:flex; justify-content:flex-end">
+                  <el-pagination v-model:current-page="listPage" v-model:page-size="listPageSize" :total="filteredProjects.length" :page-sizes="[10,20,50]" layout="total, sizes, prev, pager, next, jumper" background></el-pagination>
+                </div>
               </div>
             </div>
 
@@ -315,7 +329,7 @@
                       <template #default="{ row }">
                         <div class="quota-cell">
                           <div class="quota-num">{{ row.projectUsed }} / {{ row.projectQuota }}</div>
-                          <div class="quota-bar-mini"><span :style="{width: row.projectQuota > 0 ? Math.min(100, row.projectUsed/projectQuota*100)+'%' : '0%', background:'#a78bfa'}"></span></div>
+                          <div class="quota-bar-mini"><span :style="{width: row.projectQuota > 0 ? Math.min(100, row.projectUsed/row.projectQuota*100)+'%' : '0%', background:'#a78bfa'}"></span></div>
                         </div>
                       </template>
                     </el-table-column>
@@ -383,62 +397,106 @@
 
             <!-- 分配流水 Tab -->
             <div v-show="activeTab === 'flow'">
-              <div class="table-zone" style="padding:8px 0 0">
-                <el-table :data="allAllocations" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+              <div class="filter-bar">
+                <el-input v-model="flowKeyword" placeholder="搜索租户名称" size="default" clearable style="width:200px" :prefix-icon="Search"></el-input>
+                <el-select v-model="flowStatus" placeholder="状态" clearable size="default" style="width:120px">
+                  <el-option label="生效中" value="active"></el-option>
+                  <el-option label="已撤销" value="revoked"></el-option>
+                </el-select>
+                <el-button :icon="Refresh" @click="resetFlowFilter">重置</el-button>
+              </div>
+              <div class="table-zone" style="padding:0">
+                <el-table :data="pagedFlow" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
                   <el-table-column type="index" width="50" align="center"></el-table-column>
-                  <el-table-column label="分配方向" width="200">
+                  <el-table-column label="分配方向" min-width="200">
                     <template #default="{ row }">
                       <span style="color:var(--ink-2)">{{ tenantName(row.fromTenantId) }}</span>
                       <el-icon style="margin:0 6px; color:var(--brand)"><Right v-if="row.status === 'active'"></Right></el-icon>
                       <span style="font-weight:600">{{ tenantName(row.toTenantId) }}</span>
                     </template>
                   </el-table-column>
-                  <el-table-column label="路灯" width="100" align="center">{{ row => row.poleQuota }}</el-table-column>
-                  <el-table-column label="项目" width="100" align="center">{{ row => row.projectQuota }}</el-table-column>
+                  <el-table-column label="路灯配额" width="110" align="center">
+                    <template #default="{ row }">{{ row.poleQuota }}</template>
+                  </el-table-column>
+                  <el-table-column label="项目配额" width="110" align="center">
+                    <template #default="{ row }">{{ row.projectQuota }}</template>
+                  </el-table-column>
                   <el-table-column label="状态" width="100" align="center">
                     <template #default="{ row }"><el-tag size="small" :type="row.status === 'active' ? 'success' : 'info'">{{ row.status === 'active' ? '生效中' : '已撤销' }}</el-tag></template>
                   </el-table-column>
                   <el-table-column prop="operator" label="操作人" width="100"></el-table-column>
+                  <el-table-column prop="remark" label="备注" min-width="120" show-overflow-tooltip></el-table-column>
                   <el-table-column prop="createdAt" label="时间" width="170"></el-table-column>
                 </el-table>
-                <div class="empty-cell" v-if="!allAllocations.length">暂无分配流水</div>
+                <div class="empty-cell" v-if="!flowFiltered.length">暂无分配流水</div>
+                <div style="padding:12px 20px; display:flex; justify-content:flex-end">
+                  <el-pagination v-model:current-page="flowPage" v-model:page-size="flowPageSize" :total="flowFiltered.length" :page-sizes="[10,20,50]" layout="total, sizes, prev, pager, next, jumper" background></el-pagination>
+                </div>
               </div>
             </div>
           </div>
         </main>
       </div>
     </div>
-  </div>
 
-  <!-- 项目编辑弹窗 -->
-  <el-dialog v-model="projectDialog" :title="projectEditing ? '编辑项目' : '新增项目'" width="520px">
-    <el-form :model="projectForm" label-width="100px" :rules="projectRules" ref="projectFormRef">
-      <el-form-item label="项目名称" prop="name"><el-input v-model="projectForm.name" placeholder="请输入项目名称"></el-input></el-form-item>
-      <el-form-item label="项目编码"><el-input v-model="projectForm.code" placeholder="可选，自动生成"></el-input></el-form-item>
-      <el-form-item label="所属组织" prop="orgId">
-        <el-select v-model="projectForm.orgId" placeholder="选择组织" style="width:100%" filterable>
-          <el-option v-for="o in currentOrgs" :key="o.id" :label="o.name" :value="o.id"></el-option>
-        </el-select>
-      </el-form-item>
-      <el-form-item label="路灯配额" prop="poleQuota">
-        <el-input-number v-model="projectForm.poleQuota" :min="0" :max="99999" style="width:100%"></el-input-number>
-        <div style="font-size:12px; color:var(--ink-3); margin-top:4px">从租户路灯配额中扣减（可用：{{ availableQuota.pole }}）</div>
-      </el-form-item>
-      <el-form-item label="状态"><el-radio-group v-model="projectForm.status"><el-radio label="active">启用</el-radio><el-radio label="inactive">停用</el-radio></el-radio-group></el-form-item>
-      <el-form-item label="备注"><el-input v-model="projectForm.remark" type="textarea" :rows="2"></el-input></el-form-item>
-    </el-form>
-    <template #footer>
-      <el-button @click="projectDialog = false">取消</el-button>
-      <el-button type="primary" @click="saveProject">确定</el-button>
-    </template>
-  </el-dialog>
+    <!-- 项目编辑弹窗 -->
+    <el-dialog v-model="projectDialog" :title="projectEditing ? '编辑项目' : '新增项目'" width="680px" @close="onProjectDialogClose" destroy-on-close>
+      <el-form :model="projectForm" label-width="100px" :rules="projectRules" ref="projectFormRef">
+        <el-form-item label="项目名称" prop="name"><el-input v-model="projectForm.name" placeholder="请输入项目名称" maxlength="30" show-word-limit></el-input></el-form-item>
+        <el-form-item label="项目编码" prop="code"><el-input v-model="projectForm.code" placeholder="留空则自动生成" maxlength="20"></el-input></el-form-item>
+        <el-form-item label="所属组织" prop="orgId">
+          <el-select v-model="projectForm.orgId" placeholder="选择组织" style="width:100%" filterable>
+            <el-option v-for="o in currentOrgs" :key="o.id" :label="o.name" :value="o.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="路灯配额" prop="poleQuota">
+          <el-input-number v-model="projectForm.poleQuota" :min="0" :max="poleQuotaMax" style="width:100%"></el-input-number>
+          <div style="font-size:12px; color:var(--ink-3); margin-top:4px">项目路灯配额上限（当前可用：{{ availableQuota.pole }}）</div>
+        </el-form-item>
+        <el-form-item label="项目位置">
+          <div style="width:100%">
+            <div style="display:flex; gap:8px; align-items:center; margin-bottom:8px">
+              <el-input-number v-model="projectForm.lng" :precision="6" :step="0.000001" :min="-180" :max="180" controls-position="right" placeholder="经度" style="flex:1"></el-input-number>
+              <el-input-number v-model="projectForm.lat" :precision="6" :step="0.000001" :min="-90" :max="90" controls-position="right" placeholder="纬度" style="flex:1"></el-input-number>
+              <el-button :icon="Aim" @click="locateByLatLng" size="default">定位</el-button>
+            </div>
+            <div style="position:relative">
+              <el-autocomplete
+                v-model="addrKeyword"
+                :fetch-suggestions="addrFetch"
+                placeholder="搜索地址，如：上海陆家嘴"
+                value-key="value"
+                :trigger-on-focus="false"
+                clearable
+                style="position:absolute; top:8px; left:8px; width:260px; z-index:100"
+                @select="addrSelect"
+              >
+                <template #default="{ item }">
+                  <div style="line-height:1.4">{{ item.value }}</div>
+                </template>
+              </el-autocomplete>
+              <div ref="mapBox" style="width:100%; height:240px; border-radius:6px; overflow:hidden; background:#eef2f7; border:1px solid var(--line)"></div>
+              <div style="font-size:12px; color:var(--ink-3); margin-top:4px">点击地图拾取坐标，大屏将默认聚焦此位置</div>
+            </div>
+          </div>
+        </el-form-item>
+        <el-form-item label="状态"><el-radio-group v-model="projectForm.status"><el-radio label="active">启用</el-radio><el-radio label="inactive">停用</el-radio></el-radio-group></el-form-item>
+        <el-form-item label="备注"><el-input v-model="projectForm.remark" type="textarea" :rows="2" maxlength="100" show-word-limit></el-input></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="projectDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveProject" :loading="saving">确定</el-button>
+      </template>
+    </el-dialog>
+  </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
 <script src="js/shared-data.js"></script>
+<script src="https://webapi.amap.com/loader.js"></script>
 <script>
-const { createApp, ref, reactive, computed, watch } = Vue;
+const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
 
 const MENU_DATA = [
   { title: '首页', icon: 'HomeFilled', open: true, items: [] },
@@ -446,7 +504,7 @@ const MENU_DATA = [
   { title: '智慧灯杆', icon: 'Sunny', open: false, items: ['灯杆管理','灯控策略'] },
   { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
   { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },
-  { title: '综合运维', icon: 'SetUp', open: false, items: ['资产分配','策略下发日志'] },
+  { title: '综合运维', icon: 'SetUp', open: false, items: ['策略下发日志'] },
   { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
 ];
@@ -455,7 +513,7 @@ const MENU_HREF = {
   '灯杆管理': 'pole-management.html', '灯控策略': 'light-strategy.html',
   '项目列表': 'project-management.html', '项目分配': 'project-management.html', '配额看板': 'project-management.html', '分配流水': 'project-management.html',
   '租户列表': 'tenant-management.html', '配额管理': 'tenant-management.html', '邀请码': 'tenant-management.html',
-  '资产分配': 'asset-assign.html', '组织管理': 'organization-management.html',
+  '组织管理': 'organization-management.html',
 };
 
 const app = createApp({
@@ -494,7 +552,7 @@ const app = createApp({
     const activeTab = ref('list');
     const onMenuClick = (item, e) => {
       const map = { '项目列表': 'list', '项目分配': 'allocate', '配额看板': 'quota', '分配流水': 'flow' };
-      if (map[item]) { activeMenu.value = item; activeTab.value = map[item]; return; }
+      if (map[item]) { e.preventDefault(); activeMenu.value = item; activeTab.value = map[item]; return; }
       const href = MENU_HREF[item];
       if (href && href !== '#') window.location.href = href;
       else if (href === '#') ElementPlus.ElMessage.info(item + ' 模块建设中');
@@ -503,21 +561,50 @@ const app = createApp({
     /* ===== 项目 CRUD ===== */
     const filterOrgId = ref(null);
     const filterKeyword = ref('');
+    const filterStatus = ref(null);
+    const listPage = ref(1);
+    const listPageSize = ref(10);
     const filteredProjects = computed(() => {
       return SD.PROJECTS.filter(p => p.tenantId === currentTenantId.value)
         .filter(p => !filterOrgId.value || p.orgId === filterOrgId.value)
+        .filter(p => !filterStatus.value || p.status === filterStatus.value)
         .filter(p => !filterKeyword.value || p.name.includes(filterKeyword.value) || (p.code && p.code.includes(filterKeyword.value)));
     });
+    const pagedProjects = computed(() => filteredProjects.value.slice((listPage.value - 1) * listPageSize.value, listPage.value * listPageSize.value));
+    watch([filterOrgId, filterKeyword, filterStatus], () => { listPage.value = 1; });
+    const resetListFilter = () => { filterOrgId.value = null; filterKeyword.value = ''; filterStatus.value = null; listPage.value = 1; };
     const projectDialog = ref(false);
     const projectEditing = ref(false);
     const projectFormRef = ref();
-    const projectForm = reactive({ id: null, name: '', code: '', orgId: null, poleQuota: 0, status: 'active', remark: '' });
-    const projectRules = { name: [{ required: true, message: '请输入项目名称', trigger: 'blur' }], orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }] };
-    const resetProjectForm = () => { Object.assign(projectForm, { id: null, name: '', code: '', orgId: null, poleQuota: 0, status: 'active', remark: '' }); };
-    const openAddProject = () => { resetProjectForm(); projectEditing.value = false; projectDialog.value = true; };
-    const openEditProject = (row) => { Object.assign(projectForm, JSON.parse(JSON.stringify(row))); projectEditing.value = true; projectDialog.value = true; };
+    const projectForm = reactive({ id: null, name: '', code: '', orgId: null, poleQuota: 0, lng: null, lat: null, status: 'active', remark: '' });
+    const originalPoleQuota = ref(0);
+    const saving = ref(false);
+    const addrKeyword = ref('');
+    const mapBox = ref();
+    const projectRules = {
+      name: [{ required: true, message: '请输入项目名称', trigger: 'blur' }],
+      orgId: [{ required: true, message: '请选择所属组织', trigger: 'change' }],
+      code: [{ pattern: /^[A-Za-z0-9_-]*$/, message: '编码只能包含字母、数字、下划线和连字符', trigger: 'blur' }],
+    };
+    const resetProjectForm = () => { Object.assign(projectForm, { id: null, name: '', code: '', orgId: null, poleQuota: 0, lng: null, lat: null, status: 'active', remark: '' }); addrKeyword.value = ''; };
+    const generateProjectCode = () => {
+      const tenantProjects = SD.PROJECTS.filter(p => p.tenantId === currentTenantId.value);
+      const maxSeq = tenantProjects.reduce((max, p) => {
+        const m = p.code && p.code.match(/PRJ-\w+-(\d+)/);
+        return m ? Math.max(max, parseInt(m[1])) : max;
+      }, 0);
+      return 'PRJ-' + currentTenantId.value + '-' + String(maxSeq + 1).padStart(3, '0');
+    };
+    const onProjectDialogClose = () => { projectFormRef.value?.clearValidate(); };
+    const openAddProject = () => { resetProjectForm(); originalPoleQuota.value = 0; projectEditing.value = false; projectDialog.value = true; };
+    const openEditProject = (row) => { resetProjectForm(); Object.assign(projectForm, JSON.parse(JSON.stringify(row))); originalPoleQuota.value = row.poleQuota; projectEditing.value = true; projectDialog.value = true; };
     const saveProject = async () => {
       try { await projectFormRef.value.validate(); } catch { return; }
+      // 编码：留空自动生成 + 唯一性校验
+      const code = projectForm.code || generateProjectCode();
+      const exists = SD.PROJECTS.some(p => p.code === code && p.id !== projectForm.id);
+      if (exists) { ElementPlus.ElMessage.error('项目编码「' + code + '」已存在'); return; }
+      projectForm.code = code;
       if (projectEditing.value) {
         const idx = SD.PROJECTS.findIndex(p => p.id === projectForm.id);
         if (idx > -1) Object.assign(SD.PROJECTS[idx], projectForm);
@@ -544,6 +631,73 @@ const app = createApp({
         }).catch(() => {});
     };
 
+    /* ===== 地图选点 ===== */
+    const AMAP_KEY = '25233c75f91c4a113c2e2abfbd33eebe';
+    let mapInstance = null;
+    let mapMarker = null;
+    let amapReady = false;
+    const ensureAmap = () => {
+      if (amapReady) return Promise.resolve();
+      return AMapLoader.load({ key: AMAP_KEY, version: '2.0', plugins: ['AMap.PlaceSearch', 'AMap.Scale'] }).then(() => { amapReady = true; });
+    };
+    const placeMarker = (lng, lat) => {
+      if (!mapInstance || lng == null || lat == null) return;
+      const pos = [lng, lat];
+      if (mapMarker) { mapMarker.setPosition(pos); }
+      else { mapMarker = new AMap.Marker({ position: pos, map: mapInstance }); }
+    };
+    const focusMap = (lng, lat) => {
+      if (!mapInstance) return;
+      mapInstance.setCenter([lng, lat]);
+      placeMarker(lng, lat);
+    };
+    const initMap = () => {
+      ensureAmap().then(() => {
+        if (!projectDialog.value || !mapBox.value) return;
+        const hasPos = projectForm.lng != null && projectForm.lat != null;
+        const center = hasPos ? [projectForm.lng, projectForm.lat] : [116.397428, 39.90923];
+        mapInstance = new AMap.Map(mapBox.value, { zoom: 13, center, viewMode: '2D' });
+        mapInstance.addControl(new AMap.Scale());
+        if (hasPos) placeMarker(projectForm.lng, projectForm.lat);
+        mapInstance.on('click', (e) => {
+          const lng = Number(e.lnglat.getLng().toFixed(6));
+          const lat = Number(e.lnglat.getLat().toFixed(6));
+          projectForm.lng = lng;
+          projectForm.lat = lat;
+          placeMarker(lng, lat);
+        });
+      }).catch(err => { console.error('地图加载失败', err); ElementPlus.ElMessage.error('地图加载失败，请检查网络'); });
+    };
+    const destroyMap = () => {
+      if (mapInstance) { mapInstance.destroy(); mapInstance = null; mapMarker = null; }
+    };
+    watch(projectDialog, (val) => {
+      if (val) { nextTick(initMap); }
+      else { destroyMap(); }
+    });
+    watch(() => [projectForm.lng, projectForm.lat], ([lng, lat]) => {
+      if (mapInstance && lng != null && lat != null) placeMarker(lng, lat);
+    });
+    const locateByLatLng = () => {
+      if (projectForm.lng == null || projectForm.lat == null) { ElementPlus.ElMessage.warning('请先填写经纬度'); return; }
+      focusMap(projectForm.lng, projectForm.lat);
+    };
+    const addrFetch = (query, cb) => {
+      if (!query || !amapReady) { cb([]); return; }
+      const ps = new AMap.PlaceSearch({ pageSize: 8 });
+      ps.search(query, (status, result) => {
+        if (status === 'complete' && result.poiList) {
+          cb(result.poiList.pois.map(p => ({ value: p.name + (p.address ? ' · ' + p.address : ''), lng: p.location.getLng(), lat: p.location.getLat() })));
+        } else { cb([]); }
+      });
+    };
+    const addrSelect = (item) => {
+      if (!item) return;
+      projectForm.lng = Number(item.lng.toFixed(6));
+      projectForm.lat = Number(item.lat.toFixed(6));
+      focusMap(projectForm.lng, projectForm.lat);
+    };
+
     /* ===== 配额计算 ===== */
     const myQuota = computed(() => SD.TENANT_QUOTAS.find(q => q.tenantId === currentTenantId.value) || { poleTotal: 0, poleUsed: 0, projectTotal: 0, projectUsed: 0 });
     const grantedQuota = computed(() => {
@@ -560,6 +714,7 @@ const app = createApp({
         project: myQuota.value.projectTotal - myQuota.value.projectUsed + receivedQuota.value.project - grantedQuota.value.project,
       };
     });
+    const poleQuotaMax = computed(() => projectEditing.value ? availableQuota.value.pole + originalPoleQuota.value : availableQuota.value.pole);
     const quotaPercent = (kind) => {
       const total = myQuota.value[kind + 'Total'];
       const used = myQuota.value[kind + 'Used'] + grantedQuota.value[kind];
@@ -623,8 +778,26 @@ const app = createApp({
       });
     });
     const allAllocations = computed(() => SD.PROJECT_ALLOCATIONS.slice().sort((a, b) => b.id - a.id));
+    /* 分配流水筛选 + 分页 */
+    const flowKeyword = ref('');
+    const flowStatus = ref(null);
+    const flowPage = ref(1);
+    const flowPageSize = ref(10);
+    const flowFiltered = computed(() => {
+      return allAllocations.value.filter(a => {
+        if (flowStatus.value && a.status !== flowStatus.value) return false;
+        if (flowKeyword.value) {
+          const kw = flowKeyword.value;
+          if (!tenantName(a.fromTenantId).includes(kw) && !tenantName(a.toTenantId).includes(kw)) return false;
+        }
+        return true;
+      });
+    });
+    const pagedFlow = computed(() => flowFiltered.value.slice((flowPage.value - 1) * flowPageSize.value, flowPage.value * flowPageSize.value));
+    watch([flowKeyword, flowStatus], () => { flowPage.value = 1; });
+    const resetFlowFilter = () => { flowKeyword.value = ''; flowStatus.value = null; flowPage.value = 1; };
     const revokeAllocation = (row) => {
-      ElementPlus.ElMessageBox.confirm(`确认撤销对「${tenantName(row.toTenantId)}」的分配吗？\n已使用部分 ({{ ${row.poleUsed}}路灯 / ${row.projectUsed}项目) 不返还，未使用部分自动恢复。`, '提示', { type: 'warning' })
+      ElementPlus.ElMessageBox.confirm(`确认撤销对「${tenantName(row.toTenantId)}」的分配吗？\n已使用部分（${row.poleUsed} 路灯 / ${row.projectUsed} 项目）不返还，未使用部分自动恢复。`, '提示', { type: 'warning' })
         .then(() => {
           const idx = SD.PROJECT_ALLOCATIONS.findIndex(a => a.id === row.id);
           if (idx > -1) { SD.PROJECT_ALLOCATIONS[idx].status = 'revoked'; ElementPlus.ElMessage.success('撤销成功'); }
@@ -647,12 +820,15 @@ const app = createApp({
       collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick,
       currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: SD,
       currentOrgs, orgName, tenantName, activeTab,
-      filterOrgId, filterKeyword, filteredProjects,
+      filterOrgId, filterKeyword, filterStatus, filteredProjects, pagedProjects, listPage, listPageSize, resetListFilter,
       projectDialog, projectEditing, projectForm, projectFormRef, projectRules,
+      poleQuotaMax, saving, onProjectDialogClose,
+      mapBox, addrKeyword, addrFetch, addrSelect, locateByLatLng,
       openAddProject, openEditProject, saveProject, deleteProject,
       myQuota, grantedQuota, receivedQuota, availableQuota, quotaPercent, quotaStatus, pct, stats,
       childTenants, allocForm, allocError, canSubmitAlloc, submitAllocation, resetAllocForm,
       allocFilter, filteredAllocations, allAllocations, revokeAllocation,
+      flowKeyword, flowStatus, flowPage, flowPageSize, flowFiltered, pagedFlow, resetFlowFilter,
       iconComp, submenuIcon,
       Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete,
       Search: ElementPlusIconsVue?.Search, Promotion: ElementPlusIconsVue?.Promotion, Right: ElementPlusIconsVue?.Right,
@@ -660,6 +836,8 @@ const app = createApp({
       Folder: ElementPlusIconsVue?.Folder, Sunny: ElementPlusIconsVue?.Sunny, Share: ElementPlusIconsVue?.Share,
       Menu: ElementPlusIconsVue?.Menu, Expand: ElementPlusIconsVue?.Expand, Fold: ElementPlusIconsVue?.Fold,
       HomeFilled: ElementPlusIconsVue?.HomeFilled, Monitor: ElementPlusIconsVue?.Monitor, SetUp: ElementPlusIconsVue?.SetUp, DataLine: ElementPlusIconsVue?.DataLine, Setting: ElementPlusIconsVue?.Setting,
+      Refresh: ElementPlusIconsVue?.Refresh,
+      Aim: ElementPlusIconsVue?.Aim,
     };
   }
 });
