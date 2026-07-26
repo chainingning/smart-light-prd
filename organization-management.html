@@ -204,6 +204,13 @@
       height: 25px;
       background: var(--line);
     }
+    .tree-node { display: flex; align-items: center; justify-content: space-between; width: 100%; padding-right: 4px; }
+    .tree-node .node-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .tree-node .node-actions { display: none; gap: 6px; flex-shrink: 0; }
+    .tree-node:hover .node-actions { display: flex; }
+    .tree-node .node-actions .el-icon { font-size: 14px; color: var(--ink-2); cursor: pointer; padding: 3px; border-radius: var(--r-sm); }
+    .tree-node .node-actions .el-icon:hover { color: var(--brand); background: var(--brand-soft); }
+    .tree-node .node-actions .el-icon.danger:hover { color: var(--off); background: #fdeef0; }
   </style>
 </head>
 <body>
@@ -271,10 +278,18 @@
             <div class="org-content">
               <div class="org-left">
                 <div class="tree-panel">
-                  <el-tree :data="orgTreeData" :props="{ label: 'name', children: 'children' }" node-key="id" :expand-on-click-node="false" highlight-current :default-expand-all="true" @node-click="handleOrgClick">
+                  <el-input v-model="searchKeyword" placeholder="搜索组织名称" clearable size="small" style="margin-bottom:10px">
+                    <template #prefix><el-icon><Search></Search></el-icon></template>
+                  </el-input>
+                  <el-tree ref="treeRef" :data="orgTreeData" :props="{ label: 'name', children: 'children' }" node-key="id" :expand-on-click-node="false" highlight-current :default-expand-all="true" :filter-node-method="filterNode" @node-click="handleOrgClick">
                     <template #default="{ node, data }">
-                      <div>
-                        <span>{{ node.label }}</span>
+                      <div class="tree-node">
+                        <span class="node-label">{{ node.label }}</span>
+                        <span class="node-actions" @click.stop>
+                          <el-icon title="新增子级" @click="openAddChildOrg(data)"><Plus></Plus></el-icon>
+                          <el-icon title="编辑" @click="openEditOrgFromNode(data)"><Edit></Edit></el-icon>
+                          <el-icon class="danger" title="删除" @click="deleteOrgFromNode(data)"><Delete></Delete></el-icon>
+                        </span>
                       </div>
                     </template>
                   </el-tree>
@@ -284,9 +299,12 @@
                 <div v-if="selectedOrg">
                   <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px">
                     <div>
-                      <h3 style="margin:0; color:var(--ink)">{{ selectedOrg.name }}</h3>
+                      <h3 style="margin:0; color:var(--ink); display:flex; align-items:center; gap:8px">
+                        {{ selectedOrg.name }}
+                        <el-tag size="small" :type="selectedOrg.status === '0' ? 'success' : 'danger'">{{ selectedOrg.status === '0' ? '正常' : '停用' }}</el-tag>
+                      </h3>
                       <p style="margin:4px 0 0; font-size:var(--fs-sm); color:var(--ink-3)">
-                        {{ selectedOrg.parentName ? '上级：' + selectedOrg.parentName : '根组织' }} · 排序：{{ selectedOrg.sort }}
+                        {{ selectedOrg.parentName ? '上级：' + selectedOrg.parentName : '根组织' }} · 排序：{{ selectedOrg.sort }}<span v-if="selectedOrg.leader"> · 负责人：{{ selectedOrg.leader }}</span><span v-if="selectedOrg.phone"> · {{ selectedOrg.phone }}</span>
                       </p>
                     </div>
                     <div>
@@ -338,8 +356,9 @@
                         <el-table-column prop="roleName" label="角色" width="120"></el-table-column>
                         <el-table-column prop="parentName" label="上级职位" width="120"></el-table-column>
                         <el-table-column prop="description" label="说明"></el-table-column>
-                        <el-table-column label="操作" width="180">
+                        <el-table-column label="操作" width="240">
                           <template #default="{ row }">
+                            <el-button size="small" @click="openEditPosition(row)">编辑</el-button>
                             <el-button size="small" @click="bindUserToPosition(row)">绑定用户</el-button>
                             <el-button size="small" type="danger" @click="deletePosition(row)">删除</el-button>
                           </template>
@@ -441,7 +460,7 @@
       </div>
     </div>
 
-    <el-dialog v-model="orgDialogVisible" :title="orgEditing ? '编辑组织' : '新增组织'" width="500px">
+    <el-dialog v-model="orgDialogVisible" :title="orgEditing ? '编辑组织' : '新增组织'" width="560px">
       <el-form :model="orgForm" label-width="100px">
         <el-form-item label="上级组织">
           <el-select v-model="orgForm.parentId" placeholder="请选择" style="width:100%">
@@ -454,6 +473,24 @@
         </el-form-item>
         <el-form-item label="排序" required>
           <el-input-number v-model="orgForm.sort" :min="1" style="width:100%"></el-input-number>
+        </el-form-item>
+        <el-form-item label="负责人">
+          <el-input v-model="orgForm.leader" maxlength="20" placeholder="请输入负责人姓名"></el-input>
+        </el-form-item>
+        <el-form-item label="联系电话">
+          <el-input v-model="orgForm.phone" maxlength="20" placeholder="请输入联系电话"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱">
+          <el-input v-model="orgForm.email" maxlength="50" placeholder="请输入邮箱"></el-input>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-radio-group v-model="orgForm.status">
+            <el-radio value="0">正常</el-radio>
+            <el-radio value="1">停用</el-radio>
+          </el-radio-group>
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="orgForm.remark" type="textarea" maxlength="200" show-word-limit :rows="2"></el-input>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -608,7 +645,7 @@
   <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
   <script src="js/shared-data.js"></script>
   <script>
-const { ref, reactive, computed, createApp } = Vue;
+const { ref, reactive, computed, createApp, watch, onMounted, nextTick } = Vue;
 
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
@@ -689,13 +726,11 @@ function createSharedSetup(activeMenuName) {
 }
 
 const organizationsSeed = [
-  { id: 1, tenantId: 'T1', name: '云创科技集团', parentId: null, sort: 1 },
-  { id: 2, tenantId: 'T1', name: '华东分公司', parentId: 1, sort: 1 },
-  { id: 3, tenantId: 'T1', name: '上海办事处', parentId: 2, sort: 1 },
-  { id: 4, tenantId: 'T1', name: '苏州办事处', parentId: 2, sort: 2 },
-  { id: 5, tenantId: 'T1', name: '华南分公司', parentId: 1, sort: 2 },
-  { id: 6, tenantId: 'T1', name: '广州办事处', parentId: 5, sort: 1 },
-  { id: 7, tenantId: 'T1', name: '深圳办事处', parentId: 5, sort: 2 },
+  { id: 1, tenantId: 'T1', name: '云创科技集团', parentId: null, sort: 1, leader: '张总',   phone: '13800138001', email: 'admin@yunchuang.com',  status: '0', remark: '集团总部', createTime: '2023-09-01 10:00:00' },
+  { id: 2, tenantId: 'T1', name: '浙江省',       parentId: 1,    sort: 1, leader: '李主任', phone: '13800138002', email: 'zj@yunchuang.com',     status: '0', remark: '',         createTime: '2023-09-05 09:30:00' },
+  { id: 3, tenantId: 'T1', name: '宁波市',       parentId: 2,    sort: 1, leader: '王局长', phone: '13800138003', email: 'nb@yunchuang.com',     status: '0', remark: '',         createTime: '2023-09-10 14:20:00' },
+  { id: 4, tenantId: 'T1', name: '海曙区',       parentId: 3,    sort: 1, leader: '赵区长', phone: '13800138004', email: 'hs@yunchuang.com',     status: '0', remark: '',         createTime: '2023-09-15 11:10:00' },
+  { id: 5, tenantId: 'T1', name: '鼓楼街道',     parentId: 4,    sort: 1, leader: '钱主任', phone: '13800138005', email: 'gl@yunchuang.com',     status: '0', remark: '',         createTime: '2023-09-20 16:45:00' },
 ];
 const positionsSeed = [
   { id: 1, orgId: 1, code: 'admin', name: '管理员', roleId: 1, parentId: null, description: '系统管理员' },
@@ -736,7 +771,7 @@ for (let i = 1; i <= 20; i++) {
     name: '智慧灯杆-' + String(i).padStart(3, '0'),
     sn: 'LP2026' + String(i).padStart(5, '0'),
     groupName: '示范路分组',
-    orgId: i <= 10 ? 3 : 6,
+    orgId: i <= 10 ? 3 : 5,
     owner: i <= 3 ? (i <= 1 ? 1 : 2) : null,
     status: i % 3 === 0 ? 'offline' : 'online'
   });
@@ -767,11 +802,11 @@ const app = createApp({
 
     const orgDialogVisible = ref(false);
     const orgEditing = ref(false);
-    const orgForm = reactive({ parentId: null, name: '', sort: 1 });
+    const orgForm = reactive({ parentId: null, name: '', sort: 1, leader: '', phone: '', email: '', status: '0', remark: '' });
 
     const positionDialogVisible = ref(false);
     const positionEditing = ref(false);
-    const positionForm = reactive({ code: '', name: '', roleId: null, parentId: null, description: '' });
+    const positionForm = reactive({ id: null, code: '', name: '', roleId: null, parentId: null, description: '' });
 
     const bindUserDialogVisible = ref(false);
     const bindPositionUserDialogVisible = ref(false);
@@ -834,7 +869,9 @@ const app = createApp({
     });
 
     const orgOptions = computed(() => {
-      return organizations.filter(o => o.id !== selectedOrg.value?.id).map(o => ({ id: o.id, name: o.name }));
+      if (!selectedOrg.value) return organizations.map(o => ({ id: o.id, name: o.name }));
+      const excludeIds = [selectedOrg.value.id, ...getOrgDescendants(selectedOrg.value.id)];
+      return organizations.filter(o => !excludeIds.includes(o.id)).map(o => ({ id: o.id, name: o.name }));
     });
 
     const positions = computed(() => {
@@ -932,6 +969,27 @@ const app = createApp({
       }).sort((a, b) => new Date(b.time) - new Date(a.time));
     });
 
+    const treeRef = ref();
+    const searchKeyword = ref('');
+    const filterNode = (value, data) => {
+      if (!value) return true;
+      return data.name.includes(value);
+    };
+    watch(searchKeyword, (val) => {
+      treeRef.value?.filter(val);
+    });
+
+    // 默认选中第一级节点
+    onMounted(() => {
+      nextTick(() => {
+        const first = orgTreeData.value[0];
+        if (first) {
+          treeRef.value?.setCurrentKey(first.id);
+          handleOrgClick(first);
+        }
+      });
+    });
+
     const handleOrgClick = (data) => {
       selectedOrg.value = data;
     };
@@ -942,6 +1000,11 @@ const app = createApp({
       orgForm.parentId = null;
       orgForm.name = '';
       orgForm.sort = maxSort + 1;
+      orgForm.leader = '';
+      orgForm.phone = '';
+      orgForm.email = '';
+      orgForm.status = '0';
+      orgForm.remark = '';
       orgDialogVisible.value = true;
     };
 
@@ -951,6 +1014,11 @@ const app = createApp({
       orgForm.parentId = selectedOrg.value.parentId;
       orgForm.name = selectedOrg.value.name;
       orgForm.sort = selectedOrg.value.sort;
+      orgForm.leader = selectedOrg.value.leader || '';
+      orgForm.phone = selectedOrg.value.phone || '';
+      orgForm.email = selectedOrg.value.email || '';
+      orgForm.status = selectedOrg.value.status || '0';
+      orgForm.remark = selectedOrg.value.remark || '';
       orgDialogVisible.value = true;
     };
 
@@ -968,7 +1036,9 @@ const app = createApp({
         ElementPlus.ElMessage.success('编辑成功');
       } else {
         const newId = Math.max(...organizations.map(o => o.id), 0) + 1;
-        organizations.push({ id: newId, ...orgForm });
+        const now = new Date();
+        const p = n => String(n).padStart(2, '0');
+        organizations.push({ id: newId, tenantId: 'T1', createTime: `${now.getFullYear()}-${p(now.getMonth()+1)}-${p(now.getDate())} ${p(now.getHours())}:${p(now.getMinutes())}:${p(now.getSeconds())}`, ...orgForm });
         ElementPlus.ElMessage.success('新增成功');
       }
       orgDialogVisible.value = false;
@@ -990,17 +1060,53 @@ const app = createApp({
         }).catch(() => {});
     };
 
+    const openAddChildOrg = (data) => {
+      orgEditing.value = false;
+      const childSorts = organizations.filter(o => o.parentId === data.id).map(o => o.sort || 0);
+      orgForm.parentId = data.id;
+      orgForm.name = '';
+      orgForm.sort = (childSorts.length ? Math.max(...childSorts) : 0) + 1;
+      orgForm.leader = '';
+      orgForm.phone = '';
+      orgForm.email = '';
+      orgForm.status = '0';
+      orgForm.remark = '';
+      orgDialogVisible.value = true;
+    };
+
+    const openEditOrgFromNode = (data) => {
+      selectedOrg.value = data;
+      openEditOrg();
+    };
+
+    const deleteOrgFromNode = (data) => {
+      selectedOrg.value = data;
+      deleteOrg();
+    };
+
     const openAddPosition = () => {
       if (!selectedOrg.value) {
         ElementPlus.ElMessage.warning('请先选择组织');
         return;
       }
       positionEditing.value = false;
+      positionForm.id = null;
       positionForm.code = '';
       positionForm.name = '';
       positionForm.roleId = null;
       positionForm.parentId = null;
       positionForm.description = '';
+      positionDialogVisible.value = true;
+    };
+
+    const openEditPosition = (row) => {
+      positionEditing.value = true;
+      positionForm.id = row.id;
+      positionForm.code = row.code;
+      positionForm.name = row.name;
+      positionForm.roleId = row.roleId;
+      positionForm.parentId = row.parentId;
+      positionForm.description = row.description;
       positionDialogVisible.value = true;
     };
 
@@ -1264,7 +1370,7 @@ const app = createApp({
 
     return { ...shared, organizations, positions, users, orgUsers, roles, products, devices,
       activeTab, assetTab, selectedOrg, selectedUsers,
-      orgDialogVisible, orgEditing, orgForm, orgOptions,
+      orgDialogVisible, orgEditing, orgForm, orgOptions, treeRef, searchKeyword, filterNode,
       positionDialogVisible, positionEditing, positionForm, parentPositionOptions,
       bindUserDialogVisible, bindPositionUserDialogVisible, currentPosition,
       selectedBindUsers, selectedBindPositionUsers,
@@ -1275,7 +1381,9 @@ const app = createApp({
       deviceAssignRecords,
       editDeviceOwnerDialogVisible, editingOwner,
       handleOrgClick, openAddOrg, openEditOrg, saveOrg, deleteOrg,
+      openAddChildOrg, openEditOrgFromNode, deleteOrgFromNode,
       openAddPosition, savePosition, deletePosition,
+      openEditPosition,
       openBindUser, confirmBindUser, bindUserToPosition, confirmBindPositionUser,
       handleUserSelection, unbindUser, batchUnbindUser,
       openAssetAssign, confirmAssetAssign, unassignAsset,

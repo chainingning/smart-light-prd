@@ -520,6 +520,11 @@
                 </el-table-column>
                 <el-table-column prop="name" label="策略名称" min-width="180" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="strategyType" label="策略类型" width="120"></el-table-column>
+                <el-table-column label="启动状态" width="110" align="center">
+                  <template #default="{ row }">
+                    <el-switch v-model="row.enabled" :before-change="() => beforeToggleStatus(row)" @change="(val) => onStatusChange(row, val)" />
+                  </template>
+                </el-table-column>
                 <el-table-column label="时区" width="140">
                   <template #default="{ row }">{{ row.timezone ? (timezoneOptions.find(tz => tz.value === row.timezone)?.label?.split(' ')[0] || row.timezone) : 'UTC+08:00' }}</template>
                 </el-table-column>
@@ -958,16 +963,16 @@ for (let i = 0; i < 148; i++) {
 }
 
 const strategiesSeed = [
-  { id:1, name:'策略1', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'备注', createTime:'2026-06-29 23:24:02', actions:[{action:'开关灯', startHour:0,startMinute:1,startOn:true, endHour:1,endMinute:1,endOn:false}], boundPoleIds:[1,2,3] },
-  { id:2, name:'test_1', deviceType:'智慧灯杆', strategyType:'平台策略', loop:2, remark:'', createTime:'2026-06-20 18:14:44', actions:[{action:'调光', startHour:18,startMinute:0,startBright:80, endHour:23,endMinute:30,endBright:30}], boundPoleIds:[] },
-  { id:3, name:'龙游', deviceType:'智慧网关', remark:'', createTime:'2026-06-01 02:25:56', actions:[], boundPoleIds:[] },
-  { id:4, name:'龙游巨龙路总开关', deviceType:'智慧灯杆', strategyType:'本地策略', loop:3, remark:'', createTime:'2026-06-01 02:15:14', actions:[{action:'开关灯', startHour:19,startMinute:0,startOn:true, endHour:6,endMinute:0,endOn:false}], boundPoleIds:[4,5] },
-  { id:5, name:'亮宇平台', deviceType:'太阳能灯杆', remark:'', createTime:'2026-05-21 21:03:51', actions:[], boundPoleIds:[] },
-  { id:6, name:'亮宇', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'', createTime:'2026-05-21 21:01:52', actions:[], boundPoleIds:[] },
-  { id:7, name:'门市仓库', deviceType:'视频监控', remark:'', createTime:'2026-05-05 11:26:05', actions:[] },
-  { id:8, name:'55', deviceType:'环境监测', remark:'', createTime:'2026-04-15 16:53:43', actions:[] },
-  { id:9, name:'212', deviceType:'智慧充电桩', remark:'', createTime:'2026-04-15 09:12:50', actions:[] },
-  { id:10, name:'11', deviceType:'信息发布LED', remark:'', createTime:'2026-03-10 10:47:02', actions:[] },
+  { id:1, name:'策略1', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'备注', createTime:'2026-06-29 23:24:02', enabled:true, actions:[{action:'开关灯', startHour:0,startMinute:1,startOn:true, endHour:1,endMinute:1,endOn:false}], boundPoleIds:[1,2,3] },
+  { id:2, name:'test_1', deviceType:'智慧灯杆', strategyType:'平台策略', loop:2, remark:'', createTime:'2026-06-20 18:14:44', enabled:true, actions:[{action:'调光', startHour:18,startMinute:0,startBright:80, endHour:23,endMinute:30,endBright:30}], boundPoleIds:[] },
+  { id:3, name:'龙游', deviceType:'智慧网关', remark:'', createTime:'2026-06-01 02:25:56', enabled:false, actions:[], boundPoleIds:[] },
+  { id:4, name:'龙游巨龙路总开关', deviceType:'智慧灯杆', strategyType:'本地策略', loop:3, remark:'', createTime:'2026-06-01 02:15:14', enabled:false, actions:[{action:'开关灯', startHour:19,startMinute:0,startOn:true, endHour:6,endMinute:0,endOn:false}], boundPoleIds:[4,5] },
+  { id:5, name:'亮宇平台', deviceType:'太阳能灯杆', remark:'', createTime:'2026-05-21 21:03:51', enabled:false, actions:[], boundPoleIds:[] },
+  { id:6, name:'亮宇', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'', createTime:'2026-05-21 21:01:52', enabled:true, actions:[], boundPoleIds:[] },
+  { id:7, name:'门市仓库', deviceType:'视频监控', remark:'', createTime:'2026-05-05 11:26:05', enabled:false, actions:[] },
+  { id:8, name:'55', deviceType:'环境监测', remark:'', createTime:'2026-04-15 16:53:43', enabled:false, actions:[] },
+  { id:9, name:'212', deviceType:'智慧充电桩', remark:'', createTime:'2026-04-15 09:12:50', enabled:false, actions:[] },
+  { id:10, name:'11', deviceType:'信息发布LED', remark:'', createTime:'2026-03-10 10:47:02', enabled:false, actions:[] },
 ];
 
 const poleProjectOptionsSeed = ['智慧园区照明项目','城市道路改造项目','滨江路景观照明'];
@@ -1139,7 +1144,7 @@ const app = createApp({
     const stEditing = ref(false);
     const stEditId = ref(null);
     const stFormRef = ref();
-    const blankForm = () => ({ name:'', deviceType:'', strategyType:'', loop:'', timezone:'Asia/Shanghai', remark:'', actions:[] });
+    const blankForm = () => ({ name:'', deviceType:'', strategyType:'', loop:'', timezone:'Asia/Shanghai', remark:'', enabled:true, actions:[] });
     const stForm = reactive(blankForm());
     const stRules = { name: [{ required:true, message:'请输入策略名称', trigger:'blur' }], deviceType: [{ required:true, message:'请选择设备类型', trigger:'change' }] };
     const stAddProductFilter = ref('全部');
@@ -1171,8 +1176,15 @@ const app = createApp({
       ElementPlus.ElMessageBox.confirm(`确认删除策略「${row.name}」吗？`, '提示', { type:'warning', confirmButtonText:'确定', cancelButtonText:'取消' })
         .then(() => { const i = strategies.findIndex(x => x.id === row.id); if (i > -1) strategies.splice(i, 1); ElementPlus.ElMessage.success('删除成功'); }).catch(()=>{});
     };
+    const beforeToggleStatus = (row) => {
+      return ElementPlus.ElMessageBox.confirm(`确认${row.enabled ? '停用' : '启用'}策略「${row.name}」吗？`, '提示', { type:'warning', confirmButtonText:'确定', cancelButtonText:'取消' })
+        .then(() => true).catch(() => false);
+    };
+    const onStatusChange = (row, val) => {
+      ElementPlus.ElMessage.success(`策略「${row.name}」已${val ? '启用' : '停用'}`);
+    };
     const strategyEditDialog = ref(false);
-    const blankEditForm = () => ({ name:'', deviceType:'', strategyType:'', loop:'', timezone:'Asia/Shanghai', remark:'', actions:[] });
+    const blankEditForm = () => ({ name:'', deviceType:'', strategyType:'', loop:'', timezone:'Asia/Shanghai', remark:'', enabled:true, actions:[] });
     const stEditForm = reactive(blankEditForm());
     const stEditProductFilter = ref('全部');
     const stEditGroupFilter = ref('全部');
@@ -1295,7 +1307,7 @@ const app = createApp({
     };
     return { ...shared,
       lightStrategies, deviceTypes, strategyTypes, loops, timezoneOptions,
-      strategyDialog, stEditing, stForm, stRules, stFormRef, openAddStrategy, onDeviceChange, saveStrategy, delStrategy,
+      strategyDialog, stEditing, stForm, stRules, stFormRef, openAddStrategy, onDeviceChange, saveStrategy, delStrategy, beforeToggleStatus, onStatusChange,
       stAddProductFilter, stAddGroupFilter, stAddPoleSearch, stAddSelectedIds, filteredAddPoles, toggleAddPole,
       strategyEditDialog, stEditForm, stEditProductFilter, stEditGroupFilter, stEditPoleSearch, stEditSelectedIds, filteredEditPoles, toggleEditPole, onEditDeviceChange, openEditStrategy, saveStrategyEdit,
       cmdDialog, cmd, openCmd, editAction, saveCmd, pad2, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
