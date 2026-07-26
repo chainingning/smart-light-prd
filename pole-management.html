@@ -552,7 +552,8 @@
               <el-button size="small" type="primary" plain :icon="SetUp" @click="openPoleStrategyPick">下发策略</el-button>
               <el-button size="small" type="primary" plain :icon="Close" @click="poleCancelStrategy">取消策略</el-button>
               <el-divider direction="vertical"></el-divider>
-              <el-button size="small" type="danger" plain :icon="Delete" @click="poleBatchDelete">删除</el-button>
+              <el-button size="small" type="success" plain :icon="Download" @click="poleBatchExport" :disabled="!selectedPoles.length">批量导出</el-button>
+              <el-button size="small" type="danger" plain :icon="Delete" @click="poleBatchDelete" :disabled="!selectedPoles.length">批量删除</el-button>
             </div>
             <div class="table-zone">
               <el-table :data="pagedPoles" stripe style="width:100%" :header-cell-style="tableHeaderStyle" @selection-change="poleSelectionChange">
@@ -581,10 +582,10 @@
                 <el-table-column prop="product" label="所属产品" width="140" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="projectName" label="项目名称" width="150" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="groupName" label="分组" width="110" show-overflow-tooltip></el-table-column>
-                <el-table-column label="操作" width="150" align="center" fixed="right">
+                <el-table-column label="操作" width="180" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
-                      <el-button link type="primary" :icon="Timer" @click="poleHandleTimeStrategy(row)">时间策略</el-button>
+                      <el-button link type="primary" :icon="View" @click="openPoleDetail(row)">详情</el-button>
                       <el-divider direction="vertical"></el-divider>
                       <el-button link type="primary" :icon="Edit" @click="openEditPole(row)">编辑</el-button>
                       <el-divider direction="vertical"></el-divider>
@@ -732,6 +733,70 @@
       <el-button type="primary" @click="saveStrategyEdit">确定</el-button>
     </template>
   </el-dialog>
+
+  <!-- ============ 灯杆详情抽屉 ============ -->
+  <el-drawer v-model="poleDetailVisible" title="灯杆详情" size="520px" direction="rtl">
+    <template v-if="poleDetailData">
+      <div style="padding:0 4px;">
+        <!-- 头部摘要 -->
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+          <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#5b8bff,#2f6bff);display:grid;place-items:center;color:#fff;font-size:20px;font-weight:700;flex-shrink:0;">
+            {{ poleDetailData.name.charAt(poleDetailData.name.length - 1) }}
+          </div>
+          <div>
+            <div style="font-size:18px;font-weight:600;color:var(--ink);">{{ poleDetailData.name }}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+              <el-tag :type="poleStatusType(poleDetailData.status)" size="small" effect="plain" round>{{ poleStatusLabel(poleDetailData.status) }}</el-tag>
+              <el-tag :type="poleDetailData.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.switchOn ? '开灯' : '关灯' }}</el-tag>
+              <span style="font-size:var(--fs-cap);color:var(--ink-3);">SN: {{ poleDetailData.sn }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 基础信息 -->
+        <el-descriptions title="基础信息" :column="2" border size="small" style="margin-bottom:20px;">
+          <el-descriptions-item label="灯杆名称">{{ poleDetailData.name }}</el-descriptions-item>
+          <el-descriptions-item label="序列号">{{ poleDetailData.sn }}</el-descriptions-item>
+          <el-descriptions-item label="所属产品">{{ poleDetailData.product }}</el-descriptions-item>
+          <el-descriptions-item label="项目名称">{{ poleDetailData.projectName }}</el-descriptions-item>
+          <el-descriptions-item label="分组">{{ poleDetailData.groupName || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="灯具类型">{{ poleDetailData.lampType }}</el-descriptions-item>
+          <el-descriptions-item label="安装地址" :span="2">{{ poleDetailData.address || '—' }}</el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 实时数据 -->
+        <el-descriptions title="实时数据" :column="2" border size="small" style="margin-bottom:20px;">
+          <el-descriptions-item label="电压(V)">{{ poleDetailData.voltage ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="电流(A)">{{ poleDetailData.current ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="功率(W)">{{ poleDetailData.power ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="功率因数(%)">{{ poleDetailData.powerFactor ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="频率(Hz)">{{ poleDetailData.frequency ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="亮度(%)">{{ poleDetailData.brightness ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="温度(℃)">{{ poleDetailData.temperature ?? '—' }}</el-descriptions-item>
+          <el-descriptions-item label="运行时长(h)">{{ poleDetailData.runHours ?? '—' }}</el-descriptions-item>
+        </el-descriptions>
+
+        <!-- 控制状态 -->
+        <el-descriptions title="控制状态" :column="2" border size="small">
+          <el-descriptions-item label="开关状态">
+            <el-tag :type="poleDetailData.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.switchOn ? '开' : '关' }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="杆体倾斜">
+            <el-tag :type="poleTiltType(poleDetailData.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(poleDetailData.tilt) }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="光控">
+            <el-tag :type="poleDetailData.lightControl ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.lightControl ? '已开启' : '已关闭' }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="人体感应">
+            <el-tag :type="poleDetailData.bodySense ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.bodySense ? '已开启' : '已关闭' }}</el-tag>
+          </el-descriptions-item>
+        </el-descriptions>
+      </div>
+    </template>
+    <template #footer>
+      <el-button @click="poleDetailVisible = false">关闭</el-button>
+    </template>
+  </el-drawer>
 
   <!-- ============ 新增/编辑 灯杆 ============ -->
   <el-dialog v-model="poleDialogVisible" :title="poleDialogTitle" width="640px" align-center :close-on-click-modal="false">
@@ -1133,6 +1198,23 @@ const app = createApp({
       ElementPlus.ElMessage.success('批量删除成功');
     }, 'error');
     const poleExport = () => ElementPlus.ElMessage.success('导出成功（示例）');
+    const poleBatchExport = () => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择要导出的灯杆'); return; }
+      const headers = ['灯杆名称', '序列号', '状态', '开关', '电压(V)', '电流(A)', '功率(W)', '功率因数(%)', '亮度(%)', '温度(℃)', '运行时长(h)', '光控', '人体感应', '杆体倾斜', '灯具类型', '所属产品', '项目名称', '分组', '安装地址'];
+      const rows = selectedPoles.value.map(p => [
+        p.name, p.sn, poleStatusLabel(p.status), p.switchOn ? '开' : '关',
+        p.voltage, p.current, p.power, p.powerFactor, p.brightness, p.temperature, p.runHours,
+        p.lightControl ? '是' : '否', p.bodySense ? '是' : '否', poleTiltLabel(p.tilt),
+        p.lampType, p.product, p.projectName, p.groupName, p.address
+      ].join(','));
+      const csvContent = '\uFEFF' + headers.join(',') + '\n' + rows.join('\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = `灯杆批量导出_${selectedPoles.value.length}条.csv`;
+      link.click();
+      ElementPlus.ElMessage.success(`已导出 ${selectedPoles.value.length} 条灯杆数据`);
+    };
     const poleDownloadTemplate = () => {
       const csvContent = '\uFEFF' + [
         '灯杆名称,序列号,项目名称,产品类型,地址',
@@ -1172,6 +1254,9 @@ const app = createApp({
       ElementPlus.ElMessageBox.confirm(`确认删除灯杆「${row.name}」？`, '提示', { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' })
         .then(() => { const i = poles.findIndex(p => p.id === row.id); if (i > -1) poles.splice(i, 1); ElementPlus.ElMessage.success('删除成功'); }).catch(() => {});
     };
+    const poleDetailVisible = ref(false);
+    const poleDetailData = ref(null);
+    const openPoleDetail = (row) => { poleDetailData.value = row; poleDetailVisible.value = true; };
     const poleImportVisible = ref(false);
     const poleTsVisible = ref(false);
     const poleTsSn = ref('');
@@ -1211,8 +1296,9 @@ const app = createApp({
       selectedPoles, poleSelectionChange, poleBatchForm, poleBatchApply,
       poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
       poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete,
-      poleExport, poleDownloadTemplate,
+      poleExport, poleDownloadTemplate, poleBatchExport,
       poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete,
+      poleDetailVisible, poleDetailData, openPoleDetail,
       poleImportVisible, poleTsVisible, poleTsSn, poleTsData, poleHandleTimeStrategy,
       poleStrategyDialogVisible, poleStrategyPickId, lightStrategies, poleStrategyPickDetail, openPoleStrategyPick, confirmPoleStrategyPick,
       pad2, formatPoleActionTime, sortPoleActions, allGroupNames, tableHeaderStyle,
@@ -1220,6 +1306,7 @@ const app = createApp({
       Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, Download: ElementPlusIconsVue?.Download,
       Cpu: ElementPlusIconsVue?.Cpu, Connection: ElementPlusIconsVue?.Connection, Offline: ElementPlusIconsVue?.Offline, UserFilled: ElementPlusIconsVue?.UserFilled,
       OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
+      View: ElementPlusIconsVue?.View,
     };
   }
 });

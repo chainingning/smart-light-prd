@@ -149,6 +149,13 @@
     .org-right { flex: 1; min-width: 0; }
     .tree-panel { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; background: var(--surface-2); }
     .org-tabs { margin-bottom: 16px; }
+    .stat-row { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 16px; }
+    .stat-card { border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; background: var(--surface); display: flex; align-items: center; gap: 12px; transition: border-color .15s, box-shadow .15s; }
+    .stat-card:hover { border-color: var(--brand); box-shadow: var(--sh-sm); }
+    .stat-card .sc-icon { width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: #fff; font-size: 18px; flex-shrink: 0; }
+    .stat-card .sc-info { min-width: 0; }
+    .stat-card .sc-num { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.2; }
+    .stat-card .sc-label { font-size: var(--fs-cap); color: var(--ink-3); margin-top: 2px; }
     .asset-card { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; }
     .asset-card:hover { border-color: var(--brand); }
     .empty-cell { text-align: center; padding: 40px; color: var(--ink-3); }
@@ -310,6 +317,15 @@
                     <div>
                       <el-button size="small" @click="openEditOrg">编辑</el-button>
                       <el-button size="small" type="danger" @click="deleteOrg">删除</el-button>
+                    </div>
+                  </div>
+                  <div class="stat-row">
+                    <div class="stat-card" v-for="s in orgStats" :key="s.label">
+                      <div class="sc-icon" :style="{ background: s.color }"><el-icon><component :is="s.icon" /></el-icon></div>
+                      <div class="sc-info">
+                        <div class="sc-num">{{ s.value }}</div>
+                        <div class="sc-label">{{ s.label }}</div>
+                      </div>
                     </div>
                   </div>
                   <el-tabs v-model="activeTab" class="org-tabs">
@@ -948,6 +964,20 @@ const app = createApp({
 
     const allDevices = computed(() => devices);
 
+    const orgStats = computed(() => {
+      if (!selectedOrg.value) return [];
+      const orgId = selectedOrg.value.id;
+      const descendantIds = getOrgDescendants(orgId);
+      const allOrgIds = [orgId, ...descendantIds];
+      return [
+        { label: '子组织', value: descendantIds.length, icon: 'OfficeBuilding', color: 'linear-gradient(135deg,#5b8bff,#2f6bff)' },
+        { label: '职位数', value: positionsData.filter(p => p.orgId === orgId).length, icon: 'Postcard', color: 'linear-gradient(135deg,#1fd29a,#16a36a)' },
+        { label: '用户数', value: orgUsersData.filter(ou => ou.orgId === orgId).length, icon: 'User', color: 'linear-gradient(135deg,#ffb74d,#fb8c00)' },
+        { label: '设备数', value: devices.filter(d => allOrgIds.includes(d.orgId)).length, icon: 'Cpu', color: 'linear-gradient(135deg,#a78bfa,#7c3aed)' },
+        { label: '产品数', value: orgProducts.filter(op => op.orgId === orgId).length, icon: 'Box', color: 'linear-gradient(135deg,#f472b6,#ec4899)' },
+      ];
+    });
+
     const orgListForDevice = computed(() => {
       return organizations.map(o => {
         const descendants = getOrgDescendants(o.id);
@@ -1388,7 +1418,8 @@ const app = createApp({
       handleUserSelection, unbindUser, batchUnbindUser,
       openAssetAssign, confirmAssetAssign, unassignAsset,
       handleProductSelection, handleDeviceSelection, handleOrgDeviceSelection,
-      editDeviceOwner, saveDeviceOwner
+      editDeviceOwner, saveDeviceOwner,
+      orgStats
     };
   }
 });
