@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>首页 · 云创智慧平台</title>
+  <title>设备管理 · 云创智慧平台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -129,7 +129,6 @@
       transition: all .15s; white-space: nowrap; margin: 1px 0;
     }
     .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
-    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
     .nav-item .ni-ic { font-size: 14px; flex: 0 0 auto; opacity: .8; }
     .nav-item .ni-txt { flex: 1; }
     .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
@@ -137,9 +136,6 @@
     .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
     .nav-item.active .dot { opacity: 1; background: #6f9bff; }
     .nav-item.active .ni-ic { opacity: 1; color: #6f9bff; }
-    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
-    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
-    .nav-item.active .dot { opacity: 1; background: #6f9bff; }
     .nav-item.active::before {
       content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
       border-radius: var(--r-pill); background: var(--brand);
@@ -180,6 +176,9 @@
     }
     .top-actions .ico:hover { color: var(--brand); background: var(--brand-soft); }
     .top-actions .ico .mini { font-size: 12px; opacity: .7; }
+    .top-actions .tenant-switcher { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 8px !important; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+    .top-actions .tenant-switcher:hover { border-color: var(--brand); }
+    .top-actions .tenant-switcher .tenant-name { font-size: 13px; font-weight: 500; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .top-actions .user { display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 0 8px 0 6px; height: 36px; border-radius: var(--r-md); transition: background .15s; }
     .top-actions .user:hover { background: var(--surface-2); }
     .top-actions .user .av {
@@ -436,7 +435,8 @@
         <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Expand></Expand></el-icon></span>
         <div class="crumb">
           <span class="home-link" tabindex="0"><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
-          <span class="sep">/</span><span class="cur">工作台</span>
+          <span class="sep">/</span><span class="">智慧灯杆</span>
+          <span class="sep">/</span><span class="cur">{{ moduleName }}</span>
         </div>
         <div class="spacer"></div>
         <div class="top-actions">
@@ -454,7 +454,6 @@
               </el-dropdown-item>
             </el-dropdown-menu></template>
           </el-dropdown>
-
           <el-popover v-model:visible="searchPop" trigger="click" :width="280" placement="bottom-end">
             <template #reference><span class="ico"><el-icon><Search></Search></el-icon></span></template>
             <el-input v-model="navQuery" placeholder="搜索菜单…" size="small" clearable :prefix-icon="Search"></el-input>
@@ -484,27 +483,27 @@
       </header>
 
       <main class="content">
-        <section v-if="activeMenu === '首页'">
-          <div class="stat-grid">
-            <div class="stat" v-for="s in stats" :key="s.k">
-              <div class="st-ic" :style="{ background: s.c }"><el-icon><component :is="s.icon"></component></el-icon></div>
-              <div><div class="st-v">{{ s.v }}</div><div class="st-k">{{ s.k }}</div></div>
-            </div>
+        <!-- 统计卡片（占位，值均为 0） -->
+        <div class="stat-grid">
+          <div class="stat" v-for="s in stats" :key="s.k">
+            <div class="st-ic" :style="{ background: s.c }"><el-icon><component :is="s.icon"></component></el-icon></div>
+            <div><div class="st-v">{{ s.v }}</div><div class="st-k">{{ s.k }}</div></div>
           </div>
-          <div class="panel quick">
-            <div class="form-section-title">快捷入口</div>
-            <div class="quick-grid">
-              <div class="quick-item" v-for="q in quickLinks" :key="q.menu" tabindex="0" @click="openMenu(q.menu)" @keyup.enter="openMenu(q.menu)">
-                <el-icon class="qi-ic"><component :is="q.icon"></component></el-icon>
-                <div><div class="qi-t">{{ q.menu }}</div><div class="qi-s">{{ q.desc }}</div></div>
-              </div>
-            </div>
+        </div>
+        <!-- 功能建设中占位提示 -->
+        <div class="panel">
+          <div class="page-head">
+            <div class="ph-title">{{ moduleName }} <small>功能规划中</small></div>
           </div>
-        </section>
+          <div class="placeholder">
+            <div class="pl-ic"><el-icon><component :is="placeholderIcon"></component></el-icon></div>
+            <div class="pl-t">{{ moduleName }} · 功能建设中</div>
+            <div class="pl-s">该模块正在规划开发中，敬请期待。完整功能将包括设备列表、状态监控、策略下发、告警管理等能力。</div>
+          </div>
+        </div>
       </main>
     </div>
   </div>
-
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
@@ -512,90 +511,32 @@
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
 <script src="js/shared-data.js"></script>
 <script>
-/* ====================== 数据 ====================== */
-const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
-const groupsSeed = [
-  { id: 1, name: '燧煌二组', seq: 118, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
-  { id: 2, name: '燧煌一组', seq: 117, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
-  { id: 3, name: '测试99',   seq: 116, created: '2026-06-14', owner: 'admin', remark: '' },
-  { id: 4, name: '亚明星投光灯', seq: 120, created: '2026-06-03', owner: 'bsyg', remark: '' },
-  { id: 5, name: '毛毛虫',   seq: 121, created: '2026-06-03', owner: 'bsyg', remark: '' },
-  { id: 6, name: '亚明星路灯', seq: 119, created: '2026-06-03', owner: 'bsyg', remark: '' },
-  { id: 7, name: '金牛座',   seq: 118, created: '2026-06-03', owner: 'bsyg', remark: '' },
-  { id: 8, name: '东风',     seq: 117, created: '2026-06-03', owner: 'bsyg', remark: '' },
-  { id: 9, name: 'UFO',      seq: 116, created: '2026-06-03', owner: 'bsyg', remark: '' },
-  { id: 10, name: '金叶',    seq: 115, created: '2026-06-03', owner: 'bsyg', remark: '' },
-];
-for (let i = 11; i <= 58; i++) groupsSeed.push({ id: i, name: '分组' + i, seq: 100 + (i % 30), created: '2026-05-' + String((i % 28) + 1).padStart(2,'0'), owner: 'bsyg', remark: '' });
-
-const deviceCodes = ['862041074724346','862041074848699','865743082867622','865743082882522','866522075609640','866522075661187','869978083918950','869978083926847','869978083928090','869978084012712','869978084012803','869978084253662'];
-const devicesSeed = [];
-const createdDates = ['2025-12-20','2025-12-20','2026-03-13','2026-03-13','2026-01-27','2026-01-27','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21'];
-for (let i = 0; i < 148; i++) {
-  const base = deviceCodes[i % deviceCodes.length];
-  const code = i < 12 ? base : (Number(base) + i).toString();
-  devicesSeed.push({
-    code, tenant: '贵州燧煌照明工程有限公司', product: 'WHX-4G-110AC MINI',
-    created: createdDates[i % createdDates.length],
-    status: i % 7 === 0 ? 'online' : 'offline',
-    group: GROUP_POOL[i % GROUP_POOL.length],
-    sim: false, shadow: false, remark: '',
-    locType: '', lng: '121.51292', lat: '31.225543', address: '上海', ip: '',
-    runtime: { updated: '2026-06-01 15:28:39', sw: 'V8.11', simcard: '898602B61025D0037662', voltage: 230.8, current: 0.007, power: 0, pf: 0, energy: 0, brightness: 100, cct: 0, chip: 27.6, hours: 5, alarm: 0, sw_state: 0, signal: 31 }
-  });
-}
-
-const strategiesSeed = [
-  { id:1, name:'策略1', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'备注', createTime:'2026-06-29 23:24:02', actions:[{action:'开关灯', startHour:0,startMinute:1,startOn:true, endHour:1,endMinute:1,endOn:false}], boundPoleIds:[1,2,3] },
-  { id:2, name:'test_1', deviceType:'智慧灯杆', strategyType:'平台策略', loop:2, remark:'', createTime:'2026-06-20 18:14:44', actions:[{action:'调光', startHour:18,startMinute:0,startBright:80, endHour:23,endMinute:30,endBright:30}], boundPoleIds:[] },
-  { id:3, name:'龙游', deviceType:'智慧网关', remark:'', createTime:'2026-06-01 02:25:56', actions:[], boundPoleIds:[] },
-  { id:4, name:'龙游巨龙路总开关', deviceType:'智慧灯杆', strategyType:'本地策略', loop:3, remark:'', createTime:'2026-06-01 02:15:14', actions:[{action:'开关灯', startHour:19,startMinute:0,startOn:true, endHour:6,endMinute:0,endOn:false}], boundPoleIds:[4,5] },
-  { id:5, name:'亮宇平台', deviceType:'太阳能灯杆', remark:'', createTime:'2026-05-21 21:03:51', actions:[], boundPoleIds:[] },
-  { id:6, name:'亮宇', deviceType:'智慧灯杆', strategyType:'本地策略', loop:1, remark:'', createTime:'2026-05-21 21:01:52', actions:[], boundPoleIds:[] },
-  { id:7, name:'门市仓库', deviceType:'视频监控', remark:'', createTime:'2026-05-05 11:26:05', actions:[] },
-  { id:8, name:'55', deviceType:'环境监测', remark:'', createTime:'2026-04-15 16:53:43', actions:[] },
-  { id:9, name:'212', deviceType:'智慧充电桩', remark:'', createTime:'2026-04-15 09:12:50', actions:[] },
-  { id:10, name:'11', deviceType:'信息发布LED', remark:'', createTime:'2026-03-10 10:47:02', actions:[] },
-];
-
-const poleProjectOptionsSeed = ['智慧园区照明项目','城市道路改造项目','滨江路景观照明'];
-const poleProductOptionsSeed = ['智慧灯杆-标准型','智慧灯杆-经济型','智慧灯杆-旗舰型'];
-const poleLampTypesSeed = ['LED路灯','投光灯','庭院灯','高杆灯'];
-const poleTiltsSeed = ['normal','slight','severe'];
-const polesSeed = [];
-for (let i = 1; i <= 42; i++) {
-  polesSeed.push({
-    id: i,
-    name: '灯杆-' + String(i).padStart(3, '0'),
-    sn: 'LP2026' + String(100000 + i),
-    address: '上海市浦东新区示范路' + i + '号',
-    status: i % 5 === 0 ? 'unregistered' : (i % 3 === 0 ? 'offline' : 'online'),
-    switchOn: i % 3 !== 0,
-    voltage: +(220 + (i % 10)).toFixed(1),
-    current: +(0.5 + (i % 5) * 0.1).toFixed(2),
-    power: +(80 + (i % 20) * 3).toFixed(1),
-    powerFactor: +(85 + (i % 10)).toFixed(1),
-    brightness: 40 + (i % 6) * 10,
-    temperature: 26 + (i % 15),
-    runHours: 100 + i * 7,
-    lightControl: i % 2 === 0,
-    bodySense: i % 4 === 0,
-    tilt: poleTiltsSeed[i % poleTiltsSeed.length],
-    frequency: 50,
-    lampType: poleLampTypesSeed[i % poleLampTypesSeed.length],
-    product: poleProductOptionsSeed[i % poleProductOptionsSeed.length],
-    projectName: poleProjectOptionsSeed[i % poleProjectOptionsSeed.length],
-    groupName: GROUP_POOL[i % GROUP_POOL.length],
-  });
-}
+/* ====================== 模块映射 ====================== */
+const TYPE_MAP = {
+  solar: '太阳能照明', gateway: '智慧网关', camera: '视频监控', led: 'LED显示屏',
+  broadcast: '公共广播', environment: '环境监测', wifi: '无线网络', charging: '智慧充电桩',
+  call: '一键呼叫', cover: '井盖管理', cable: '电缆防盗', controller: '集中管理器',
+};
+const TYPE_ICONS = {
+  solar: 'Sunrise', gateway: 'Connection', camera: 'VideoCamera', led: 'Monitor',
+  broadcast: 'Bell', environment: 'Aim', wifi: 'Position', charging: 'Cellphone',
+  call: 'Phone', cover: 'Location', cable: 'Lock', controller: 'Grid',
+};
+const params = new URLSearchParams(window.location.search);
+const typeKey = params.get('type') || 'solar';
+const moduleName = TYPE_MAP[typeKey] || '未知模块';
+const placeholderIcon = TYPE_ICONS[typeKey] || 'Tools';
+document.title = moduleName + ' · 云创智慧平台';
 
 /* ====================== 共享逻辑 ====================== */
 const { createApp, ref, reactive, computed, watch } = Vue;
 
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
-  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
-  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
+  { title: '智慧灯杆', icon: 'Sunny',   open: true,  items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
+  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
@@ -623,8 +564,15 @@ const MENU_HREF = {
   '电缆防盗': 'device-placeholder.html?type=cable',
   '集中管理器': 'device-placeholder.html?type=controller',
   '灯控策略': 'light-strategy.html',
-  
-  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
+
+  '组织管理': 'organization-management.html',
+  '项目列表': 'project-management.html',
+  '项目分配': 'project-management.html',
+  '配额看板': 'project-management.html',
+  '分配流水': 'project-management.html',
+  '租户列表': 'tenant-management.html',
+  '配额管理': 'tenant-management.html',
+  '邀请码': 'tenant-management.html',
 };
 
 function createSharedSetup(activeMenuName) {
@@ -662,7 +610,6 @@ function createSharedSetup(activeMenuName) {
     if (!href) { e.preventDefault(); placeholder(item); }
     // 有 href 时，放行默认跳转，不 prevent
   };
-
   /* ===== 租户切换 ===== */
   const savedTenant = localStorage.getItem('currentTenantId');
   const currentTenantId = ref(savedTenant || 'T1');
@@ -678,14 +625,13 @@ function createSharedSetup(activeMenuName) {
     ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
     setTimeout(() => window.location.reload(), 600);
   };
-
   /* 图标查找（直接用组件对象） */
   const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
   const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
   return {
     collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
-    searchPop, navQuery, navMatches, jumpMenu, toggleFull,
-    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData, placeholder, onMenuClick,
+    searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
+    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData,
     iconComp, submenuIcon,
   };
 }
@@ -699,26 +645,28 @@ function registerIcons(app) {
   } catch (e) {}
 }
 
-const pad2 = n => String(n ?? 0).padStart(2, '0');
-const tableHeaderStyle = { background: '#f5f8fd', color: '#586273', fontWeight: '600', fontSize: '13px' };
-
-
 const app = createApp({
   setup() {
-    const shared = createSharedSetup('首页');
+    const shared = createSharedSetup(moduleName);
+    // 强制展开包含当前菜单项的菜单组（智慧灯杆）
+    const targetGroup = shared.menuGroups.find(g => g.items.includes(moduleName));
+    if (targetGroup) targetGroup.open = true;
+
+    // 占位统计卡片：值均为 0，图标背景统一灰色
     const stats = [
-      { k: '设备总数', v: '148', c: 'linear-gradient(135deg,#5b8bff,#2f6bff)', icon: 'Cpu' },
-      { k: '在线设备', v: '22',  c: 'linear-gradient(135deg,#1fd29a,#16a36a)', icon: 'Connection' },
-      { k: '分组数量', v: '58',  c: 'linear-gradient(135deg,#ffb74d,#fb8c00)', icon: 'Folder' },
-      { k: '运行策略', v: '10',  c: 'linear-gradient(135deg,#a78bfa,#7c5cfc)', icon: 'SetUp' },
+      { k: '设备总数', v: 0, c: 'linear-gradient(135deg,#9aa6b6,#7a8597)', icon: 'Cpu' },
+      { k: '在线设备', v: 0, c: 'linear-gradient(135deg,#9aa6b6,#7a8597)', icon: 'Connection' },
+      { k: '离线设备', v: 0, c: 'linear-gradient(135deg,#9aa6b6,#7a8597)', icon: 'Offline' },
+      { k: '故障设备', v: 0, c: 'linear-gradient(135deg,#9aa6b6,#7a8597)', icon: 'Warning' },
     ];
-    const quickLinks = [
-      { menu: '设备分组', href: 'device-group.html', desc: '按类型管理分组', icon: 'Folder' },
-      { menu: '设备管理', href: 'device-management.html', desc: '查看设备运行状态', icon: 'Cpu' },
-      { menu: '灯杆管理', href: 'pole-management.html', desc: '管理智慧灯杆', icon: 'Sunny' },
-    ];
-    const openMenu = (m) => { const href = MENU_HREF[m]; if (href) window.location.href = href; };
-    return { ...shared, stats, quickLinks, openMenu };
+
+    return { ...shared,
+      moduleName, placeholderIcon, stats,
+      Search: ElementPlusIconsVue?.Search,
+      User: ElementPlusIconsVue?.User,
+      Setting: ElementPlusIconsVue?.Setting,
+      SwitchButton: ElementPlusIconsVue?.SwitchButton,
+    };
   }
 });
 registerIcons(app);

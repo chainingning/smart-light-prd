@@ -546,6 +546,9 @@
               <el-button size="small" type="success" plain :icon="Lightning" @click="poleLightOn">开灯</el-button>
               <el-button size="small" type="primary" plain :icon="MuteNotification" @click="poleLightOff">关灯</el-button>
               <el-divider direction="vertical"></el-divider>
+              <el-button size="small" type="success" :icon="Lightning" @click="poleLightAllOn">全部开</el-button>
+              <el-button size="small" type="danger" :icon="MuteNotification" @click="poleLightAllOff">全部关</el-button>
+              <el-divider direction="vertical"></el-divider>
               <el-button size="small" type="primary" plain :icon="SetUp" @click="openPoleStrategyPick">下发策略</el-button>
               <el-button size="small" type="primary" plain :icon="Close" @click="poleCancelStrategy">取消策略</el-button>
               <el-divider direction="vertical"></el-divider>
@@ -953,8 +956,8 @@ const { createApp, ref, reactive, computed, watch } = Vue;
 
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
-  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['策略下发日志'] },
+  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
@@ -969,6 +972,18 @@ const MENU_HREF = {
   '设备分组': 'device-group.html',
   '设备管理': 'device-management.html',
   '灯杆管理': 'pole-management.html',
+  '太阳能照明': 'device-placeholder.html?type=solar',
+  '智慧网关': 'device-placeholder.html?type=gateway',
+  '视频监控': 'device-placeholder.html?type=camera',
+  'LED显示屏': 'device-placeholder.html?type=led',
+  '公共广播': 'device-placeholder.html?type=broadcast',
+  '环境监测': 'device-placeholder.html?type=environment',
+  '无线网络': 'device-placeholder.html?type=wifi',
+  '智慧充电桩': 'device-placeholder.html?type=charging',
+  '一键呼叫': 'device-placeholder.html?type=call',
+  '井盖管理': 'device-placeholder.html?type=cover',
+  '电缆防盗': 'device-placeholder.html?type=cable',
+  '集中管理器': 'device-placeholder.html?type=controller',
   '灯控策略': 'light-strategy.html',
   
   '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
@@ -1099,6 +1114,16 @@ const app = createApp({
     const poleTiltLabel = (t) => ({ normal: '正常', slight: '微倾', severe: '严重倾斜' }[t] || t);
     const poleLightOn = () => poleConfirmAndExec('确定要对选中的灯杆执行【开灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = true); ElementPlus.ElMessage.success('开灯成功'); });
     const poleLightOff = () => poleConfirmAndExec('确定要对选中的灯杆执行【关灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = false); ElementPlus.ElMessage.success('关灯成功'); });
+    const poleLightAllOn = () => {
+      if (!filteredPoles.value.length) { ElementPlus.ElMessage.warning('当前没有可操作的灯杆'); return; }
+      ElementPlus.ElMessageBox.confirm(`确定要对全部 ${filteredPoles.value.length} 台灯杆执行【全部开灯】操作吗？`, '操作确认', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
+        .then(() => { filteredPoles.value.forEach(p => p.switchOn = true); ElementPlus.ElMessage.success(`已对 ${filteredPoles.value.length} 台灯杆执行全部开灯`); }).catch(() => {});
+    };
+    const poleLightAllOff = () => {
+      if (!filteredPoles.value.length) { ElementPlus.ElMessage.warning('当前没有可操作的灯杆'); return; }
+      ElementPlus.ElMessageBox.confirm(`确定要对全部 ${filteredPoles.value.length} 台灯杆执行【全部关灯】操作吗？`, '操作确认', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
+        .then(() => { filteredPoles.value.forEach(p => p.switchOn = false); ElementPlus.ElMessage.success(`已对 ${filteredPoles.value.length} 台灯杆执行全部关灯`); }).catch(() => {});
+    };
     const poleCancelStrategy = () => poleConfirmAndExec('确定要【取消策略】吗？取消后选中灯杆将停止执行已下发的策略。', () => { ElementPlus.ElMessage.success('策略已取消'); });
     const poleBatchDelete = () => poleConfirmAndExec('确定要删除选中的灯杆吗？此操作不可恢复！', () => {
       const ids = selectedPoles.value.map(p => p.id);
@@ -1184,7 +1209,7 @@ const app = createApp({
       filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleStats,
       selectedPoles, poleSelectionChange, poleBatchForm, poleBatchApply,
       poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
-      poleLightOn, poleLightOff, poleCancelStrategy, poleBatchDelete,
+      poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete,
       poleExport, poleDownloadTemplate,
       poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete,
       poleImportVisible, poleTsVisible, poleTsSn, poleTsData, poleHandleTimeStrategy,

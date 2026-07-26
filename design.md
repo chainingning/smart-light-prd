@@ -44,9 +44,21 @@
 │   └── 设备分组    ← 已实现
 ├── ☀️ 智慧灯杆
 │   ├── 灯杆管理    ← 已实现
-│   └── 灯控策略    ← 已实现
+│   ├── 太阳能照明  ← 占位
+│   ├── 智慧网关    ← 占位
+│   ├── 视频监控    ← 占位
+│   ├── LED显示屏   ← 占位
+│   ├── 公共广播    ← 占位
+│   ├── 环境监测    ← 占位
+│   ├── 无线网络    ← 占位
+│   ├── 智慧充电桩  ← 占位
+│   ├── 一键呼叫    ← 占位
+│   ├── 井盖管理    ← 占位
+│   ├── 电缆防盗    ← 占位
+│   └── 集中管理器  ← 占位
 ├── ⚙️ 综合运维
 │   ├── 策略管理    ← 已实现
+│   ├── 灯控策略    ← 已实现
 │   └── 策略下发日志
 ├── 📊 系统运维
 │   ├── 运维概览
@@ -82,7 +94,19 @@
 | 设备管理 | `device-management.html` | 设备管理 |
 | 设备分组 | `device-group.html` | 设备管理 |
 | 灯杆管理 | `pole-management.html` | 智慧灯杆 |
-| 灯控策略 | `light-strategy.html` | 智慧灯杆 |
+| 太阳能照明 | `device-placeholder.html?type=solar` | 智慧灯杆 |
+| 智慧网关 | `device-placeholder.html?type=gateway` | 智慧灯杆 |
+| 视频监控 | `device-placeholder.html?type=camera` | 智慧灯杆 |
+| LED显示屏 | `device-placeholder.html?type=led` | 智慧灯杆 |
+| 公共广播 | `device-placeholder.html?type=broadcast` | 智慧灯杆 |
+| 环境监测 | `device-placeholder.html?type=environment` | 智慧灯杆 |
+| 无线网络 | `device-placeholder.html?type=wifi` | 智慧灯杆 |
+| 智慧充电桩 | `device-placeholder.html?type=charging` | 智慧灯杆 |
+| 一键呼叫 | `device-placeholder.html?type=call` | 智慧灯杆 |
+| 井盖管理 | `device-placeholder.html?type=cover` | 智慧灯杆 |
+| 电缆防盗 | `device-placeholder.html?type=cable` | 智慧灯杆 |
+| 集中管理器 | `device-placeholder.html?type=controller` | 智慧灯杆 |
+| 灯控策略 | `light-strategy.html` | 综合运维 |
 | 策略管理 | `strategy.html` | 综合运维 |
 | 组织管理 | `organization-management.html` | 系统管理 |
 
@@ -252,7 +276,7 @@
 
 ### 3.6 灯控策略 (light-strategy.html)
 
-**页面路径：** 智慧灯杆 / 灯控策略
+**页面路径：** 综合运维 / 灯控策略
 
 **定位：** 仅展示「智慧灯杆」设备类型的策略，与通用策略管理区分。
 
