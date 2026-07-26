@@ -341,10 +341,6 @@
     .tag-soft { background: var(--brand-soft); color: var(--brand); border: none; }
 
     /* ============ 灯杆管理 / 批量条 / 选择详情提示 ============ */
-    .batch-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
-    .batch-bar .bf-item { display: flex; align-items: center; gap: 8px; }
-    .batch-bar .bf-lbl { font-size: var(--fs-cap); color: var(--ink-3); white-space: nowrap; }
-    .batch-bar .bf-sel { font-size: var(--fs-sm); color: var(--ink-2); font-weight: 600; }
 
     .pick-detail { margin-top: 14px; background: var(--surface-2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 14px 16px; }
     .pick-detail .pd-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; gap: 10px; }
@@ -522,21 +518,7 @@
             </div>
           </div>
 
-          <div class="panel batch-bar" style="margin-top:16px">
-            <span class="bf-sel">已选 {{ selectedPoles.length }} 项</span>
-            <div class="bf-item"><span class="bf-lbl">感应周期</span><el-input v-model="poleBatchForm.senseCycle" placeholder="输入" style="width:90px" size="small" :disabled="!selectedPoles.length"></el-input></div>
-            <div class="bf-item"><span class="bf-lbl">调光</span><el-slider v-model="poleBatchForm.dim" style="width:120px" size="small" :disabled="!selectedPoles.length"></el-slider><span class="bf-lbl">{{ poleBatchForm.dim }}%</span></div>
-            <div class="bf-item"><span class="bf-lbl">色温</span><el-slider v-model="poleBatchForm.colorTemp" style="width:120px" size="small" :disabled="!selectedPoles.length"></el-slider><span class="bf-lbl">{{ poleBatchForm.colorTemp < 30 ? '暖' : poleBatchForm.colorTemp > 70 ? '冷' : '中性' }}</span></div>
-            <div class="bf-item"><span class="bf-lbl">回路</span>
-              <el-select v-model="poleBatchForm.circuit" placeholder="选择" size="small" style="width:80px" :disabled="!selectedPoles.length">
-                <el-option v-for="n in 8" :key="n" :label="String(n)" :value="n"></el-option>
-              </el-select>
-            </div>
-            <el-button type="primary" size="small" :disabled="!selectedPoles.length" @click="poleBatchApply">应用</el-button>
-          </div>
-
           <div class="panel" style="margin-top:16px">
-            <div class="page-head"><div class="ph-title">智慧照明列表 <small>共 {{ filteredPoles.length }} 条</small></div></div>
             <div class="toolbar">
               <el-button type="primary" size="small" :icon="Plus" @click="openAddPole">新增</el-button>
               <el-button size="small" :icon="Upload" @click="poleImportVisible = true">导入</el-button>
@@ -557,32 +539,32 @@
             </div>
             <div class="table-zone">
               <el-table :data="pagedPoles" stripe style="width:100%" :header-cell-style="tableHeaderStyle" @selection-change="poleSelectionChange">
-                <el-table-column type="selection" width="45"></el-table-column>
-                <el-table-column prop="name" label="灯杆名称" min-width="120" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="sn" label="序列号" min-width="140" show-overflow-tooltip></el-table-column>
-                <el-table-column label="状态" width="90" align="center">
+                <el-table-column type="selection" width="42"></el-table-column>
+                <el-table-column prop="name" label="灯杆名称" min-width="90" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="sn" label="序列号" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="address" label="地址" min-width="100" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="product" label="所属产品" min-width="90" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="projectName" label="项目名称" min-width="90" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="groupName" label="分组" min-width="70" show-overflow-tooltip></el-table-column>
+                <el-table-column label="状态" width="80" align="center">
                   <template #default="{ row }"><el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag></template>
                 </el-table-column>
-                <el-table-column label="开关" width="70" align="center">
+                <el-table-column label="开关" width="60" align="center">
                   <template #default="{ row }"><el-tag :type="row.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ row.switchOn ? '开' : '关' }}</el-tag></template>
                 </el-table-column>
-                <el-table-column prop="voltage" label="电压(V)" width="85" align="right"></el-table-column>
-                <el-table-column prop="power" label="功率(W)" width="85" align="right"></el-table-column>
-                <el-table-column prop="brightness" label="亮度(%)" width="85" align="right"></el-table-column>
-                <el-table-column label="光控" width="70" align="center">
+                <el-table-column prop="voltage" label="电压(V)" width="75" align="right"></el-table-column>
+                <el-table-column prop="power" label="功率(W)" width="75" align="right"></el-table-column>
+                <el-table-column prop="brightness" label="亮度(%)" width="75" align="right"></el-table-column>
+                <el-table-column label="光控" width="60" align="center">
                   <template #default="{ row }"><el-switch v-model="row.lightControl" size="small"></el-switch></template>
                 </el-table-column>
-                <el-table-column label="人体感应" width="90" align="center">
+                <el-table-column label="人体感应" width="80" align="center">
                   <template #default="{ row }"><el-switch v-model="row.bodySense" size="small"></el-switch></template>
                 </el-table-column>
-                <el-table-column label="杆体倾斜" width="90" align="center">
+                <el-table-column label="杆体倾斜" width="80" align="center">
                   <template #default="{ row }"><el-tag :type="poleTiltType(row.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(row.tilt) }}</el-tag></template>
                 </el-table-column>
-                <el-table-column prop="lampType" label="灯具类型" width="100"></el-table-column>
-                <el-table-column prop="product" label="所属产品" width="140" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="projectName" label="项目名称" width="150" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="groupName" label="分组" width="110" show-overflow-tooltip></el-table-column>
-                <el-table-column label="操作" width="180" align="center" fixed="right">
+                <el-table-column label="操作" width="220" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
                       <el-button link type="primary" :icon="View" @click="openPoleDetail(row)">详情</el-button>
@@ -735,11 +717,11 @@
   </el-dialog>
 
   <!-- ============ 灯杆详情抽屉 ============ -->
-  <el-drawer v-model="poleDetailVisible" title="灯杆详情" size="520px" direction="rtl">
+  <el-drawer v-model="poleDetailVisible" title="灯杆详情" size="560px" direction="rtl">
     <template v-if="poleDetailData">
       <div style="padding:0 4px;">
         <!-- 头部摘要 -->
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:20px;">
           <div style="width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,#5b8bff,#2f6bff);display:grid;place-items:center;color:#fff;font-size:20px;font-weight:700;flex-shrink:0;">
             {{ poleDetailData.name.charAt(poleDetailData.name.length - 1) }}
           </div>
@@ -748,49 +730,92 @@
             <div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
               <el-tag :type="poleStatusType(poleDetailData.status)" size="small" effect="plain" round>{{ poleStatusLabel(poleDetailData.status) }}</el-tag>
               <el-tag :type="poleDetailData.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.switchOn ? '开灯' : '关灯' }}</el-tag>
-              <span style="font-size:var(--fs-cap);color:var(--ink-3);">SN: {{ poleDetailData.sn }}</span>
             </div>
           </div>
         </div>
 
-        <!-- 基础信息 -->
-        <el-descriptions title="基础信息" :column="2" border size="small" style="margin-bottom:20px;">
-          <el-descriptions-item label="灯杆名称">{{ poleDetailData.name }}</el-descriptions-item>
-          <el-descriptions-item label="序列号">{{ poleDetailData.sn }}</el-descriptions-item>
-          <el-descriptions-item label="所属产品">{{ poleDetailData.product }}</el-descriptions-item>
-          <el-descriptions-item label="项目名称">{{ poleDetailData.projectName }}</el-descriptions-item>
-          <el-descriptions-item label="分组">{{ poleDetailData.groupName || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="灯具类型">{{ poleDetailData.lampType }}</el-descriptions-item>
-          <el-descriptions-item label="安装地址" :span="2">{{ poleDetailData.address || '—' }}</el-descriptions-item>
+        <!-- 基本信息 -->
+        <el-descriptions title="基本信息" :column="2" border size="small" style="margin-bottom:16px;">
+          <el-descriptions-item label="灯具类型">{{ poleDetailData.lampType || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="所在地点" :span="2">{{ poleDetailData.address || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="所在经度">{{ poleDetailData.lng || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="所在纬度">{{ poleDetailData.lat || '—' }}</el-descriptions-item>
         </el-descriptions>
 
-        <!-- 实时数据 -->
-        <el-descriptions title="实时数据" :column="2" border size="small" style="margin-bottom:20px;">
-          <el-descriptions-item label="电压(V)">{{ poleDetailData.voltage ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="电流(A)">{{ poleDetailData.current ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="功率(W)">{{ poleDetailData.power ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="功率因数(%)">{{ poleDetailData.powerFactor ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="频率(Hz)">{{ poleDetailData.frequency ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="亮度(%)">{{ poleDetailData.brightness ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="温度(℃)">{{ poleDetailData.temperature ?? '—' }}</el-descriptions-item>
-          <el-descriptions-item label="运行时长(h)">{{ poleDetailData.runHours ?? '—' }}</el-descriptions-item>
+        <!-- 设备信息 -->
+        <el-descriptions title="设备信息" :column="2" border size="small" style="margin-bottom:16px;">
+          <el-descriptions-item label="设备名称">{{ poleDetailData.name }}</el-descriptions-item>
+          <el-descriptions-item label="所属产品">{{ poleDetailData.product || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="灯杆类型">{{ poleDetailData.lampType || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="最后上线">{{ poleDetailData.lastOnline || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="灯杆序列号">{{ poleDetailData.sn }}</el-descriptions-item>
+          <el-descriptions-item label="网关序列号">{{ poleDetailData.gatewaySn || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="SIM卡号">{{ poleDetailData.simCard || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="软件版本">{{ poleDetailData.softwareVer || '—' }}</el-descriptions-item>
         </el-descriptions>
 
-        <!-- 控制状态 -->
-        <el-descriptions title="控制状态" :column="2" border size="small">
-          <el-descriptions-item label="开关状态">
-            <el-tag :type="poleDetailData.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.switchOn ? '开' : '关' }}</el-tag>
+        <!-- 设备状态 -->
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+          <span style="font-size:14px;font-weight:600;color:var(--ink);">设备状态</span>
+          <span style="font-size:var(--fs-cap);color:var(--ink-3);">（更新时间：{{ poleDetailData.lastOnline || '—' }}）</span>
+        </div>
+        <el-descriptions :column="2" border size="small" style="margin-bottom:16px;">
+          <el-descriptions-item label="电压">{{ poleDetailData.voltage ?? '—' }}V</el-descriptions-item>
+          <el-descriptions-item label="电流">{{ poleDetailData.current ?? '—' }}A</el-descriptions-item>
+          <el-descriptions-item label="功率">{{ poleDetailData.power ?? '—' }}W</el-descriptions-item>
+          <el-descriptions-item label="过载功率">{{ poleDetailData.overloadPower != null ? poleDetailData.overloadPower + 'W' : '—' }}</el-descriptions-item>
+          <el-descriptions-item label="累计电量">{{ poleDetailData.totalEnergy ?? '—' }}kWh</el-descriptions-item>
+          <el-descriptions-item label="开关">
+            <el-tag :type="poleDetailData.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.switchOn ? '开灯' : '关灯' }}</el-tag>
           </el-descriptions-item>
-          <el-descriptions-item label="杆体倾斜">
-            <el-tag :type="poleTiltType(poleDetailData.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(poleDetailData.tilt) }}</el-tag>
-          </el-descriptions-item>
-          <el-descriptions-item label="光控">
-            <el-tag :type="poleDetailData.lightControl ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.lightControl ? '已开启' : '已关闭' }}</el-tag>
-          </el-descriptions-item>
+          <el-descriptions-item label="亮度">{{ poleDetailData.brightness ?? '—' }}%</el-descriptions-item>
+          <el-descriptions-item label="温度">{{ poleDetailData.temperature ?? '—' }}℃</el-descriptions-item>
+          <el-descriptions-item label="运行时间">{{ poleDetailData.runHours ?? '—' }}H</el-descriptions-item>
+          <el-descriptions-item label="x轴倾斜">{{ poleDetailData.tiltX != null ? poleDetailData.tiltX + '度' : '—' }}</el-descriptions-item>
+          <el-descriptions-item label="y轴倾斜">{{ poleDetailData.tiltY != null ? poleDetailData.tiltY + '度' : '—' }}</el-descriptions-item>
+          <el-descriptions-item label="z轴倾斜">{{ poleDetailData.tiltZ != null ? poleDetailData.tiltZ + '度' : '—' }}</el-descriptions-item>
           <el-descriptions-item label="人体感应">
-            <el-tag :type="poleDetailData.bodySense ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.bodySense ? '已开启' : '已关闭' }}</el-tag>
+            <el-tag :type="poleDetailData.bodySense ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.bodySense ? '有人' : '没人' }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="设备仓状态">
+            <el-tag :type="poleDetailData.cabinetStatus === '正常' ? 'success' : poleDetailData.cabinetStatus === '报警' ? 'danger' : 'info'" size="small" effect="plain">{{ poleDetailData.cabinetStatus || '—' }}</el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="光照度使能">
+            <el-tag :type="poleDetailData.lightEnable ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.lightEnable ? '打开' : '关闭' }}</el-tag>
           </el-descriptions-item>
         </el-descriptions>
+
+        <!-- 设备控制 -->
+        <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:8px;">设备控制</div>
+        <div style="border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--surface);margin-bottom:16px;">
+          <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+            <el-button type="success" :icon="Lightning" :disabled="poleDetailData.switchOn" @click="poleDetailCtrlOn">开灯</el-button>
+            <el-button type="danger" :icon="MuteNotification" :disabled="!poleDetailData.switchOn" @click="poleDetailCtrlOff">关灯</el-button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <span style="font-size:var(--fs-sm);color:var(--ink-2);width:50px;flex-shrink:0;">调光</span>
+            <el-slider v-model="poleDetailCtrl.dim" style="flex:1" :format-tooltip="v => v + '%'"></el-slider>
+            <span style="font-size:var(--fs-sm);color:var(--ink);width:40px;text-align:right;">{{ poleDetailCtrl.dim }}%</span>
+            <el-button type="primary" size="small" @click="poleDetailCtrlApplyDim">确认</el-button>
+          </div>
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span style="font-size:var(--fs-sm);color:var(--ink-2);width:50px;flex-shrink:0;">色温</span>
+            <el-slider v-model="poleDetailCtrl.colorTemp" style="flex:1" :min="0" :max="100"></el-slider>
+            <span style="font-size:var(--fs-sm);color:var(--ink-2);width:50px;text-align:right;">{{ poleDetailCtrl.colorTemp < 30 ? '暖光' : poleDetailCtrl.colorTemp > 70 ? '冷光' : '中性' }}</span>
+            <el-button type="primary" size="small" @click="poleDetailCtrlApplyCCT">确认</el-button>
+          </div>
+        </div>
+
+        <!-- 功率走势 -->
+        <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:8px;">功率走势</div>
+        <div style="border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--surface-2);">
+          <div style="display:flex;align-items:flex-end;gap:4px;height:100px;">
+            <div v-for="v in polePowerChart" :key="v.label" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;">
+              <div :style="{ width:'100%', height:v.pct + '%', background:'linear-gradient(180deg,#5b8bff,#3b7bff)', borderRadius:'4px 4px 0 0' }"></div>
+              <span style="font-size:10px;color:var(--ink-3);">{{ v.label }}</span>
+            </div>
+          </div>
+        </div>
       </div>
     </template>
     <template #footer>
@@ -1011,6 +1036,19 @@ for (let i = 1; i <= 42; i++) {
     product: poleProductOptionsSeed[i % poleProductOptionsSeed.length],
     projectName: poleProjectOptionsSeed[i % poleProjectOptionsSeed.length],
     groupName: GROUP_POOL[i % GROUP_POOL.length],
+    lng: '120.' + String(510000 + i * 137),
+    lat: '31.' + String(300000 + i * 89),
+    gatewaySn: 'GW2026' + String(200000 + i),
+    simCard: '898611232130' + String(4551000 + i),
+    softwareVer: 'V3.' + (10 + i % 10),
+    lastOnline: '2026-07-27 0' + (i % 9) + ':' + String(10 + i % 49).padStart(2,'0') + ':' + String(20 + i % 39).padStart(2,'0'),
+    overloadPower: i % 4 === 0 ? +(150 + i * 2).toFixed(1) : null,
+    totalEnergy: +(15 + i * 0.85).toFixed(2),
+    tiltX: (i % 3 === 0) ? null : +((i % 5) * 0.5).toFixed(2),
+    tiltY: (i % 4 === 0) ? null : +((i % 3) * 0.3).toFixed(2),
+    tiltZ: (i % 5 === 0) ? null : +((i % 4) * 0.4).toFixed(2),
+    cabinetStatus: ['正常','未知','报警'][i % 3],
+    lightEnable: i % 2 === 0,
     orgId: i <= 20 ? 3 : (i <= 35 ? 6 : null),
     owner: i <= 5 ? (i % 3 + 1) : null,
   });
@@ -1172,8 +1210,6 @@ const app = createApp({
       ElementPlus.ElMessageBox.confirm(message, '操作确认', { confirmButtonText: '确定', cancelButtonText: '取消', type })
         .then(fn).catch(() => {});
     };
-    const poleBatchForm = reactive({ senseCycle: '', dim: 50, colorTemp: 50, circuit: null });
-    const poleBatchApply = () => poleCheckSelected(() => { ElementPlus.ElMessage.success(`已对 ${selectedPoles.value.length} 项设备应用批量设置`); });
     const poleStatusType = (s) => ({ online: 'success', offline: 'danger', unregistered: 'info' }[s] || 'info');
     const poleStatusLabel = (s) => ({ online: '在线', offline: '离线', unregistered: '未注册' }[s] || s);
     const poleTiltType = (t) => ({ normal: 'success', slight: 'warning', severe: 'danger' }[t] || 'info');
@@ -1257,6 +1293,45 @@ const app = createApp({
     const poleDetailVisible = ref(false);
     const poleDetailData = ref(null);
     const openPoleDetail = (row) => { poleDetailData.value = row; poleDetailVisible.value = true; };
+    const polePowerChart = computed(() => {
+      if (!poleDetailData.value) return [];
+      const base = poleDetailData.value.power || 80;
+      const labels = ['00','04','08','12','16','20','24'];
+      return labels.map((label, idx) => {
+        const factor = idx === 0 || idx === 6 ? 0.3 : (idx <= 2 ? 0.5 : 1);
+        const val = Math.round(base * factor * (0.8 + Math.sin(idx * 1.3) * 0.2));
+        return { label, pct: Math.min(100, Math.max(8, val)) };
+      });
+    });
+    const poleDetailCtrl = reactive({ dim: 50, colorTemp: 50 });
+    const poleDetailCtrlOn = () => {
+      if (!poleDetailData.value) return;
+      poleDetailData.value.switchOn = true;
+      poleDetailData.value.brightness = poleDetailCtrl.dim;
+      ElementPlus.ElMessage.success('开灯指令已下发');
+    };
+    const poleDetailCtrlOff = () => {
+      if (!poleDetailData.value) return;
+      poleDetailData.value.switchOn = false;
+      ElementPlus.ElMessage.success('关灯指令已下发');
+    };
+    const poleDetailCtrlApplyDim = () => {
+      if (!poleDetailData.value) return;
+      const dim = poleDetailCtrl.dim;
+      poleDetailData.value.brightness = dim;
+      if (poleDetailData.value.switchOn) {
+        ElementPlus.ElMessage.success(`调光已设置为 ${dim}%`);
+      } else {
+        ElementPlus.ElMessage.info(`调光值 ${dim}% 已记录，当前为关灯状态，开灯后生效`);
+      }
+    };
+    const poleDetailCtrlApplyCCT = () => {
+      if (!poleDetailData.value) return;
+      const cct = poleDetailCtrl.colorTemp;
+      const cctLabel = cct < 30 ? '暖光' : cct > 70 ? '冷光' : '中性';
+      poleDetailData.value.colorTemp = cct;
+      ElementPlus.ElMessage.success(`色温已设置为 ${cctLabel}（${cct}%）`);
+    };
     const poleImportVisible = ref(false);
     const poleTsVisible = ref(false);
     const poleTsSn = ref('');
@@ -1293,12 +1368,13 @@ const app = createApp({
     return { ...shared,
       poleProjectOptions, poleProductOptions, poles, poleSearchForm, poleShowMore, polePage, polePageSize,
       filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleStats,
-      selectedPoles, poleSelectionChange, poleBatchForm, poleBatchApply,
+      selectedPoles, poleSelectionChange,
       poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
       poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete,
       poleExport, poleDownloadTemplate, poleBatchExport,
       poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete,
-      poleDetailVisible, poleDetailData, openPoleDetail,
+      poleDetailVisible, poleDetailData, openPoleDetail, polePowerChart,
+      poleDetailCtrl, poleDetailCtrlOn, poleDetailCtrlOff, poleDetailCtrlApplyDim, poleDetailCtrlApplyCCT,
       poleImportVisible, poleTsVisible, poleTsSn, poleTsData, poleHandleTimeStrategy,
       poleStrategyDialogVisible, poleStrategyPickId, lightStrategies, poleStrategyPickDetail, openPoleStrategyPick, confirmPoleStrategyPick,
       pad2, formatPoleActionTime, sortPoleActions, allGroupNames, tableHeaderStyle,
@@ -1306,7 +1382,7 @@ const app = createApp({
       Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, Download: ElementPlusIconsVue?.Download,
       Cpu: ElementPlusIconsVue?.Cpu, Connection: ElementPlusIconsVue?.Connection, Offline: ElementPlusIconsVue?.Offline, UserFilled: ElementPlusIconsVue?.UserFilled,
       OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
-      View: ElementPlusIconsVue?.View,
+      View: ElementPlusIconsVue?.View, Lightning: ElementPlusIconsVue?.Lightning, MuteNotification: ElementPlusIconsVue?.MuteNotification,
     };
   }
 });
