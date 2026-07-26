@@ -698,9 +698,6 @@ const MENU_DATA = [
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
   { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
   { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
-  { title: '会员中心', icon: 'User', open: false, items: ['会员列表'] },
-  { title: '商城系统', icon: 'ShoppingCart', open: false, items: ['商品管理','订单管理'] },
-  { title: '公众号管理', icon: 'ChatDotRound', open: false, items: ['菜单配置'] },
 ];
 
 const MENU_HREF = {
@@ -722,7 +719,10 @@ const MENU_HREF = {
   '集中管理器': 'device-placeholder.html?type=controller',
   '灯控策略': 'light-strategy.html',
   
-  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
+  '组织管理': 'organization-management.html',
+  '用户管理': 'user-management.html',
+  '角色管理': 'role-management.html',
+  '菜单管理': 'menu-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
 };
 
 function createSharedSetup(activeMenuName) {

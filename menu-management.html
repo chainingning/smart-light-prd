@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>菜单管理 · 云创智慧平台</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+  <style>
+    :root {
+      --brand: #2f6bff; --brand-deep: #1f4fd6; --brand-soft: #ebf1ff;
+      --ok: #16a36a; --off: #ef4d5e; --warn: #e6952c;
+      --bg: #f4f6fb; --surface: #ffffff; --surface-2: #f8fafc;
+      --line: #e6eaf2; --line-soft: #eef1f7;
+      --ink: #1b2533; --ink-2: #586273; --ink-3: #7c8696;
+      --side: #1b2330; --side-2: #12171f;
+      --r-sm: 8px; --r-md: 10px; --r-lg: 14px; --r-pill: 999px;
+      --fs-cap: 12px; --fs-sm: 13px; --fs: 14px; --fs-md: 16px; --fs-lg: 20px;
+      --sh-sm: 0 1px 2px rgba(16,24,40,.05); --sh-md: 0 6px 20px rgba(16,24,40,.07);
+      --sb-w: 226px; --sb-w-collapsed: 64px;
+      --el-color-primary: #2f6bff; --el-color-primary-light-3: #5c8bff; --el-color-primary-light-5: #84a7ff;
+      --el-color-primary-light-7: #adc5ff; --el-color-primary-light-8: #c1d3ff; --el-color-primary-light-9: #ebf1ff; --el-color-primary-dark-2: #1f4fd6;
+      --el-border-radius-base: 8px; --el-font-size-base: 14px;
+      --el-text-color-regular: #586273; --el-border-color: #e6eaf2; --el-border-color-lighter: #eef1f7;
+    }
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; }
+    body { font-family: "Inter","PingFang SC","Microsoft YaHei",system-ui,-apple-system,sans-serif; background: var(--bg); color: var(--ink); font-size: var(--fs); -webkit-font-smoothing: antialiased; }
+    #app { height: 100vh; }
+    .shell { display: flex; height: 100vh; overflow: hidden; }
+    :focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; border-radius: 4px; }
+    .sidebar { width: var(--sb-w); flex: 0 0 var(--sb-w); background: linear-gradient(180deg,var(--side),var(--side-2)); color: #c3ccd9; display: flex; flex-direction: column; transition: flex-basis .22s,width .22s,transform .25s; }
+    .sidebar.collapsed { width: var(--sb-w-collapsed); flex-basis: var(--sb-w-collapsed); }
+    .brand { height: 60px; display: flex; align-items: center; gap: 11px; padding: 0 20px; color: #fff; font-weight: 700; font-size: var(--fs-md); letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap; }
+    .brand .logo { width: 30px; height: 30px; border-radius: var(--r-md); flex: 0 0 auto; background: linear-gradient(135deg,#5b8bff,#2f6bff); display: grid; place-items: center; font-size: 15px; box-shadow: 0 4px 14px rgba(47,107,255,.5); }
+    .sidebar.collapsed .brand { padding: 0; justify-content: center; }
+    .sidebar.collapsed .brand .brand-txt { display: none; }
+    .version-tag { display: inline-flex; align-items: center; font-size: 10px; font-weight: 500; background: rgba(255,255,255,.15); color: rgba(255,255,255,.7); padding: 1px 5px; border-radius: 4px; letter-spacing: 0; flex-shrink: 0; margin-left: 4px; }
+    .sidebar.collapsed .version-tag { display: none; }
+    .nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 10px; }
+    .nav::-webkit-scrollbar { width: 6px; } .nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: var(--r-pill); }
+    .nav-group { margin-bottom: 2px; }
+    .nav-group > .nav-title { display: flex; align-items: center; gap: 11px; padding: 11px 12px; border-radius: var(--r-md); font-size: var(--fs-sm); color: #aab4c3; cursor: pointer; user-select: none; transition: color .15s,background .15s; white-space: nowrap; }
+    .nav-title .ng-ic { font-size: 16px; flex: 0 0 auto; display: inline-flex; }
+    .nav-title .ng-txt { flex: 1; } .nav-title .caret { font-size: 13px; opacity: .55; transition: transform .2s; }
+    .nav-group.open > .nav-title .caret { transform: rotate(180deg); }
+    .nav-title:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-group.open > .nav-title, .nav-group.has-active > .nav-title { color: #fff; }
+    .nav-children { overflow: hidden; padding: 2px 0 4px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 12px 9px 38px; font-size: var(--fs-sm); color: #aab4c3; cursor: pointer; position: relative; border-radius: var(--r-md); transition: all .15s; white-space: nowrap; margin: 1px 0; }
+    .nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+    .nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+    .nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+    .nav-item.active .dot { opacity: 1; background: #6f9bff; }
+    .nav-item.active::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: var(--r-pill); background: var(--brand); }
+    .sidebar.collapsed .nav-title { justify-content: center; padding: 13px 0; }
+    .sidebar.collapsed .nav-title .ng-txt, .sidebar.collapsed .nav-title .caret { display: none; }
+    .sidebar.collapsed .nav-children { display: none !important; }
+    .sidebar.collapsed .nav-group.has-active > .nav-title { background: rgba(47,107,255,.18); }
+    .sidebar.collapsed .nav-group.has-active > .nav-title .ng-ic { color: #6f9bff; }
+    .sb-foot { border-top: 1px solid rgba(255,255,255,.07); padding: 10px; }
+    .sb-collapse { width: 100%; height: 36px; border-radius: var(--r-md); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: #aab4c3; font-size: var(--fs-sm); transition: all .15s; }
+    .sb-collapse:hover { color: #fff; background: rgba(255,255,255,.07); }
+    .nav-backdrop { position: fixed; inset: 0; background: rgba(12,18,28,.45); z-index: 55; }
+    .main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    .topbar { height: 60px; flex: 0 0 60px; background: var(--surface); border-bottom: 1px solid var(--line-soft); display: flex; align-items: center; padding: 0 20px; gap: 16px; }
+    .topbar .ico { font-size: 18px; color: var(--ink-2); cursor: pointer; padding: 8px; border-radius: var(--r-sm); transition: background .15s; }
+    .topbar .ico:hover { background: rgba(16,24,40,.05); }
+    .topbar .tenant-switcher { display: inline-flex; align-items: center; gap: 5px; height: 32px; padding: 0 8px !important; border: 1px solid var(--line); border-radius: var(--r-md); background: var(--surface); color: var(--ink); }
+    .topbar .tenant-switcher:hover { border-color: var(--brand); }
+    .topbar .tenant-switcher .tenant-name { font-size: 13px; font-weight: 500; max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .crumb { display: flex; align-items: center; gap: 6px; font-size: var(--fs-sm); color: var(--ink-2); }
+    .crumb .sep { opacity: .5; } .crumb .cur { color: var(--ink); font-weight: 500; }
+    .crumb .home-link { color: var(--ink-2); cursor: pointer; } .crumb .home-link:hover { color: var(--brand); }
+    .spacer { flex: 1; }
+    .content { flex: 1; overflow-y: auto; padding: 20px; }
+    .panel { background: var(--surface); border-radius: var(--r-lg); box-shadow: var(--sh-sm); overflow: hidden; }
+    .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px 20px 0; }
+    .table-zone { padding: 12px 20px 20px; }
+    .empty-cell { text-align: center; padding: 40px; color: var(--ink-3); }
+    .icon-pick-box { display: flex; flex-wrap: wrap; gap: 6px; max-height: 180px; overflow-y: auto; border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; background: var(--surface-2); }
+    .icon-pick-item { width: 36px; height: 36px; display: grid; place-items: center; border-radius: var(--r-sm); cursor: pointer; border: 2px solid transparent; transition: all .15s; color: var(--ink-2); }
+    .icon-pick-item:hover { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+    .icon-pick-item.selected { border-color: var(--brand); background: var(--brand-soft); color: var(--brand); }
+  </style>
+</head>
+<body>
+<div id="app">
+  <div class="shell">
+    <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
+      <nav class="nav">
+        <div v-for="g in menuGroups" :key="g.title" class="nav-group" :class="{ open: g.open, 'has-active': g.items.includes(activeMenu) }">
+          <div class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon v-if="!g.singleLink" class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
+          </div>
+          <div class="nav-children" v-show="g.open">
+            <a v-for="item in g.items" :key="item" :href="menuHref[item] || '#'" class="nav-item" :class="{ active: item === activeMenu }" @click="onMenuClick(item, $event)">
+              <span class="dot"></span>{{ item }}
+            </a>
+          </div>
+        </div>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
+          <el-icon><component :is="iconComp(collapsed ? 'Expand' : 'Fold')"></component></el-icon>
+          <span v-if="!collapsed">收起菜单</span>
+        </div>
+      </div>
+    </aside>
+    <div class="nav-backdrop" v-if="mobileNav" @click="mobileNav = false"></div>
+    <div class="main">
+      <header class="topbar">
+        <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Expand></Expand></el-icon></span>
+        <div class="crumb">
+          <span class="home-link" tabindex="0"><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
+          <span class="sep">/</span><span class="">系统管理</span>
+          <span class="sep">/</span><span class="cur">菜单管理</span>
+        </div>
+        <div class="spacer"></div>
+        <el-dropdown trigger="click" @command="switchTenant">
+          <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+            <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+            <span class="tenant-name">{{ currentTenantName }}</span>
+            <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+          </span>
+          <template #dropdown><el-dropdown-menu>
+            <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+              <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>{{ t.name }}
+            </el-dropdown-item>
+          </el-dropdown-menu></template>
+        </el-dropdown>
+      </header>
+      <main class="content">
+        <div class="panel">
+          <!-- 筛选栏 -->
+          <div class="filter-bar">
+            <el-input v-model="queryParams.menuName" placeholder="菜单名称" clearable style="width:180px" @keyup.enter="handleQuery"></el-input>
+            <el-button type="primary" :icon="Search" @click="handleQuery">搜索</el-button>
+            <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
+            <div style="flex:1"></div>
+            <el-button type="primary" :icon="Plus" @click="handleAdd(null)">新增</el-button>
+            <el-button :icon="Sort" @click="toggleExpandAll">{{ isExpandAll ? '折叠' : '展开' }}</el-button>
+          </div>
+          <!-- 树表格 -->
+          <div class="table-zone">
+            <el-table :data="filteredTree" row-key="id" border :default-expand-all="isExpandAll" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+              <el-table-column label="菜单名称" width="200" prop="menuName">
+                <template #default="{ row }">
+                  <el-icon v-if="row.menuType === 'M'" style="margin-right:4px; color:var(--brand)"><component :is="iconComp('Folder')"></component></el-icon>
+                  <el-icon v-if="row.menuType === 'C'" style="margin-right:4px; color:var(--ok)"><component :is="iconComp('Menu')"></component></el-icon>
+                  <el-icon v-if="row.menuType === 'F'" style="margin-right:4px; color:var(--warn)"><component :is="iconComp('Aim')"></component></el-icon>
+                  <span>{{ row.menuName }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="图标" width="80" align="center">
+                <template #default="{ row }">
+                  <span v-if="row.icon && row.icon !== '#'" style="font-size:16px; color:var(--ink-2)">{{ row.icon }}</span>
+                  <span v-else style="color:var(--ink-3)">—</span>
+                </template>
+              </el-table-column>
+              <el-table-column prop="orderNum" label="排序" width="80" align="center"></el-table-column>
+              <el-table-column label="类型" width="80" align="center">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.menuType === 'M' ? 'primary' : row.menuType === 'C' ? 'success' : 'warning'">
+                    {{ row.menuType === 'M' ? '目录' : row.menuType === 'C' ? '菜单' : '按钮' }}
+                  </el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column prop="perms" label="权限标识" width="180" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="path" label="路由地址" width="140" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="component" label="组件路径" width="160" show-overflow-tooltip></el-table-column>
+              <el-table-column label="状态" width="80" align="center">
+                <template #default="{ row }">
+                  <el-tag size="small" :type="row.status === '0' ? 'success' : 'info'">{{ row.status === '0' ? '正常' : '停用' }}</el-tag>
+                </template>
+              </el-table-column>
+              <el-table-column label="操作" width="220" align="center" fixed="right">
+                <template #default="{ row }">
+                  <el-button link type="primary" :icon="Plus" size="small" @click="handleAdd(row)">新增</el-button>
+                  <el-button link type="primary" :icon="Edit" size="small" @click="handleEdit(row)">编辑</el-button>
+                  <el-button link type="danger" :icon="Delete" size="small" @click="handleDelete(row)">删除</el-button>
+                </template>
+              </el-table-column>
+            </el-table>
+            <div class="empty-cell" v-if="!filteredTree.length">暂无菜单数据</div>
+          </div>
+        </div>
+
+        <!-- 新增/编辑弹窗 -->
+        <el-dialog v-model="dialogVisible" :title="editing ? '编辑菜单' : '新增菜单'" width="680px" @close="onDialogClose">
+          <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="padding-right:20px">
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="上级菜单" prop="parentId">
+                  <el-tree-select v-model="form.parentId" :data="menuSelectTree" :props="{ label: 'menuName', children: 'children' }" node-key="id" placeholder="请选择上级菜单" check-strictly :render-after-expand="false" style="width:100%">
+                    <template #default="{ data }">
+                      <span>{{ data.menuName }}</span>
+                    </template>
+                  </el-tree-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="24">
+                <el-form-item label="菜单类型" prop="menuType">
+                  <el-radio-group v-model="form.menuType">
+                    <el-radio value="M">目录</el-radio>
+                    <el-radio value="C">菜单</el-radio>
+                    <el-radio value="F">按钮</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="菜单名称" prop="menuName">
+                  <el-input v-model="form.menuName" placeholder="请输入菜单名称" maxlength="50"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="显示排序" prop="orderNum">
+                  <el-input-number v-model="form.orderNum" :min="0" :max="999" style="width:100%"></el-input-number>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" v-if="form.menuType !== 'F'">
+                <el-form-item label="图标">
+                  <el-popover trigger="click" :width="400" placement="bottom-start">
+                    <template #reference>
+                      <el-input v-model="form.icon" placeholder="点击选择图标" readonly style="cursor:pointer">
+                        <template #prepend>
+                          <span style="font-size:16px">{{ form.icon || '#' }}</span>
+                        </template>
+                      </el-input>
+                    </template>
+                    <div class="icon-pick-box">
+                      <div v-for="ic in iconList" :key="ic" class="icon-pick-item" :class="{ selected: form.icon === ic }" @click="form.icon = ic">
+                        <span style="font-size:16px">{{ ic }}</span>
+                      </div>
+                    </div>
+                  </el-popover>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" v-if="form.menuType !== 'F'">
+                <el-form-item label="路由地址" prop="path">
+                  <el-input v-model="form.path" placeholder="如: user" maxlength="200"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" v-if="form.menuType === 'C'">
+                <el-form-item label="组件路径" prop="component">
+                  <el-input v-model="form.component" placeholder="如: system/user/index" maxlength="255"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" v-if="form.menuType !== 'M'">
+                <el-form-item label="权限标识" prop="perms">
+                  <el-input v-model="form.perms" placeholder="如: system:user:list" maxlength="100"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12" v-if="form.menuType !== 'F'">
+                <el-form-item label="显示状态">
+                  <el-radio-group v-model="form.visible">
+                    <el-radio value="0">显示</el-radio>
+                    <el-radio value="1">隐藏</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="菜单状态">
+                  <el-radio-group v-model="form.status">
+                    <el-radio value="0">正常</el-radio>
+                    <el-radio value="1">停用</el-radio>
+                  </el-radio-group>
+                </el-form-item>
+              </el-col>
+            </el-row>
+          </el-form>
+          <template #footer>
+            <el-button @click="dialogVisible = false">取消</el-button>
+            <el-button type="primary" @click="submitForm">确定</el-button>
+          </template>
+        </el-dialog>
+      </main>
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+  <script src="js/shared-data.js"></script>
+  <script>
+const { ref, reactive, computed, createApp } = Vue;
+
+const MENU_DATA = [
+  { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
+  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
+  { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
+  { title: '系统管理', icon: 'Setting', open: true,  items: ['组织管理','用户管理','角色管理','菜单管理'] },
+];
+
+const MENU_HREF = {
+  '首页': 'index.html', '设备分组': 'device-group.html', '设备管理': 'device-management.html',
+  '灯杆管理': 'pole-management.html',
+  '太阳能照明': 'device-placeholder.html?type=solar', '智慧网关': 'device-placeholder.html?type=gateway',
+  '视频监控': 'device-placeholder.html?type=camera', 'LED显示屏': 'device-placeholder.html?type=led',
+  '公共广播': 'device-placeholder.html?type=broadcast', '环境监测': 'device-placeholder.html?type=environment',
+  '无线网络': 'device-placeholder.html?type=wifi', '智慧充电桩': 'device-placeholder.html?type=charging',
+  '一键呼叫': 'device-placeholder.html?type=call', '井盖管理': 'device-placeholder.html?type=cover',
+  '电缆防盗': 'device-placeholder.html?type=cable', '集中管理器': 'device-placeholder.html?type=controller',
+  '灯控策略': 'light-strategy.html',
+  '组织管理': 'organization-management.html',
+  '用户管理': 'user-management.html',
+  '角色管理': 'role-management.html',
+  '菜单管理': 'menu-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
+};
+
+function createSharedSetup(activeMenuName) {
+  const collapsed = ref(false);
+  const mobileNav = ref(false);
+  const activeMenu = ref(activeMenuName);
+  const savedOpenState = localStorage.getItem('menuOpenState');
+  const savedOpen = savedOpenState ? JSON.parse(savedOpenState) : {};
+  const menuGroups = reactive(MENU_DATA.map(g => ({ ...g, open: savedOpen[g.title] !== undefined ? savedOpen[g.title] : g.open })));
+  const menuHref = MENU_HREF;
+  const toggleGroup = (g) => {
+    if (collapsed.value) { collapsed.value = false; g.open = true; }
+    else { g.open = !g.open; }
+    const openState = {}; menuGroups.forEach(grp => openState[grp.title] = grp.open);
+    localStorage.setItem('menuOpenState', JSON.stringify(openState));
+  };
+  const onMenuClick = (item, e) => { const href = menuHref[item]; if (href) window.location.href = href; };
+  const savedTenant = localStorage.getItem('currentTenantId');
+  const currentTenantId = ref(savedTenant || 'T1');
+  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
+  const currentTenantName = computed(() => { const t = availableTenants.value.find(t => t.id === currentTenantId.value); return t ? t.name : '未知租户'; });
+  const switchTenant = (id) => {
+    if (id === currentTenantId.value) return; currentTenantId.value = id;
+    localStorage.setItem('currentTenantId', id);
+    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
+    setTimeout(() => window.location.reload(), 600);
+  };
+  const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
+  return { activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick, collapsed, mobileNav,
+    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData, iconComp };
+}
+
+const app = createApp({
+  setup() {
+    const shared = createSharedSetup('菜单管理');
+    const SD = window.SharedData;
+
+    /* ===== 菜单数据 ===== */
+    const menus = reactive(SD ? SD.MENU_TREE.map(m => ({ ...m })) : []);
+
+    /* ===== 构建树结构 ===== */
+    const buildTree = (parentId) => {
+      return menus.filter(m => m.parentId === parentId).map(m => ({
+        ...m,
+        children: buildTree(m.id).length ? buildTree(m.id) : undefined
+      })).sort((a, b) => a.orderNum - b.orderNum);
+    };
+    const menuTree = computed(() => buildTree(0));
+
+    /* ===== 筛选 ===== */
+    const queryParams = reactive({ menuName: '' });
+    const filteredTree = computed(() => {
+      if (!queryParams.menuName) return menuTree.value;
+      const search = queryParams.menuName;
+      const filterNode = (nodes) => {
+        return nodes.map(n => {
+          const children = n.children ? filterNode(n.children) : [];
+          if (n.menuName.includes(search) || children.length) {
+            return { ...n, children: children.length ? children : undefined };
+          }
+          return null;
+        }).filter(Boolean);
+      };
+      return filterNode(menuTree.value);
+    });
+    const handleQuery = () => {};
+    const resetQuery = () => { queryParams.menuName = ''; };
+
+    /* ===== 展开/折叠 ===== */
+    const isExpandAll = ref(true);
+    const toggleExpandAll = () => { isExpandAll.value = !isExpandAll.value; };
+
+    /* ===== 上级菜单选择树（新增根选项） ===== */
+    const menuSelectTree = computed(() => {
+      return [{ id: 0, menuName: '根目录', children: menuTree.value }];
+    });
+
+    /* ===== 图标列表（文本图标，参考 ruoyi-vue-pro） ===== */
+    const iconList = ['home','monitor','sunny','clock','folder','files','share','document','user','user-filled','menu','setting','office-building','collection','goods','cpu','connection','data-line','data-analysis','location','location-information','warning','bell','phone','cellphone','aim','grid','lock','position','sunrise','video-camera','tickets','shopping-cart','chat-dot-round','histogram','promotion'];
+
+    /* ===== 新增/编辑 ===== */
+    const dialogVisible = ref(false);
+    const editing = ref(false);
+    const formRef = ref(null);
+    const form = reactive({ id: null, parentId: 0, menuType: 'M', menuName: '', icon: '', orderNum: 0, path: '', component: '', perms: '', visible: '0', status: '0' });
+    const rules = {
+      menuName: [{ required: true, message: '请输入菜单名称', trigger: 'blur' }],
+      orderNum: [{ required: true, message: '请输入显示排序', trigger: 'blur' }],
+      menuType: [{ required: true, message: '请选择菜单类型', trigger: 'change' }],
+    };
+    const resetForm = () => { Object.assign(form, { id: null, parentId: 0, menuType: 'M', menuName: '', icon: '', orderNum: 0, path: '', component: '', perms: '', visible: '0', status: '0' }); };
+    const onDialogClose = () => { formRef.value?.clearValidate(); };
+    const handleAdd = (row) => {
+      resetForm();
+      form.parentId = row ? row.id : 0;
+      form.menuType = row ? (row.menuType === 'F' ? 'F' : 'C') : 'M';
+      editing.value = false;
+      dialogVisible.value = true;
+    };
+    const handleEdit = (row) => {
+      resetForm();
+      Object.assign(form, JSON.parse(JSON.stringify(row)));
+      editing.value = true;
+      dialogVisible.value = true;
+    };
+    const submitForm = async () => {
+      try { await formRef.value.validate(); } catch { return; }
+      if (editing.value) {
+        const idx = menus.findIndex(m => m.id === form.id);
+        if (idx > -1) Object.assign(menus[idx], form);
+        ElementPlus.ElMessage.success('修改成功');
+      } else {
+        if (menus.some(m => m.menuName === form.menuName && m.parentId === form.parentId)) {
+          ElementPlus.ElMessage.error('同级菜单名称已存在'); return;
+        }
+        const newId = Math.max(...menus.map(m => m.id), 0) + 1;
+        menus.push({ ...form, id: newId });
+        ElementPlus.ElMessage.success('新增成功');
+      }
+      dialogVisible.value = false;
+    };
+
+    /* ===== 删除 ===== */
+    const handleDelete = (row) => {
+      const hasChildren = menus.some(m => m.parentId === row.id);
+      if (hasChildren) {
+        ElementPlus.ElMessage.warning('该菜单下有子菜单，不允许删除');
+        return;
+      }
+      ElementPlus.ElMessageBox.confirm(`确认删除菜单「${row.menuName}」吗？`, '提示', { type: 'warning' })
+        .then(() => {
+          const idx = menus.findIndex(m => m.id === row.id);
+          if (idx > -1) menus.splice(idx, 1);
+          ElementPlus.ElMessage.success('删除成功');
+        }).catch(() => {});
+    };
+
+    return { ...shared,
+      menuTree, filteredTree, menuSelectTree,
+      queryParams, handleQuery, resetQuery,
+      isExpandAll, toggleExpandAll,
+      iconList,
+      dialogVisible, editing, formRef, form, rules, onDialogClose,
+      handleAdd, handleEdit, submitForm, handleDelete,
+      Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete,
+      Search: ElementPlusIconsVue?.Search, Refresh: ElementPlusIconsVue?.Refresh, Sort: ElementPlusIconsVue?.Sort,
+      OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Expand: ElementPlusIconsVue?.Expand,
+      ArrowDown: ElementPlusIconsVue?.ArrowDown, Check: ElementPlusIconsVue?.Check,
+      Folder: ElementPlusIconsVue?.Folder, Menu: ElementPlusIconsVue?.Menu, Aim: ElementPlusIconsVue?.Aim,
+    };
+  }
+});
+app.use(ElementPlus);
+if (window.ElementPlusIconsVue) {
+  for (const [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+}
+app.mount('#app');
+  </script>
+</body>
+</html>

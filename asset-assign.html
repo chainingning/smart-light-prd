@@ -548,9 +548,6 @@ const MENU_DATA = [
   { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },  { title: '综合运维', icon: 'SetUp', open: true, items: ['灯控策略','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
-  { title: '会员中心', icon: 'User', open: false, items: ['会员列表'] },
-  { title: '商城系统', icon: 'ShoppingCart', open: false, items: ['商品管理','订单管理'] },
-  { title: '公众号管理', icon: 'ChatDotRound', open: false, items: ['菜单配置'] },
 ];
 const MENU_HREF = {
   '首页': 'index.html',
@@ -571,14 +568,16 @@ const MENU_HREF = {
   '集中管理器': 'device-placeholder.html?type=controller',
   '灯控策略': 'light-strategy.html',
   
-  '组织管理': 'organization-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
+  '组织管理': 'organization-management.html',
+  '用户管理': 'user-management.html',
+  '角色管理': 'role-management.html',
+  '菜单管理': 'menu-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
 };
 const MENU_ICON_MAP = {
   '首页': 'HomeFilled', '产品分类': 'Grid', '产品管理': 'Package', '设备管理': 'Monitor', '设备分组': 'Collection',
   '灯杆管理': 'Sunny', '灯控策略': 'Clock', '策略下发日志': 'Document',
   '运维概览': 'PieChart', '日志管理': 'DocumentCopy', '监控告警': 'Bell',
   '用户管理': 'User', '角色管理': 'UserFilled', '菜单管理': 'Menu',
-  '会员列表': 'User', '商品管理': 'ShoppingBag', '订单管理': 'Ticket', '菜单配置': 'Menu',
 };
 function createSharedSetup(activeMenuName) {
   const collapsed = ref(false);
