@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>角色管理 · 云创智慧平台</title>
+  <title>分级管理 · 云创智慧平台</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -80,9 +80,6 @@
     .filter-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 16px 20px 0; }
     .table-zone { padding: 12px 20px 20px; }
     .empty-cell { text-align: center; padding: 40px; color: var(--ink-3); }
-    .menu-perm-tree { border: 1px solid var(--line); border-radius: var(--r-md); padding: 12px; max-height: 320px; overflow-y: auto; background: var(--surface-2); }
-    .menu-perm-actions { margin-bottom: 8px; display: flex; gap: 12px; align-items: center; }
-    .data-scope-tip { font-size: 12px; color: var(--ink-3); margin-top: 4px; line-height: 1.6; }
   </style>
 </head>
 <body>
@@ -118,7 +115,7 @@
         <div class="crumb">
           <span class="home-link" tabindex="0"><a href="index.html" style="color:inherit;text-decoration:none">首页</a></span>
           <span class="sep">/</span><span class="">系统管理</span>
-          <span class="sep">/</span><span class="cur">角色管理</span>
+          <span class="sep">/</span><span class="cur">分级管理</span>
         </div>
         <div class="spacer"></div>
         <el-dropdown trigger="click" @command="switchTenant">
@@ -138,8 +135,7 @@
         <div class="panel">
           <!-- 筛选栏 -->
           <div class="filter-bar">
-            <el-input v-model="queryParams.roleName" placeholder="角色名称" clearable style="width:180px" @keyup.enter="handleQuery"></el-input>
-            <el-input v-model="queryParams.roleKey" placeholder="权限字符" clearable style="width:180px" @keyup.enter="handleQuery"></el-input>
+            <el-input v-model="queryParams.deptName" placeholder="组织名称" clearable style="width:200px" @keyup.enter="handleQuery"></el-input>
             <el-select v-model="queryParams.status" placeholder="状态" clearable style="width:120px">
               <el-option label="正常" value="0"></el-option>
               <el-option label="停用" value="1"></el-option>
@@ -147,82 +143,97 @@
             <el-button type="primary" :icon="Search" @click="handleQuery">搜索</el-button>
             <el-button :icon="Refresh" @click="resetQuery">重置</el-button>
             <div style="flex:1"></div>
-            <el-button type="primary" :icon="Plus" @click="handleAdd">新增</el-button>
+            <el-button type="primary" plain :icon="Sort" @click="toggleExpandAll">{{ isExpandAll ? '折叠' : '展开' }}全部</el-button>
+            <el-button type="primary" :icon="Plus" @click="handleAdd(null)">新增</el-button>
           </div>
-          <!-- 表格 -->
+          <!-- 树表格 -->
           <div class="table-zone">
-            <el-table :data="pagedList" border stripe @selection-change="handleSelectionChange" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
-              <el-table-column type="selection" width="50" align="center"></el-table-column>
-              <el-table-column label="编号" type="index" width="60" align="center" :index="(i)=>(page-1)*pageSize+i+1"></el-table-column>
-              <el-table-column prop="roleName" label="角色名称" width="140" show-overflow-tooltip></el-table-column>
-              <el-table-column prop="roleKey" label="权限字符" width="120"></el-table-column>
-              <el-table-column prop="roleSort" label="显示顺序" width="100" align="center"></el-table-column>
-              <el-table-column label="数据权限" width="120" align="center">
-                <template #default="{ row }"><el-tag size="small" effect="plain" :type="dataScopeTagType(row.dataScope)">{{ dataScopeName(row.dataScope) }}</el-tag></template>
-              </el-table-column>
+            <el-table
+              v-if="refreshTable"
+              :data="filteredTreeData"
+              row-key="id"
+              border
+              :default-expand-all="isExpandAll"
+              :tree-props="{ children: 'children', hasChildren: 'hasChildren' }"
+              :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}"
+            >
+              <el-table-column prop="name" label="组织名称" width="220" show-overflow-tooltip></el-table-column>
+              <el-table-column prop="orderNum" label="排序" width="90" align="center"></el-table-column>
+              <el-table-column prop="leader" label="负责人" width="110" align="center"></el-table-column>
+              <el-table-column prop="phone" label="联系电话" width="140" align="center"></el-table-column>
+              <el-table-column prop="email" label="邮箱" width="200" show-overflow-tooltip></el-table-column>
               <el-table-column label="状态" width="90" align="center">
                 <template #default="{ row }">
-                  <el-switch v-model="row.status" active-value="0" inactive-value="1" :disabled="row.id === 1" @change="handleStatusChange(row)"></el-switch>
+                  <el-tag size="small" :type="row.status === '0' ? 'success' : 'danger'">{{ row.status === '0' ? '正常' : '停用' }}</el-tag>
                 </template>
               </el-table-column>
-              <el-table-column prop="createTime" label="创建时间" width="170"></el-table-column>
-              <el-table-column label="操作" width="230" align="center" fixed="right">
+              <el-table-column prop="createTime" label="创建时间" width="170" align="center"></el-table-column>
+              <el-table-column label="操作" width="220" align="center" fixed="right">
                 <template #default="{ row }">
                   <el-button link type="primary" :icon="Edit" size="small" @click="handleEdit(row)">编辑</el-button>
-                  <el-button link type="primary" :icon="Checked" size="small" @click="handleDataScope(row)">数据权限</el-button>
-                  <el-button link type="danger" :icon="Delete" size="small" :disabled="row.id === 1" @click="handleDelete(row)">删除</el-button>
+                  <el-button link type="primary" :icon="Plus" size="small" @click="handleAdd(row)">新增</el-button>
+                  <el-button link type="danger" :icon="Delete" size="small" @click="handleDelete(row)">删除</el-button>
                 </template>
               </el-table-column>
             </el-table>
-            <div class="empty-cell" v-if="!filteredList.length">暂无角色数据</div>
-            <div style="display:flex; justify-content:flex-end; padding-top:16px;">
-              <el-pagination v-model:current-page="page" v-model:page-size="pageSize" :page-sizes="[10,20,50]" :total="filteredList.length" layout="total, sizes, prev, pager, next, jumper" background></el-pagination>
-            </div>
+            <div class="empty-cell" v-if="!filteredTreeData.length">暂无组织数据</div>
           </div>
         </div>
 
         <!-- 新增/编辑弹窗 -->
-        <el-dialog v-model="dialogVisible" :title="editing ? '编辑角色' : '新增角色'" width="680px" @close="onDialogClose">
+        <el-dialog v-model="dialogVisible" :title="editing ? '编辑组织' : '新增组织'" width="680px" @close="onDialogClose">
           <el-form ref="formRef" :model="form" :rules="rules" label-width="100px" style="padding-right:20px">
             <el-row :gutter="20">
-              <el-col :span="12">
-                <el-form-item label="角色名称" prop="roleName">
-                  <el-input v-model="form.roleName" placeholder="请输入角色名称" maxlength="30"></el-input>
+              <el-col :span="24" v-if="form.parentId !== 0">
+                <el-form-item label="上级组织" prop="parentId">
+                  <el-tree-select
+                    v-model="form.parentId"
+                    :data="parentDeptOptions"
+                    :props="{ label: 'name', children: 'children' }"
+                    node-key="id"
+                    placeholder="选择上级组织"
+                    check-strictly
+                    value-key="id"
+                    style="width:100%"
+                  ></el-tree-select>
+                </el-form-item>
+              </el-col>
+              <el-col :span="24" v-else>
+                <el-form-item label="上级组织">
+                  <el-tag type="info">主类目</el-tag>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="权限字符" prop="roleKey">
-                  <el-input v-model="form.roleKey" placeholder="如: admin" maxlength="100"></el-input>
+                <el-form-item label="组织名称" prop="name">
+                  <el-input v-model="form.name" placeholder="请输入组织名称" maxlength="30"></el-input>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="显示顺序" prop="roleSort">
-                  <el-input-number v-model="form.roleSort" :min="0" :max="999" style="width:100%"></el-input-number>
+                <el-form-item label="显示排序" prop="orderNum">
+                  <el-input-number v-model="form.orderNum" :min="0" :max="999" controls-position="right" style="width:100%"></el-input-number>
                 </el-form-item>
               </el-col>
               <el-col :span="12">
-                <el-form-item label="状态">
+                <el-form-item label="负责人" prop="leader">
+                  <el-input v-model="form.leader" placeholder="请输入负责人" maxlength="20"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="联系电话" prop="phone">
+                  <el-input v-model="form.phone" placeholder="请输入联系电话" maxlength="11"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="邮箱" prop="email">
+                  <el-input v-model="form.email" placeholder="请输入邮箱" maxlength="50"></el-input>
+                </el-form-item>
+              </el-col>
+              <el-col :span="12">
+                <el-form-item label="组织状态">
                   <el-radio-group v-model="form.status">
                     <el-radio value="0">正常</el-radio>
                     <el-radio value="1">停用</el-radio>
                   </el-radio-group>
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item label="菜单权限">
-                  <div class="menu-perm-actions">
-                    <el-checkbox v-model="menuExpandAll">展开/折叠</el-checkbox>
-                    <el-checkbox v-model="menuCheckAll" @change="handleCheckAll">全选/全不选</el-checkbox>
-                    <el-checkbox v-model="menuCheckStrictly">父子联动</el-checkbox>
-                  </div>
-                  <div class="menu-perm-tree">
-                    <el-tree ref="menuTreeRef" :data="menuTreeData" :props="{ label: 'menuName', children: 'children' }" node-key="id" show-checkbox :check-strictly="!menuCheckStrictly" :default-expand-all="menuExpandAll" :default-checked-keys="form.menuIds"></el-tree>
-                  </div>
-                </el-form-item>
-              </el-col>
-              <el-col :span="24">
-                <el-form-item label="备注">
-                  <el-input v-model="form.remark" type="textarea" :rows="2" placeholder="请输入备注" maxlength="200"></el-input>
                 </el-form-item>
               </el-col>
             </el-row>
@@ -230,40 +241,6 @@
           <template #footer>
             <el-button @click="dialogVisible = false">取消</el-button>
             <el-button type="primary" @click="submitForm">确定</el-button>
-          </template>
-        </el-dialog>
-
-        <!-- 数据权限弹窗 -->
-        <el-dialog v-model="dataScopeVisible" title="分配数据权限" width="520px">
-          <el-form label-width="120px" style="padding-right:20px">
-            <el-form-item label="角色名称">
-              <span style="font-weight:600">{{ dataScopeTarget?.roleName }}</span>
-            </el-form-item>
-            <el-form-item label="权限范围">
-              <el-select v-model="dataScopeForm.dataScope" style="width:100%" @change="onDataScopeChange">
-                <el-option label="全部数据权限" value="1"></el-option>
-                <el-option label="自定义数据权限" value="2"></el-option>
-                <el-option label="本部门数据权限" value="3"></el-option>
-                <el-option label="本部门及以下数据权限" value="4"></el-option>
-                <el-option label="仅本人数据权限" value="5"></el-option>
-              </el-select>
-            </el-form-item>
-            <el-form-item label="数据权限" v-if="dataScopeForm.dataScope === '2'">
-              <div class="menu-perm-tree" style="max-height:200px">
-                <el-tree ref="deptTreeRef" :data="deptTreeData" :props="{ label: 'name', children: 'children' }" node-key="id" show-checkbox :default-expand-all="false"></el-tree>
-              </div>
-            </el-form-item>
-            <el-form-item>
-              <div class="data-scope-tip">
-                <span style="color:var(--ink-2)">数据权限说明：</span><br/>
-                全部：可查看所有数据　|　自定义：可查看指定部门数据<br/>
-                本部门：仅查看本部门数据　|　本部门及以下：包含子部门　|　仅本人：只看自己的数据
-              </div>
-            </el-form-item>
-          </el-form>
-          <template #footer>
-            <el-button @click="dataScopeVisible = false">取消</el-button>
-            <el-button type="primary" @click="submitDataScope">确定</el-button>
           </template>
         </el-dialog>
       </main>
@@ -275,12 +252,13 @@
   <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
   <script src="js/shared-data.js"></script>
   <script>
-const { ref, reactive, computed, createApp, watch } = Vue;
+const { ref, reactive, computed, createApp, nextTick } = Vue;
 
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
   { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
-  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
+  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
+  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
   { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
   { title: '系统管理', icon: 'Setting', open: true,  items: ['组织管理','分级管理','用户管理','角色管理','菜单管理'] },
 ];
@@ -299,7 +277,9 @@ const MENU_HREF = {
   '分级管理': 'dept-management.html',
   '用户管理': 'user-management.html',
   '角色管理': 'role-management.html',
-  '菜单管理': 'menu-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',
+  '菜单管理': 'menu-management.html',
+  '项目列表': 'project-management.html', '项目分配': 'project-management.html',
+  '配额看板': 'project-management.html', '分配流水': 'project-management.html',
 };
 
 function createSharedSetup(activeMenuName) {
@@ -334,161 +314,135 @@ function createSharedSetup(activeMenuName) {
 
 const app = createApp({
   setup() {
-    const shared = createSharedSetup('角色管理');
+    const shared = createSharedSetup('分级管理');
     const SD = window.SharedData;
 
-    /* ===== 角色数据 ===== */
-    const roles = reactive(SD ? SD.ROLES.map(r => ({ ...r })) : []);
+    /* ===== 组织数据 ===== */
+    const depts = reactive(SD ? SD.DEPTS.map(d => ({ ...d })) : []);
 
-    /* ===== 菜单树（用于权限分配） ===== */
-    const allMenus = SD ? SD.MENU_TREE.map(m => ({ ...m })) : [];
-    const menuTreeData = computed(() => {
-      const build = (parentId) => {
-        return allMenus.filter(m => m.parentId === parentId).map(m => ({
-          ...m,
-          children: build(m.id).length ? build(m.id) : undefined
-        })).sort((a, b) => a.orderNum - b.orderNum);
-      };
-      return build(0);
-    });
-    const allMenuIds = allMenus.map(m => m.id);
-    const menuTreeRef = ref(null);
-    const menuExpandAll = ref(false);
-    const menuCheckAll = ref(false);
-    const menuCheckStrictly = ref(true);
-    const handleCheckAll = (val) => {
-      if (val) { menuTreeRef.value?.setCheckedKeys(allMenuIds); } else { menuTreeRef.value?.setCheckedKeys([]); }
+    /* ===== 构建树 ===== */
+    const buildTree = (list, parentId) => {
+      return list.filter(d => d.parentId === parentId)
+        .map(d => ({ ...d, children: buildTree(list, d.id).length ? buildTree(list, d.id) : undefined }))
+        .sort((a, b) => a.orderNum - b.orderNum);
     };
-    watch(menuExpandAll, (val) => {
-      const nodes = menuTreeRef.value?.store?.nodesMap || {};
-      Object.values(nodes).forEach(n => { n.expanded = val; });
-    });
 
-    /* ===== 部门树（数据权限自定义） ===== */
-    const depts = SD ? SD.DEPTS.map(d => ({ ...d })) : [];
-    const deptTreeData = computed(() => {
-      const build = (parentId) => {
-        return depts.filter(d => d.parentId === parentId).map(d => ({
-          ...d, children: build(d.id).length ? build(d.id) : undefined
-        })).sort((a, b) => a.orderNum - b.orderNum);
+    const allTreeData = computed(() => buildTree(depts, 0));
+
+    /* ===== 筛选 ===== */
+    const queryParams = reactive({ deptName: '', status: '' });
+    const isExpandAll = ref(true);
+    const refreshTable = ref(true);
+
+    const filteredTreeData = computed(() => {
+      if (!queryParams.deptName && !queryParams.status) return allTreeData.value;
+      // 递归过滤树：保留匹配节点及其祖先链和子树
+      const filterNode = (nodes) => {
+        const result = [];
+        for (const node of nodes) {
+          let matched = true;
+          if (queryParams.deptName && !node.name.includes(queryParams.deptName)) matched = false;
+          if (queryParams.status && node.status !== queryParams.status) matched = false;
+          const children = node.children ? filterNode(node.children) : [];
+          if (matched || children.length) {
+            result.push({ ...node, children: children.length ? children : undefined });
+          }
+        }
+        return result;
       };
-      return build(0);
+      return filterNode(allTreeData.value);
     });
-    const deptTreeRef = ref(null);
 
-    /* ===== 数据权限名称映射 ===== */
-    const dataScopeName = (scope) => ({ '1':'全部', '2':'自定义', '3':'本部门', '4':'本部门及以下', '5':'仅本人' })[scope] || '—';
-    const dataScopeTagType = (scope) => ({ '1':'danger', '2':'warning', '3':'info', '4':'success', '5':'' })[scope] || 'info';
+    const handleQuery = () => { isExpandAll.value = true; toggleExpandAll(); };
+    const resetQuery = () => { queryParams.deptName = ''; queryParams.status = ''; isExpandAll.value = true; toggleExpandAll(); };
 
-    /* ===== 查询 ===== */
-    const queryParams = reactive({ roleName: '', roleKey: '', status: '' });
-    const selectedIds = ref([]);
-    const page = ref(1);
-    const pageSize = ref(10);
-    const filteredList = computed(() => {
-      return roles.filter(r => {
-        if (queryParams.roleName && !r.roleName.includes(queryParams.roleName)) return false;
-        if (queryParams.roleKey && !r.roleKey.includes(queryParams.roleKey)) return false;
-        if (queryParams.status && r.status !== queryParams.status) return false;
-        return true;
-      });
+    const toggleExpandAll = () => {
+      refreshTable.value = false;
+      isExpandAll.value = !isExpandAll.value;
+      nextTick(() => { refreshTable.value = true; });
+    };
+
+    /* ===== 上级组织选项（排除自身及子节点） ===== */
+    const parentDeptOptions = computed(() => {
+      if (!editing.value || !form.id) return allTreeData.value;
+      // 排除当前编辑节点及其所有子节点（不能将自己设为自己的父级）
+      const getChildIds = (pid) => {
+        const ids = [pid];
+        depts.filter(d => d.parentId === pid).forEach(d => ids.push(...getChildIds(d.id)));
+        return ids;
+      };
+      const excludeIds = getChildIds(form.id);
+      const filterTree = (nodes) => {
+        return nodes.filter(n => !excludeIds.includes(n.id))
+          .map(n => ({ ...n, children: n.children ? filterTree(n.children) : undefined }))
+          .filter(n => true);
+      };
+      return filterTree(allTreeData.value);
     });
-    const pagedList = computed(() => {
-      const start = (page.value - 1) * pageSize.value;
-      return filteredList.value.slice(start, start + pageSize.value);
-    });
-    const handleQuery = () => { page.value = 1; };
-    const resetQuery = () => { queryParams.roleName = ''; queryParams.roleKey = ''; queryParams.status = ''; page.value = 1; };
-    const handleSelectionChange = (val) => { selectedIds.value = val.map(v => v.id); };
 
     /* ===== 新增/编辑 ===== */
     const dialogVisible = ref(false);
     const editing = ref(false);
     const formRef = ref(null);
-    const form = reactive({ id: null, roleName: '', roleKey: '', roleSort: 0, status: '0', menuIds: [], remark: '' });
+    const form = reactive({ id: null, parentId: 0, name: '', orderNum: 0, leader: '', phone: '', email: '', status: '0' });
     const rules = {
-      roleName: [{ required: true, message: '请输入角色名称', trigger: 'blur' }],
-      roleKey: [{ required: true, message: '请输入权限字符', trigger: 'blur' }, { pattern: /^[a-zA-Z_]+$/, message: '仅允许字母和下划线', trigger: 'blur' }],
-      roleSort: [{ required: true, message: '请输入显示顺序', trigger: 'blur' }],
+      parentId: [{ required: true, message: '请选择上级组织', trigger: 'change' }],
+      name: [{ required: true, message: '请输入组织名称', trigger: 'blur' }, { min: 2, max: 20, message: '长度在 2 到 20 个字符', trigger: 'blur' }],
+      orderNum: [{ required: true, message: '请输入显示排序', trigger: 'blur' }],
+      email: [{ type: 'email', message: '请输入正确的邮箱', trigger: 'blur' }],
     };
-    const resetForm = () => { Object.assign(form, { id: null, roleName: '', roleKey: '', roleSort: 0, status: '0', menuIds: [], remark: '' }); menuCheckAll.value = false; };
+    const resetForm = () => { Object.assign(form, { id: null, parentId: 0, name: '', orderNum: 0, leader: '', phone: '', email: '', status: '0' }); };
     const onDialogClose = () => { formRef.value?.clearValidate(); };
-    const handleAdd = () => { resetForm(); editing.value = false; dialogVisible.value = true; };
+    const handleAdd = (row) => {
+      resetForm();
+      if (row) { form.parentId = row.id; }
+      else { form.parentId = 0; form.orderNum = 0; }
+      editing.value = false;
+      dialogVisible.value = true;
+    };
     const handleEdit = (row) => {
       resetForm();
-      Object.assign(form, { id: row.id, roleName: row.roleName, roleKey: row.roleKey, roleSort: row.roleSort, status: row.status, remark: row.remark });
-      form.menuIds = row.menuIds ? [...row.menuIds] : [];
+      Object.assign(form, JSON.parse(JSON.stringify(row)));
       editing.value = true;
       dialogVisible.value = true;
     };
     const submitForm = async () => {
       try { await formRef.value.validate(); } catch { return; }
-      const checkedKeys = menuTreeRef.value?.getCheckedKeys() || [];
-      const halfCheckedKeys = menuTreeRef.value?.getHalfCheckedKeys() || [];
-      form.menuIds = [...checkedKeys, ...halfCheckedKeys];
       if (editing.value) {
-        const idx = roles.findIndex(r => r.id === form.id);
-        if (idx > -1) Object.assign(roles[idx], form);
+        const idx = depts.findIndex(d => d.id === form.id);
+        if (idx > -1) Object.assign(depts[idx], form);
         ElementPlus.ElMessage.success('修改成功');
       } else {
-        if (roles.some(r => r.roleKey === form.roleKey)) { ElementPlus.ElMessage.error('权限字符已存在'); return; }
-        const newId = Math.max(...roles.map(r => r.id), 0) + 1;
-        roles.push({ ...form, id: newId, dataScope: '1', createTime: new Date().toISOString().slice(0, 19).replace('T', ' ') });
+        const newId = Math.max(...depts.map(d => d.id), 99) + 1;
+        depts.push({ ...form, id: newId, createTime: new Date().toISOString().slice(0, 19).replace('T', ' ') });
         ElementPlus.ElMessage.success('新增成功');
       }
       dialogVisible.value = false;
     };
 
     /* ===== 删除 ===== */
+    const hasChildren = (deptId) => depts.some(d => d.parentId === deptId);
     const handleDelete = (row) => {
-      ElementPlus.ElMessageBox.confirm(`确认删除角色「${row.roleName}」吗？`, '提示', { type: 'warning' })
+      if (hasChildren(row.id)) {
+        ElementPlus.ElMessage.warning('该组织下存在子组织，不允许删除');
+        return;
+      }
+      ElementPlus.ElMessageBox.confirm(`确认删除组织「${row.name}」吗？`, '提示', { type: 'warning' })
         .then(() => {
-          const idx = roles.findIndex(r => r.id === row.id);
-          if (idx > -1) roles.splice(idx, 1);
+          const idx = depts.findIndex(d => d.id === row.id);
+          if (idx > -1) depts.splice(idx, 1);
           ElementPlus.ElMessage.success('删除成功');
         }).catch(() => {});
     };
 
-    /* ===== 状态切换 ===== */
-    const handleStatusChange = (row) => {
-      const text = row.status === '0' ? '启用' : '停用';
-      ElementPlus.ElMessageBox.confirm(`确认要${text}角色「${row.roleName}」吗？`, '提示', { type: 'warning' })
-        .then(() => { ElementPlus.ElMessage.success(text + '成功'); })
-        .catch(() => { row.status = row.status === '0' ? '1' : '0'; });
-    };
-
-    /* ===== 数据权限 ===== */
-    const dataScopeVisible = ref(false);
-    const dataScopeTarget = ref(null);
-    const dataScopeForm = reactive({ dataScope: '1' });
-    const handleDataScope = (row) => {
-      dataScopeTarget.value = row;
-      dataScopeForm.dataScope = row.dataScope || '1';
-      dataScopeVisible.value = true;
-    };
-    const onDataScopeChange = (val) => {
-      // 自定义数据权限时展开部门树
-    };
-    const submitDataScope = () => {
-      if (!dataScopeTarget.value) return;
-      const target = roles.find(r => r.id === dataScopeTarget.value.id);
-      if (target) target.dataScope = dataScopeForm.dataScope;
-      ElementPlus.ElMessage.success('数据权限设置成功');
-      dataScopeVisible.value = false;
-    };
-
     return { ...shared,
-      roles, filteredList, pagedList, page, pageSize, queryParams, selectedIds,
-      handleQuery, resetQuery, handleSelectionChange,
-      menuTreeData, menuTreeRef, menuExpandAll, menuCheckAll, menuCheckStrictly, handleCheckAll,
-      deptTreeData, deptTreeRef,
-      dataScopeName, dataScopeTagType,
-      dialogVisible, editing, formRef, form, rules, onDialogClose, handleAdd, handleEdit, submitForm,
-      handleDelete, handleStatusChange,
-      dataScopeVisible, dataScopeTarget, dataScopeForm, handleDataScope, onDataScopeChange, submitDataScope,
+      filteredTreeData, queryParams, isExpandAll, refreshTable,
+      handleQuery, resetQuery, toggleExpandAll,
+      dialogVisible, editing, formRef, form, rules, parentDeptOptions,
+      onDialogClose, handleAdd, handleEdit, submitForm,
+      handleDelete,
       Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete,
-      Search: ElementPlusIconsVue?.Search, Refresh: ElementPlusIconsVue?.Refresh,
-      Checked: ElementPlusIconsVue?.Checked,
+      Search: ElementPlusIconsVue?.Search, Refresh: ElementPlusIconsVue?.Refresh, Sort: ElementPlusIconsVue?.Sort,
       OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Expand: ElementPlusIconsVue?.Expand,
       ArrowDown: ElementPlusIconsVue?.ArrowDown, Check: ElementPlusIconsVue?.Check,
     };

@@ -57,32 +57,27 @@
     { id: 1, fromTenantId: 'T1', toTenantId: 'T2', poleQuota: 500, poleUsed: 0, projectQuota: 10, projectUsed: 3, status: 'active', operator: 'admin', createdAt: '2025-06-15 10:00:00' },
   ];
 
-  /* ============== 部门 Seed（参考 ruoyi-vue-pro dept） ============== */
+  /* ============== 组织 Seed（参考 ruoyi-vue-pro dept） ============== */
   const DEPTS = [
-    { id: 100, name: '云创科技集团', parentId: 0,   orderNum: 0, status: '0' },
-    { id: 101, name: '深圳总公司',    parentId: 100, orderNum: 1, status: '0' },
-    { id: 102, name: '长沙分公司',    parentId: 100, orderNum: 2, status: '0' },
-    { id: 103, name: '研发部门',      parentId: 101, orderNum: 1, status: '0' },
-    { id: 104, name: '市场部门',      parentId: 101, orderNum: 2, status: '0' },
-    { id: 105, name: '测试部门',      parentId: 101, orderNum: 3, status: '0' },
-    { id: 106, name: '财务部门',      parentId: 101, orderNum: 4, status: '0' },
-    { id: 107, name: '运维部门',      parentId: 101, orderNum: 5, status: '0' },
-    { id: 108, name: '市场部门',      parentId: 102, orderNum: 1, status: '0' },
-    { id: 109, name: '技术部门',      parentId: 102, orderNum: 2, status: '0' },
+    { id: 100, name: '云创科技集团', parentId: 0,   orderNum: 0, leader: '张总',   phone: '13800138001', email: 'admin@yunchuang.com', status: '0', createTime: '2023-09-29 11:47:20' },
+    { id: 101, name: '浙江省',       parentId: 100, orderNum: 1, leader: '李主任', phone: '13800138002', email: 'zj@yunchuang.com',    status: '0', createTime: '2023-09-29 11:47:20' },
+    { id: 102, name: '宁波市',       parentId: 101, orderNum: 1, leader: '王局长', phone: '13800138003', email: 'nb@yunchuang.com',    status: '0', createTime: '2023-09-29 11:47:20' },
+    { id: 103, name: '海曙区',       parentId: 102, orderNum: 1, leader: '赵区长', phone: '13800138004', email: 'hs@yunchuang.com',    status: '0', createTime: '2023-09-29 11:47:20' },
+    { id: 104, name: '鼓楼街道',     parentId: 103, orderNum: 1, leader: '钱主任', phone: '13800138005', email: 'gl@yunchuang.com',    status: '0', createTime: '2023-09-29 11:47:20' },
   ];
 
   /* ============== 用户 Seed（参考 ruoyi-vue-pro user） ============== */
   const USERS = [
     { id: 1,  username: 'admin',     nickname: '若依管理员', deptId: 103, phone: '15888888888', email: 'ry@qq.com',       sex: '0', status: '0', remark: '管理员', createTime: '2023-09-29 11:47:20' },
-    { id: 2,  username: 'ry',         nickname: '若依',      deptId: 105, phone: '15666666666', email: 'ry@qq.com',       sex: '0', status: '0', remark: '测试员', createTime: '2023-09-29 11:47:20' },
+    { id: 2,  username: 'ry',         nickname: '若依',      deptId: 102, phone: '15666666666', email: 'ry@qq.com',       sex: '0', status: '0', remark: '测试员', createTime: '2023-09-29 11:47:20' },
     { id: 3,  username: 'common',     nickname: '普通用户',   deptId: 100, phone: '13333333333', email: 'common@qq.com',   sex: '1', status: '0', remark: '', createTime: '2023-09-29 11:47:20' },
     { id: 4,  username: 'light_admin',nickname: '照明管理员', deptId: 103, phone: '13900138001', email: 'light@qq.com',    sex: '0', status: '0', remark: '负责照明项目管理', createTime: '2024-01-10 09:30:00' },
-    { id: 5,  username: 'pole_ops',   nickname: '灯杆运维',   deptId: 107, phone: '13900138002', email: 'ops@qq.com',      sex: '0', status: '0', remark: '灯杆运维工程师', createTime: '2024-02-15 14:20:00' },
+    { id: 5,  username: 'pole_ops',   nickname: '灯杆运维',   deptId: 104, phone: '13900138002', email: 'ops@qq.com',      sex: '0', status: '0', remark: '灯杆运维工程师', createTime: '2024-02-15 14:20:00' },
     { id: 6,  username: 'dev_zhang',  nickname: '张工',      deptId: 103, phone: '13900138003', email: 'zhang@qq.com',    sex: '0', status: '0', remark: '研发工程师', createTime: '2024-03-01 10:00:00' },
     { id: 7,  username: 'dev_li',     nickname: '李工',      deptId: 104, phone: '13900138004', email: 'li@qq.com',       sex: '1', status: '1', remark: '休长假', createTime: '2024-04-12 16:30:00' },
-    { id: 8,  username: 'test_wang',  nickname: '王测试',    deptId: 105, phone: '13900138005', email: 'wang@qq.com',     sex: '0', status: '0', remark: 'QA工程师', createTime: '2024-05-20 11:15:00' },
-    { id: 9,  username: 'fin_chen',   nickname: '陈财务',    deptId: 106, phone: '13900138006', email: 'chen@qq.com',     sex: '1', status: '0', remark: '财务负责人', createTime: '2024-06-01 09:00:00' },
-    { id: 10, username: 'ops_sun',    nickname: '孙运维',    deptId: 107, phone: '13900138007', email: 'sun@qq.com',      sex: '0', status: '0', remark: '系统运维', createTime: '2024-07-10 13:45:00' },
+    { id: 8,  username: 'test_wang',  nickname: '王测试',    deptId: 102, phone: '13900138005', email: 'wang@qq.com',     sex: '0', status: '0', remark: 'QA工程师', createTime: '2024-05-20 11:15:00' },
+    { id: 9,  username: 'fin_chen',   nickname: '陈财务',    deptId: 101, phone: '13900138006', email: 'chen@qq.com',     sex: '1', status: '0', remark: '财务负责人', createTime: '2024-06-01 09:00:00' },
+    { id: 10, username: 'ops_sun',    nickname: '孙运维',    deptId: 104, phone: '13900138007', email: 'sun@qq.com',      sex: '0', status: '0', remark: '系统运维', createTime: '2024-07-10 13:45:00' },
   ];
 
   /* ============== 角色 Seed（参考 ruoyi-vue-pro role） ============== */
@@ -242,6 +237,7 @@
     '资产分配': 'Share',
     '策略下发日志': 'Document',
     '组织管理': 'OfficeBuilding',
+    '分级管理': 'Operation',
     '用户管理': 'User',
     '角色管理': 'UserFilled',
     '菜单管理': 'Menu',
@@ -262,7 +258,7 @@
     { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
     { title: '综合运维', icon: 'SetUp', open: true, items: ['资产分配','策略下发日志'] },
     { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
-    { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','用户管理','角色管理','菜单管理'] },
+    { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','分级管理','用户管理','角色管理','菜单管理'] },
     { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
     { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
   ];
