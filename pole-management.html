@@ -540,8 +540,8 @@
             <div class="table-zone">
               <el-table :data="pagedPoles" stripe style="width:100%" :header-cell-style="tableHeaderStyle" @selection-change="poleSelectionChange">
                 <el-table-column type="selection" width="42"></el-table-column>
-                <el-table-column prop="name" label="灯杆名称" min-width="90" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="sn" label="序列号" width="120" show-overflow-tooltip></el-table-column>
+                <el-table-column prop="name" label="灯杆名称" min-width="90" show-overflow-tooltip sortable></el-table-column>
+                <el-table-column prop="sn" label="序列号" width="120" show-overflow-tooltip sortable></el-table-column>
                 <el-table-column prop="address" label="地址" min-width="100" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="product" label="所属产品" min-width="90" show-overflow-tooltip></el-table-column>
                 <el-table-column prop="projectName" label="项目名称" min-width="90" show-overflow-tooltip></el-table-column>

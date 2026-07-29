@@ -341,6 +341,26 @@
     .dialog-actions-table { margin-top: 2px; }
     .empty-cell { text-align: center; color: var(--ink-3); padding: 28px 0; font-size: var(--fs-sm); }
     .tag-soft { background: var(--brand-soft); color: var(--brand); border: none; }
+    /* 动作内联编辑 */
+    .act-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
+    .act-count { display: inline-block; min-width: 20px; padding: 0 7px; margin-left: 4px; font-size: 12px; line-height: 18px; text-align: center; color: #fff; background: var(--brand); border-radius: 10px; }
+    .act-quick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .aq-label { font-size: var(--fs-sm); color: var(--ink-3); }
+    .aq-chip { cursor: pointer; user-select: none; transition: all .15s; }
+    .aq-chip:hover { color: var(--brand); border-color: var(--brand); }
+    .act-scene { font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
+    .act-list { display: flex; flex-direction: column; gap: 12px; }
+    .act-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
+    .act-card-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
+    .act-idx { font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); }
+    .act-card-spacer { flex: 1; }
+    .act-card-body { padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+    .act-seg { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .seg-title { width: 36px; flex-shrink: 0; font-size: var(--fs-sm); font-weight: 600; color: var(--ink-2); }
+    .seg-lbl { font-size: var(--fs-sm); color: var(--ink-3); }
+    .seg-val { width: 40px; font-size: var(--fs-sm); color: var(--ink); }
+    .seg-hint { font-size: var(--fs-sm); color: var(--ink-3); }
+    .act-empty { padding: 8px 0; }
 
     /* ============ 灯杆管理 / 批量条 / 选择详情提示 ============ */
     .batch-bar { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
@@ -623,29 +643,70 @@
       </div>
     </div>
     <div style="border-top:1px solid var(--line); padding-top:16px; margin-top:16px">
-      <div style="display:flex; align-items:center; gap:10px">
-        <el-button type="success" :icon="CirclePlus" @click="openCmd(stForm)">添加动作</el-button>
-        <el-table :data="stForm.actions" border size="small" class="dialog-actions-table" style="flex:1">
-          <el-table-column label="触发类型" width="100" align="center">
-            <template #default="{ row }"><el-tag size="small" effect="plain">{{ row.triggerType === 'sunrise' ? '日出' : row.triggerType === 'sunset' ? '日落' : '定时' }}</el-tag></template>
-          </el-table-column>
-          <el-table-column label="开始" min-width="150">
-            <template #default="{ row }">开始：{{ row.triggerType === 'sunrise' ? '日出' : row.triggerType === 'sunset' ? '日落' : row.startTime }} ({{ row.action==='开关灯' ? (row.startOn?'开':'关') : '亮'+row.startBright+'%' }})</template>
-          </el-table-column>
-          <el-table-column label="结束" min-width="150">
-            <template #default="{ row }">结束：{{ row.endTime }} ({{ row.action==='开关灯' ? (row.endOn?'开':'关') : '亮'+row.endBright+'%' }})</template>
-          </el-table-column>
-          <el-table-column label="动作" width="80" align="center">
-            <template #default="{ row }"><el-tag size="small" effect="plain" class="tag-soft">{{ row.action }}</el-tag></template>
-          </el-table-column>
-          <el-table-column label="操作" width="110" align="center">
-            <template #default="{ $index }">
-              <el-button link type="primary" size="small" @click="editAction(stForm, $index)">编辑</el-button>
-              <el-button link type="danger" size="small" @click="stForm.actions.splice($index,1)">删除</el-button>
-            </template>
-          </el-table-column>
-          <template #empty><div class="empty-cell">暂无数据，请点击「添加动作」</div></template>
-        </el-table>
+      <div class="act-head">
+        <div class="cat-head" style="padding:0">执行动作 <span class="act-count">{{ stForm.actions.length }}</span></div>
+        <div class="act-quick">
+          <span class="aq-label">快捷模板</span>
+          <el-tag v-for="t in actionTemplates" :key="t.key" class="aq-chip" effect="plain" @click="applyTemplate(stForm, t)">{{ t.label }}</el-tag>
+          <el-button type="primary" size="small" :icon="CirclePlus" @click="addActionCard(stForm)">添加动作</el-button>
+        </div>
+      </div>
+      <div v-if="stForm.actions.length" class="act-list">
+        <div v-for="(a, i) in stForm.actions" :key="i" class="act-card">
+          <div class="act-card-head">
+            <span class="act-idx">动作 {{ i + 1 }}</span>
+            <span v-if="a.scene" class="act-scene" :style="{ color: sceneColor(a.scene), background: sceneColor(a.scene) + '1a' }">{{ a.scene }}</span>
+            <el-select v-model="a.action" size="small" style="width:104px">
+              <el-option label="开关灯" value="开关灯"></el-option>
+              <el-option label="调光" value="调光"></el-option>
+            </el-select>
+            <el-select v-model="a.triggerType" size="small" style="width:116px">
+              <el-option label="定时" value="timed"></el-option>
+              <el-option label="日出" value="sunrise"></el-option>
+              <el-option label="日落" value="sunset"></el-option>
+            </el-select>
+            <div class="act-card-spacer"></div>
+            <el-button link type="danger" size="small" :icon="Delete" @click="stForm.actions.splice(i, 1)">删除</el-button>
+          </div>
+          <div class="act-card-body">
+            <div class="act-seg">
+              <span class="seg-title">开始</span>
+              <template v-if="a.action === '开关灯'">
+                <el-switch v-model="a.startOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
+              </template>
+              <template v-else>
+                <span class="seg-lbl">亮度</span>
+                <el-slider v-model="a.startBright" :max="100" style="width:120px"></el-slider>
+                <span class="seg-val">{{ a.startBright }}%</span>
+              </template>
+              <template v-if="a.triggerType === 'timed'">
+                <span class="seg-lbl">时间</span>
+                <el-time-picker v-model="a.startTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="开始时间"></el-time-picker>
+              </template>
+              <template v-else>
+                <span class="seg-lbl">偏移</span>
+                <el-input-number v-model="a.startOffset" :min="-120" :max="120" :step="5" size="small" style="width:104px"></el-input-number>
+                <span class="seg-hint">分</span>
+              </template>
+            </div>
+            <div class="act-seg">
+              <span class="seg-title">结束</span>
+              <template v-if="a.action === '开关灯'">
+                <el-switch v-model="a.endOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
+              </template>
+              <template v-else>
+                <span class="seg-lbl">亮度</span>
+                <el-slider v-model="a.endBright" :max="100" style="width:120px"></el-slider>
+                <span class="seg-val">{{ a.endBright }}%</span>
+              </template>
+              <span class="seg-lbl">时间</span>
+              <el-time-picker v-model="a.endTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="结束时间"></el-time-picker>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div v-else class="act-empty">
+        <el-empty description="暂无动作，点击「添加动作」或选择左侧快捷模板" :image-size="56"></el-empty>
       </div>
     </div>
     <template #footer>
@@ -710,28 +771,71 @@
           <template #empty><div class="empty-cell">暂无符合条件的设备</div></template>
         </el-table>
         <div style="border-top:1px solid var(--line); padding-top:12px; margin-top:12px">
-          <el-button type="success" :icon="CirclePlus" size="small" @click="openCmd(stEditForm)">添加动作</el-button>
-          <el-table :data="stEditForm.actions" border size="small" class="dialog-actions-table" style="margin-top:8px">
-            <el-table-column label="触发类型" width="100" align="center">
-              <template #default="{ row }"><el-tag size="small" effect="plain">{{ row.triggerType === 'sunrise' ? '日出' : row.triggerType === 'sunset' ? '日落' : '定时' }}</el-tag></template>
-            </el-table-column>
-            <el-table-column label="开始" min-width="150">
-              <template #default="{ row }">开始：{{ row.triggerType === 'sunrise' ? '日出' : row.triggerType === 'sunset' ? '日落' : row.startTime }} ({{ row.action==='开关灯' ? (row.startOn?'开':'关') : '亮'+row.startBright+'%' }})</template>
-            </el-table-column>
-            <el-table-column label="结束" min-width="150">
-              <template #default="{ row }">结束：{{ row.endTime }} ({{ row.action==='开关灯' ? (row.endOn?'开':'关') : '亮'+row.endBright+'%' }})</template>
-            </el-table-column>
-            <el-table-column label="动作" width="80" align="center">
-              <template #default="{ row }"><el-tag size="small" effect="plain" class="tag-soft">{{ row.action }}</el-tag></template>
-            </el-table-column>
-            <el-table-column label="操作" width="110" align="center">
-              <template #default="{ $index }">
-                <el-button link type="primary" size="small" @click="editAction(stEditForm, $index)">编辑</el-button>
-                <el-button link type="danger" size="small" @click="stEditForm.actions.splice($index,1)">删除</el-button>
-              </template>
-            </el-table-column>
-            <template #empty><div class="empty-cell">暂无动作</div></template>
-          </el-table>
+          <div class="act-head">
+            <div class="cat-head" style="padding:0">执行动作 <span class="act-count">{{ stEditForm.actions.length }}</span></div>
+            <div class="act-quick">
+              <span class="aq-label">快捷模板</span>
+              <el-tag v-for="t in actionTemplates" :key="t.key" class="aq-chip" effect="plain" @click="applyTemplate(stEditForm, t)">{{ t.label }}</el-tag>
+              <el-button type="primary" size="small" :icon="CirclePlus" @click="addActionCard(stEditForm)">添加动作</el-button>
+            </div>
+          </div>
+          <div v-if="stEditForm.actions.length" class="act-list">
+            <div v-for="(a, i) in stEditForm.actions" :key="i" class="act-card">
+              <div class="act-card-head">
+                <span class="act-idx">动作 {{ i + 1 }}</span>
+            <span v-if="a.scene" class="act-scene" :style="{ color: sceneColor(a.scene), background: sceneColor(a.scene) + '1a' }">{{ a.scene }}</span>
+                <el-select v-model="a.action" size="small" style="width:104px">
+                  <el-option label="开关灯" value="开关灯"></el-option>
+                  <el-option label="调光" value="调光"></el-option>
+                </el-select>
+                <el-select v-model="a.triggerType" size="small" style="width:116px">
+                  <el-option label="定时" value="timed"></el-option>
+                  <el-option label="日出" value="sunrise"></el-option>
+                  <el-option label="日落" value="sunset"></el-option>
+                </el-select>
+                <div class="act-card-spacer"></div>
+                <el-button link type="danger" size="small" :icon="Delete" @click="stEditForm.actions.splice(i, 1)">删除</el-button>
+              </div>
+              <div class="act-card-body">
+                <div class="act-seg">
+                  <span class="seg-title">开始</span>
+                  <template v-if="a.action === '开关灯'">
+                    <el-switch v-model="a.startOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
+                  </template>
+                  <template v-else>
+                    <span class="seg-lbl">亮度</span>
+                    <el-slider v-model="a.startBright" :max="100" style="width:120px"></el-slider>
+                    <span class="seg-val">{{ a.startBright }}%</span>
+                  </template>
+                  <template v-if="a.triggerType === 'timed'">
+                    <span class="seg-lbl">时间</span>
+                    <el-time-picker v-model="a.startTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="开始时间"></el-time-picker>
+                  </template>
+                  <template v-else>
+                    <span class="seg-lbl">偏移</span>
+                    <el-input-number v-model="a.startOffset" :min="-120" :max="120" :step="5" size="small" style="width:104px"></el-input-number>
+                    <span class="seg-hint">分</span>
+                  </template>
+                </div>
+                <div class="act-seg">
+                  <span class="seg-title">结束</span>
+                  <template v-if="a.action === '开关灯'">
+                    <el-switch v-model="a.endOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
+                  </template>
+                  <template v-else>
+                    <span class="seg-lbl">亮度</span>
+                    <el-slider v-model="a.endBright" :max="100" style="width:120px"></el-slider>
+                    <span class="seg-val">{{ a.endBright }}%</span>
+                  </template>
+                  <span class="seg-lbl">时间</span>
+                  <el-time-picker v-model="a.endTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="结束时间"></el-time-picker>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div v-else class="act-empty">
+            <el-empty description="暂无动作，点击「添加动作」或选择左侧快捷模板" :image-size="56"></el-empty>
+          </div>
         </div>
       </div>
     </div>
@@ -871,42 +975,6 @@
     </template>
   </el-dialog>
 
-  <!-- ============ 指令（动作） ============ -->
-  <el-dialog v-model="cmdDialog" title="指令配置" width="520px" append-to-body :close-on-click-modal="false">
-    <el-form :model="cmd" label-width="76px">
-      <el-form-item label="动作" required>
-        <el-select v-model="cmd.action" placeholder="请选择" style="width:100%"><el-option label="开关灯" value="开关灯"></el-option><el-option label="调光" value="调光"></el-option></el-select>
-      </el-form-item>
-      <el-form-item label="触发类型" required>
-        <el-select v-model="cmd.triggerType" placeholder="请选择" style="width:100%">
-          <el-option label="定时触发" value="timed"></el-option>
-          <el-option label="日出触发" value="sunrise"></el-option>
-          <el-option label="日落触发" value="sunset"></el-option>
-        </el-select>
-      </el-form-item>
-      <template v-if="cmd.action">
-        <div class="time-divider">开始设置</div>
-        <el-form-item label="开关" v-if="cmd.action === '开关灯'"><el-switch v-model="cmd.startOn" active-text="开" inactive-text="关" inline-prompt></el-switch></el-form-item>
-        <el-form-item label="亮度" v-else><el-slider v-model="cmd.startBright" :max="100" style="width:100%"></el-slider></el-form-item>
-        <el-form-item label="时间" :required="cmd.triggerType === 'timed'">
-          <el-time-picker v-model="cmd.startTime" format="HH:mm" value-format="HH:mm" placeholder="选择时间" style="width:100%" :disabled="cmd.triggerType !== 'timed'"></el-time-picker>
-          <div v-if="cmd.triggerType !== 'timed'" style="color:var(--ink-3);font-size:var(--fs-sm);margin-top:4px">{{ cmd.triggerType === 'sunrise' ? '日出时刻触发' : '日落时刻触发' }}</div>
-        </el-form-item>
-        <el-form-item label="偏移量" v-if="cmd.triggerType !== 'timed'">
-          <el-input-number v-model="cmd.startOffset" :min="-120" :max="120" :step="5" style="width:100%" placeholder="分钟"></el-input-number>
-          <div style="color:var(--ink-3);font-size:var(--fs-sm);margin-top:4px">相对于日出/日落的偏移分钟数（正数延后，负数提前）</div>
-        </el-form-item>
-        <div class="time-divider">结束设置</div>
-        <el-form-item label="开关" v-if="cmd.action === '开关灯'"><el-switch v-model="cmd.endOn" active-text="开" inactive-text="关" inline-prompt></el-switch></el-form-item>
-        <el-form-item label="亮度" v-else><el-slider v-model="cmd.endBright" :max="100" style="width:100%"></el-slider></el-form-item>
-        <el-form-item label="时间" required><el-time-picker v-model="cmd.endTime" format="HH:mm" value-format="HH:mm" placeholder="选择结束时间" style="width:100%"></el-time-picker></el-form-item>
-      </template>
-    </el-form>
-    <template #footer>
-      <el-button @click="cmdDialog = false">取 消</el-button>
-      <el-button type="primary" @click="saveCmd">确 定</el-button>
-    </template>
-  </el-dialog>
   <!-- ============ 地图选点时区 ============ -->
   <el-dialog v-model="mapPickerVisible" title="地图选点 - 自动判断时区" width="680px" :close-on-click-modal="false" destroy-on-close @opened="onMapDialogOpened">
     <div style="display:flex; flex-direction:column; gap:12px">
@@ -1217,33 +1285,29 @@ const app = createApp({
       ElementPlus.ElMessage.success('修改成功');
       strategyEditDialog.value = false;
     };
-    const cmdDialog = ref(false);
-    const cmdIndex = ref(-1);
-    const cmdActionsHost = ref(null);
-    const blankCmd = () => ({ action:'', triggerType:'timed', startOn:false, startBright:50, startHour:0, startMinute:0, startTime:'00:00', startOffset:0, endOn:false, endBright:50, endHour:1, endMinute:0, endTime:'01:00' });
-    const cmd = reactive(blankCmd());
-    const openCmd = (host) => { cmdActionsHost.value = host || stForm; cmdIndex.value=-1; Object.assign(cmd, blankCmd()); cmdDialog.value=true; };
-    const editAction = (host, i) => {
-      cmdActionsHost.value = host || stForm;
-      cmdIndex.value = i;
-      const a = JSON.parse(JSON.stringify(cmdActionsHost.value.actions[i]));
-      a.startTime = a.startTime || `${pad2(a.startHour)}:${pad2(a.startMinute)}`;
-      a.endTime   = a.endTime   || `${pad2(a.endHour)}:${pad2(a.endMinute)}`;
-      a.triggerType = a.triggerType || 'timed';
-      a.startOffset = a.startOffset || 0;
-      Object.assign(cmd, blankCmd(), a); cmdDialog.value = true;
+    /* ===== 动作内联编辑 ===== */
+    const blankAction = () => ({ action: '开关灯', triggerType: 'timed', scene: '', startOn: true, startBright: 50, startTime: '18:00', startOffset: 0, endOn: false, endBright: 30, endTime: '23:00' });
+    const addActionCard = (form) => { if (!form.actions) form.actions = []; form.actions.push(blankAction()); };
+    const actionTemplates = [
+      { key: 'sun',     label: '日落开 · 日出关', action: '开关灯', triggerType: 'sunset', startOn: true, startOffset: 0, endTime: '06:00', endOn: false },
+      { key: 't1',      label: '18:00亮80% · 23:00关', action: '调光', triggerType: 'timed', startBright: 80, startTime: '18:00', endBright: 0, endTime: '23:00' },
+      { key: 't2',      label: '19:00开 · 06:00关', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
+      { key: 'all',     label: '全天亮60%', action: '调光', triggerType: 'timed', startBright: 60, startTime: '00:00', endBright: 60, endTime: '23:59' },
+      { key: 'holiday', label: '节假日策略', scene: '节假日', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '00:00', endOn: true, endTime: '23:59' },
+      { key: 'light',   label: '光感策略', scene: '光感', action: '调光', triggerType: 'sunset', startBright: 70, startOffset: 0, endOn: false, endTime: '06:00' },
+      { key: 'pir',     label: '人体感应', scene: '感应', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
+      { key: 'eco',     label: '节能模式', scene: '节能', action: '调光', triggerType: 'timed', startBright: 30, startTime: '22:00', endBright: 0, endTime: '06:00' },
+      { key: 'dawn',    label: '晨间渐亮', scene: '渐亮', action: '调光', triggerType: 'timed', startBright: 40, startTime: '06:00', endBright: 100, endTime: '08:00' },
+      { key: 'noon',    label: '午间全亮', scene: '午间', action: '调光', triggerType: 'timed', startBright: 100, startTime: '11:00', endBright: 100, endTime: '14:00' },
+    ];
+    const applyTemplate = (form, t) => {
+      const { key, label, ...rest } = t;
+      if (!form.actions) form.actions = [];
+      form.actions.push({ ...blankAction(), ...rest });
     };
-    const saveCmd = () => {
-      if (!cmd.action) { ElementPlus.ElMessage.warning('请选择动作'); return; }
-      if (!cmd.triggerType) { ElementPlus.ElMessage.warning('请选择触发类型'); return; }
-      if (cmd.triggerType === 'timed' && !cmd.startTime) { ElementPlus.ElMessage.warning('请选择开始时间'); return; }
-      if (!cmd.endTime) { ElementPlus.ElMessage.warning('请选择结束时间'); return; }
-      const item = JSON.parse(JSON.stringify(cmd));
-      if (item.startTime) { const [sh, sm] = item.startTime.split(':').map(Number); item.startHour = sh; item.startMinute = sm; }
-      const [eh, em] = item.endTime.split(':').map(Number);
-      item.endHour = eh; item.endMinute = em;
-      if (cmdIndex.value === -1) cmdActionsHost.value.actions.push(item); else cmdActionsHost.value.actions.splice(cmdIndex.value, 1, item);
-      cmdDialog.value = false;
+    const sceneColor = (s) => {
+      const m = { '日常': '#64748b', '节假日': '#ff9f43', '光感': '#5b8bff', '感应': '#22c55e', '节能': '#14b8a6', '渐亮': '#a855f7', '午间': '#f59e0b' };
+      return m[s] || '#909399';
     };
     /* ===== 地图选点时区 ===== */
     const mapPickerVisible = ref(false);
@@ -1288,20 +1352,24 @@ const app = createApp({
       }
       mapPickerVisible.value = false;
     };
+    const toMin = (t) => { if (!t) return 0; const [h, m] = String(t).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
     const formatLightStart = (a) => {
       const off = a.startOffset || 0;
       const offText = off ? `${off > 0 ? '+' : ''}${off}分钟` : '';
       if (a.triggerType === 'sunrise') return `日出${offText}`;
       if (a.triggerType === 'sunset') return `日落${offText}`;
-      return `${a.startHour}时${a.startMinute}分`;
+      if (a.startTime) return `${a.startTime.split(':')[0]}时${(a.startTime.split(':')[1] || '00')}分`;
+      return `${(a.startHour || 0)}时${(a.startMinute || 0).toString().padStart(2, '0')}分`;
     };
-    const formatLightEnd = (a) => `${a.endHour}时${a.endMinute}分`;
+    const formatLightEnd = (a) => a.endTime
+      ? `${a.endTime.split(':')[0]}时${(a.endTime.split(':')[1] || '00')}分`
+      : `${(a.endHour || 0)}时${(a.endMinute || 0).toString().padStart(2, '0')}分`;
     const sortLightActions = (actions) => {
       return [...(actions || [])].sort((a, b) => {
         if (a.nextDay && !b.nextDay) return 1;
         if (!a.nextDay && b.nextDay) return -1;
-        const aMin = (a.startHour || 0) * 60 + (a.startMinute || 0);
-        const bMin = (b.startHour || 0) * 60 + (b.startMinute || 0);
+        const aMin = a.startHour != null ? (a.startHour || 0) * 60 + (a.startMinute || 0) : toMin(a.startTime);
+        const bMin = b.startHour != null ? (b.startHour || 0) * 60 + (b.startMinute || 0) : toMin(b.startTime);
         return aMin - bMin;
       });
     };
@@ -1310,7 +1378,7 @@ const app = createApp({
       strategyDialog, stEditing, stForm, stRules, stFormRef, openAddStrategy, onDeviceChange, saveStrategy, delStrategy, beforeToggleStatus, onStatusChange,
       stAddProductFilter, stAddGroupFilter, stAddPoleSearch, stAddSelectedIds, filteredAddPoles, toggleAddPole,
       strategyEditDialog, stEditForm, stEditProductFilter, stEditGroupFilter, stEditPoleSearch, stEditSelectedIds, filteredEditPoles, toggleEditPole, onEditDeviceChange, openEditStrategy, saveStrategyEdit,
-      cmdDialog, cmd, openCmd, editAction, saveCmd, pad2, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
+      actionTemplates, addActionCard, applyTemplate, sceneColor, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
       mapPickerVisible, mapContainer, mapDetectedTz, toggleMapPicker, onMapDialogOpened, applyDetectedTz,
       Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, CirclePlus: ElementPlusIconsVue?.CirclePlus, MapLocation: ElementPlusIconsVue?.MapLocation,
     };
