@@ -348,6 +348,7 @@
     .aq-label { font-size: var(--fs-sm); color: var(--ink-3); }
     .aq-chip { cursor: pointer; user-select: none; transition: all .15s; }
     .aq-chip:hover { color: var(--brand); border-color: var(--brand); }
+    .act-scene { font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
     .act-list { display: flex; flex-direction: column; gap: 12px; }
     .act-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
     .act-card-head { display: flex; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface); border-bottom: 1px solid var(--line); }
@@ -654,6 +655,7 @@
         <div v-for="(a, i) in stForm.actions" :key="i" class="act-card">
           <div class="act-card-head">
             <span class="act-idx">动作 {{ i + 1 }}</span>
+            <span v-if="a.scene" class="act-scene" :style="{ color: sceneColor(a.scene), background: sceneColor(a.scene) + '1a' }">{{ a.scene }}</span>
             <el-select v-model="a.action" size="small" style="width:104px">
               <el-option label="开关灯" value="开关灯"></el-option>
               <el-option label="调光" value="调光"></el-option>
@@ -781,6 +783,7 @@
             <div v-for="(a, i) in stEditForm.actions" :key="i" class="act-card">
               <div class="act-card-head">
                 <span class="act-idx">动作 {{ i + 1 }}</span>
+            <span v-if="a.scene" class="act-scene" :style="{ color: sceneColor(a.scene), background: sceneColor(a.scene) + '1a' }">{{ a.scene }}</span>
                 <el-select v-model="a.action" size="small" style="width:104px">
                   <el-option label="开关灯" value="开关灯"></el-option>
                   <el-option label="调光" value="调光"></el-option>
@@ -1283,18 +1286,28 @@ const app = createApp({
       strategyEditDialog.value = false;
     };
     /* ===== 动作内联编辑 ===== */
-    const blankAction = () => ({ action: '开关灯', triggerType: 'timed', startOn: true, startBright: 50, startTime: '18:00', startOffset: 0, endOn: false, endBright: 30, endTime: '23:00' });
+    const blankAction = () => ({ action: '开关灯', triggerType: 'timed', scene: '', startOn: true, startBright: 50, startTime: '18:00', startOffset: 0, endOn: false, endBright: 30, endTime: '23:00' });
     const addActionCard = (form) => { if (!form.actions) form.actions = []; form.actions.push(blankAction()); };
     const actionTemplates = [
-      { key: 'sun',  label: '日落开 · 日出关', action: '开关灯', triggerType: 'sunset', startOn: true, startOffset: 0, endTime: '06:00', endOn: false },
-      { key: 't1',   label: '18:00亮80% · 23:00关', action: '调光', triggerType: 'timed', startBright: 80, startTime: '18:00', endBright: 0, endTime: '23:00' },
-      { key: 't2',   label: '19:00开 · 06:00关', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
-      { key: 'all',  label: '全天亮60%', action: '调光', triggerType: 'timed', startBright: 60, startTime: '00:00', endBright: 60, endTime: '23:59' },
+      { key: 'sun',     label: '日落开 · 日出关', action: '开关灯', triggerType: 'sunset', startOn: true, startOffset: 0, endTime: '06:00', endOn: false },
+      { key: 't1',      label: '18:00亮80% · 23:00关', action: '调光', triggerType: 'timed', startBright: 80, startTime: '18:00', endBright: 0, endTime: '23:00' },
+      { key: 't2',      label: '19:00开 · 06:00关', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
+      { key: 'all',     label: '全天亮60%', action: '调光', triggerType: 'timed', startBright: 60, startTime: '00:00', endBright: 60, endTime: '23:59' },
+      { key: 'holiday', label: '节假日策略', scene: '节假日', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '00:00', endOn: true, endTime: '23:59' },
+      { key: 'light',   label: '光感策略', scene: '光感', action: '调光', triggerType: 'sunset', startBright: 70, startOffset: 0, endOn: false, endTime: '06:00' },
+      { key: 'pir',     label: '人体感应', scene: '感应', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
+      { key: 'eco',     label: '节能模式', scene: '节能', action: '调光', triggerType: 'timed', startBright: 30, startTime: '22:00', endBright: 0, endTime: '06:00' },
+      { key: 'dawn',    label: '晨间渐亮', scene: '渐亮', action: '调光', triggerType: 'timed', startBright: 40, startTime: '06:00', endBright: 100, endTime: '08:00' },
+      { key: 'noon',    label: '午间全亮', scene: '午间', action: '调光', triggerType: 'timed', startBright: 100, startTime: '11:00', endBright: 100, endTime: '14:00' },
     ];
     const applyTemplate = (form, t) => {
       const { key, label, ...rest } = t;
       if (!form.actions) form.actions = [];
       form.actions.push({ ...blankAction(), ...rest });
+    };
+    const sceneColor = (s) => {
+      const m = { '日常': '#64748b', '节假日': '#ff9f43', '光感': '#5b8bff', '感应': '#22c55e', '节能': '#14b8a6', '渐亮': '#a855f7', '午间': '#f59e0b' };
+      return m[s] || '#909399';
     };
     /* ===== 地图选点时区 ===== */
     const mapPickerVisible = ref(false);
@@ -1365,7 +1378,7 @@ const app = createApp({
       strategyDialog, stEditing, stForm, stRules, stFormRef, openAddStrategy, onDeviceChange, saveStrategy, delStrategy, beforeToggleStatus, onStatusChange,
       stAddProductFilter, stAddGroupFilter, stAddPoleSearch, stAddSelectedIds, filteredAddPoles, toggleAddPole,
       strategyEditDialog, stEditForm, stEditProductFilter, stEditGroupFilter, stEditPoleSearch, stEditSelectedIds, filteredEditPoles, toggleEditPole, onEditDeviceChange, openEditStrategy, saveStrategyEdit,
-      actionTemplates, addActionCard, applyTemplate, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
+      actionTemplates, addActionCard, applyTemplate, sceneColor, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
       mapPickerVisible, mapContainer, mapDetectedTz, toggleMapPicker, onMapDialogOpened, applyDetectedTz,
       Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, CirclePlus: ElementPlusIconsVue?.CirclePlus, MapLocation: ElementPlusIconsVue?.MapLocation,
     };
