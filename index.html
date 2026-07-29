@@ -1,14 +1,15 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>首页 · 云创智慧平台</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
-  <style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>首页 · 云创智慧平台</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+    <style>
+
     :root {
       /* ----- brand & status ----- */
       --brand: #2f6bff;
@@ -378,6 +379,69 @@
     .quick-item .qi-t { font-size: var(--fs); font-weight: 600; }
     .quick-item .qi-s { font-size: var(--fs-cap); color: var(--ink-3); }
 
+    /* ============ Dashboard Home (from yudao-ui-admin-vue3 /index) ============ */
+    .dashboard-home { padding-bottom: 20px; }
+    .dashboard-row { display: flex; gap: 16px; margin-bottom: 16px; align-items: stretch; }
+    .dashboard-col { display: flex; flex-direction: column; min-width: 0; }
+    .dashboard-col > * { flex: 1; width: 100%; }
+    .dashboard-card { display: flex; flex-direction: column; width: 100%; height: 100%; overflow: hidden; border: none; border-radius: var(--r-lg); background: var(--surface); }
+    .dashboard-card .el-card__header { flex-shrink: 0; padding: 12px 16px; border-bottom: 1px solid var(--line-soft); }
+    .dashboard-card .el-card__body { display: flex; flex: 1; flex-direction: column; min-height: 0; padding: 0; }
+
+    .stat-grid-6 { display: grid; grid-template-columns: repeat(6, 1fr); gap: 16px; margin-bottom: 16px; }
+    @media (max-width: 1400px) { .stat-grid-6 { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 900px) { .stat-grid-6 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 600px) { .stat-grid-6 { grid-template-columns: 1fr; } }
+    .stat-card { display: flex; align-items: center; gap: 16px; padding: 16px 20px; border-radius: var(--r-lg); border: 1px solid var(--line); background: var(--surface); box-shadow: var(--sh-sm); transition: all .18s; }
+    .stat-card:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
+    .stat-icon { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; font-size: 22px; color: #fff; flex-shrink: 0; }
+    .stat-title { font-size: var(--fs-sm); color: var(--ink-3); margin-bottom: 4px; }
+    .stat-value { font-size: 22px; font-weight: 700; color: var(--ink); line-height: 1.1; display: flex; align-items: baseline; gap: 4px; }
+    .stat-suffix { font-size: var(--fs); color: var(--ink-2); font-weight: 500; }
+    .stat-unit { font-size: var(--fs-sm); color: var(--ink-3); }
+    .stat-trend { display: flex; align-items: center; gap: 4px; margin-top: 4px; font-size: 12px; }
+    .stat-trend.up { color: var(--ok); }
+    .stat-trend.down { color: var(--off); }
+
+    .map-legend { display: flex; gap: 12px; font-size: 12px; color: var(--ink-2); }
+    .legend-item { display: flex; gap: 4px; align-items: center; }
+    .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; }
+    .dot.online { background: var(--ok); }
+    .dot.offline { background: #bfbfbf; }
+    .dot.alarm { background: var(--off); }
+    .map-wrap { flex: 1; min-height: 320px; }
+    .map-container { width: 100%; height: 100%; min-height: 320px; }
+    .map-fallback { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 320px; background: var(--surface-2); color: var(--ink-3); }
+
+    .action-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; align-content: start; }
+    .action-item { display: flex; gap: 10px; align-items: center; padding: 14px 12px; cursor: pointer; border-radius: var(--r-md); transition: all .2s; }
+    .action-item:hover { transform: translateY(-1px); box-shadow: 0 2px 8px rgba(16,24,40,.06); }
+    .action-icon { display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 36px; height: 36px; background: #fff; border-radius: 8px; font-size: 18px; }
+    .action-name { font-size: 13px; font-weight: 500; color: var(--ink); }
+    .period-hint { display: flex; gap: 6px; align-items: center; padding: 10px 12px; font-size: 12px; color: var(--ink-2); background: #fffbe6; border-radius: 6px; margin-top: 12px; }
+    .period-hint .ph-ic { color: #faad14; font-size: 14px; }
+
+    .alarm-list, .project-list, .log-list { flex: 1; overflow-y: auto; max-height: 260px; }
+    .alarm-item, .project-item, .log-item { padding: 12px 16px; cursor: pointer; border-bottom: 1px solid var(--line-soft); transition: background .2s; }
+    .alarm-item:hover, .project-item:hover, .log-item:hover { background: var(--surface-2); }
+    .alarm-item:last-child, .project-item:last-child, .log-item:last-child { border-bottom: none; }
+    .alarm-left { display: flex; gap: 8px; align-items: center; margin-bottom: 4px; }
+    .alarm-title { overflow: hidden; font-size: 13px; font-weight: 500; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+    .alarm-meta, .project-stats, .log-meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--ink-3); }
+    .alarm-meta { padding-left: 52px; }
+    .project-stats { gap: 10px; justify-content: flex-start; }
+    .project-stats .offline { color: #faad14; }
+    .project-stats .alarm { color: var(--off); }
+    .project-name { overflow: hidden; margin-bottom: 2px; font-size: 13px; font-weight: 500; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+    .rank { flex-shrink: 0; width: 20px; font-size: 13px; font-weight: 600; color: var(--ink-3); text-align: center; }
+    .rank.top { color: var(--brand); }
+    .project-progress { flex-shrink: 0; width: 60px; }
+    .log-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .log-name { overflow: hidden; font-size: 13px; font-weight: 500; color: var(--ink); text-overflow: ellipsis; white-space: nowrap; }
+
+    .empty-state { display: flex; flex: 1; align-items: center; justify-content: center; min-height: 200px; }
+    .chart-wrap { width: 100%; height: 100%; min-height: 220px; }
+
     /* ============ Element overrides ============ */
     .el-button--primary { --el-button-bg-color: var(--brand); --el-button-border-color: var(--brand); --el-button-hover-bg-color: var(--brand-deep); --el-button-hover-border-color: var(--brand-deep); }
 
@@ -393,7 +457,8 @@
       .cat-pane, .detail-nav { width: 100%; flex: none; border-right: none; border-bottom: 1px solid var(--line); }
       .content { padding: 14px; }
     }
-  </style>
+  
+    </style>
 </head>
 <body>
 <div id="app">
@@ -484,20 +549,176 @@
       </header>
 
       <main class="content">
-        <section v-if="activeMenu === '首页'">
-          <div class="stat-grid">
-            <div class="stat" v-for="s in stats" :key="s.k">
-              <div class="st-ic" :style="{ background: s.c }"><el-icon><component :is="s.icon"></component></el-icon></div>
-              <div><div class="st-v">{{ s.v }}</div><div class="st-k">{{ s.k }}</div></div>
+        <section v-if="activeMenu === '首页'" class="dashboard-home" v-loading="dashboardLoading">
+          <!-- 第一行：核心 KPI -->
+          <div class="stat-grid-6">
+            <div class="stat-card" v-for="item in summaryStats" :key="item.title">
+              <div class="stat-icon" :style="{ backgroundColor: item.iconBg }">
+                <el-icon><component :is="iconName(item.icon)"></component></el-icon>
+              </div>
+              <div>
+                <div class="stat-title">{{ item.title }}</div>
+                <div class="stat-value">
+                  {{ formatNumber(item.value, item.decimals) }}
+                  <span v-if="item.suffix" class="stat-suffix">{{ item.suffix }}</span>
+                  <span v-else-if="item.unit" class="stat-unit">{{ item.unit }}</span>
+                </div>
+                <div v-if="item.trend !== undefined" class="stat-trend" :class="item.trend >= 0 ? 'up' : 'down'">
+                  <el-icon><component :is="item.trend >= 0 ? 'CaretTop' : 'CaretBottom'"></component></el-icon>
+                  <span>{{ Math.abs(item.trend) }}%</span>
+                  <span style="color: var(--ink-3); margin-left: 4px;">{{ item.trendLabel || '较昨日' }}</span>
+                </div>
+              </div>
             </div>
           </div>
-          <div class="panel quick">
-            <div class="form-section-title">快捷入口</div>
-            <div class="quick-grid">
-              <div class="quick-item" v-for="q in quickLinks" :key="q.menu" tabindex="0" @click="openMenu(q.menu)" @keyup.enter="openMenu(q.menu)">
-                <el-icon class="qi-ic"><component :is="q.icon"></component></el-icon>
-                <div><div class="qi-t">{{ q.menu }}</div><div class="qi-s">{{ q.desc }}</div></div>
-              </div>
+
+          <!-- 第二行：地图分布 + 快捷操作 -->
+          <div class="dashboard-row">
+            <div class="dashboard-col" style="flex: 15;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '0' }">
+                <template #header>
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 15px; font-weight: 500; color: var(--ink);">灯杆分布</span>
+                    <div class="map-legend">
+                      <span class="legend-item"><i class="dot online"></i>在线</span>
+                      <span class="legend-item"><i class="dot offline"></i>离线</span>
+                      <span class="legend-item"><i class="dot alarm"></i>告警</span>
+                    </div>
+                  </div>
+                </template>
+                <div class="map-wrap">
+                  <div v-if="mapError" class="map-fallback">
+                    <el-icon :size="40" style="margin-bottom: 8px; opacity: .5;"><component :is="iconName('ep:map-location')"></component></el-icon>
+                    <span>{{ mapError }}</span>
+                  </div>
+                  <div v-else ref="mapRef" class="map-container"></div>
+                </div>
+              </el-card>
+            </div>
+            <div class="dashboard-col" style="flex: 9;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '16px', display: 'flex', flexDirection: 'column' }">
+                <template #header>
+                  <span style="font-size: 15px; font-weight: 500; color: var(--ink);">快捷操作</span>
+                </template>
+                <div class="action-grid">
+                  <div v-for="item in quickActions" :key="item.name" class="action-item" :style="{ backgroundColor: item.bgColor }" @click="goUrl(item.url)">
+                    <div class="action-icon" :style="{ color: item.color }">
+                      <el-icon><component :is="iconName(item.icon)"></component></el-icon>
+                    </div>
+                    <span class="action-name">{{ item.name }}</span>
+                  </div>
+                </div>
+                <div class="period-hint">
+                  <el-icon class="ph-ic"><component :is="iconName('ep:sunny')"></component></el-icon>
+                  <span>{{ periodHint }}</span>
+                </div>
+              </el-card>
+            </div>
+          </div>
+
+          <!-- 第三行：设备分布 + 开灯趋势 + 实时告警 -->
+          <div class="dashboard-row">
+            <div class="dashboard-col" style="flex: 8;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '12px 8px 8px' }">
+                <template #header>
+                  <span style="font-size: 15px; font-weight: 500; color: var(--ink);">设备类型分布</span>
+                </template>
+                <div ref="deviceTypeChart" class="chart-wrap" style="height: 240px;"></div>
+              </el-card>
+            </div>
+            <div class="dashboard-col" style="flex: 8;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '12px 8px 8px' }">
+                <template #header>
+                  <span style="font-size: 15px; font-weight: 500; color: var(--ink);">24h 开灯趋势</span>
+                </template>
+                <div ref="lightingTrendChart" class="chart-wrap" style="height: 240px;"></div>
+              </el-card>
+            </div>
+            <div class="dashboard-col" style="flex: 8;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '0' }">
+                <template #header>
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 15px; font-weight: 500; color: var(--ink);">实时告警</span>
+                    <el-link type="primary" :underline="false" style="font-size: 13px;" @click="goUrl('/smart-pole/log/alert-log')">查看全部</el-link>
+                  </div>
+                </template>
+                <div v-if="deviceAlarms.length === 0" class="empty-state">
+                  <el-empty description="暂无告警" :image-size="64" />
+                </div>
+                <div v-else class="alarm-list">
+                  <div v-for="alarm in deviceAlarms" :key="alarm.id" class="alarm-item" @click="goUrl('/smart-pole/log/alert-log')">
+                    <div class="alarm-left">
+                      <el-tag :type="alarmLevelType(alarm.level)" size="small" effect="plain">{{ alarmLevelLabel(alarm.level) }}</el-tag>
+                      <span class="alarm-title">{{ alarm.title }}</span>
+                    </div>
+                    <div class="alarm-meta">
+                      <span>{{ alarm.deviceName }}</span>
+                      <span>{{ alarm.time }}</span>
+                    </div>
+                  </div>
+                </div>
+              </el-card>
+            </div>
+          </div>
+
+          <!-- 第四行：项目健康度 + 节电趋势 + 策略执行 -->
+          <div class="dashboard-row">
+            <div class="dashboard-col" style="flex: 8;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '0' }">
+                <template #header>
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 15px; font-weight: 500; color: var(--ink);">项目健康度</span>
+                    <el-link type="primary" :underline="false" style="font-size: 13px;" @click="goUrl('/smart-pole/dashboard/project-overview')">全部项目</el-link>
+                  </div>
+                </template>
+                <div class="project-list">
+                  <div v-for="(item, index) in projectHealth" :key="item.id" class="project-item" @click="goUrl('/smart-pole/dashboard/project-overview')">
+                    <span class="rank" :class="{ top: index < 3 }">{{ index + 1 }}</span>
+                    <div style="flex: 1; min-width: 0;">
+                      <div class="project-name">{{ item.name }}</div>
+                      <div class="project-stats">
+                        <span>在线率 {{ item.onlineRate }}%</span>
+                        <span class="offline">离线 {{ item.offlineCount }}</span>
+                        <span class="alarm">告警 {{ item.alarmCount }}</span>
+                      </div>
+                    </div>
+                    <el-progress :percentage="item.onlineRate" :stroke-width="6" :show-text="false" :color="progressColor(item.onlineRate)" class="project-progress" />
+                  </div>
+                </div>
+              </el-card>
+            </div>
+            <div class="dashboard-col" style="flex: 8;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '12px 8px 8px' }">
+                <template #header>
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 15px; font-weight: 500; color: var(--ink);">近7日节电趋势</span>
+                    <el-link type="primary" :underline="false" style="font-size: 13px;" @click="goUrl('/smart-pole/report/energy-report')">能耗报表</el-link>
+                  </div>
+                </template>
+                <div ref="energyTrendChart" class="chart-wrap" style="height: 220px;"></div>
+              </el-card>
+            </div>
+            <div class="dashboard-col" style="flex: 8;">
+              <el-card class="dashboard-card" shadow="never" :body-style="{ padding: '0' }">
+                <template #header>
+                  <div style="display: flex; align-items: center; justify-content: space-between;">
+                    <span style="font-size: 15px; font-weight: 500; color: var(--ink);">策略执行记录</span>
+                    <el-link type="primary" :underline="false" style="font-size: 13px;" @click="goUrl('/smart-pole/strategy/dispatch-log')">调度日志</el-link>
+                  </div>
+                </template>
+                <div class="log-list">
+                  <div v-for="log in dispatchLogs" :key="log.id" class="log-item">
+                    <div class="log-header">
+                      <span class="log-name">{{ log.strategyName }}</span>
+                      <el-tag :type="dispatchStatusType(log.status)" size="small" effect="plain">{{ dispatchStatusLabel(log.status) }}</el-tag>
+                    </div>
+                    <div class="log-meta">
+                      <span>{{ log.projectName }}</span>
+                      <span>{{ log.time }}</span>
+                    </div>
+                  </div>
+                </div>
+              </el-card>
             </div>
           </div>
         </section>
@@ -510,6 +731,8 @@
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.5.1/dist/echarts.min.js"></script>
+<script src="https://webapi.amap.com/loader.js"></script>
 <script src="js/shared-data.js"></script>
 <script>
 /* ====================== 数据 ====================== */
@@ -590,7 +813,7 @@ for (let i = 1; i <= 42; i++) {
 }
 
 /* ====================== 共享逻辑 ====================== */
-const { createApp, ref, reactive, computed, watch } = Vue;
+const { createApp, ref, reactive, computed, watch, onMounted, onBeforeUnmount, nextTick } = Vue;
 
 const MENU_DATA = [
   { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
@@ -704,22 +927,275 @@ const pad2 = n => String(n ?? 0).padStart(2, '0');
 const tableHeaderStyle = { background: '#f5f8fd', color: '#586273', fontWeight: '600', fontSize: '13px' };
 
 
+const AMAP_KEY = '25233c75f91c4a113c2e2abfbd33eebe';
+
 const app = createApp({
   setup() {
     const shared = createSharedSetup('首页');
-    const stats = [
-      { k: '设备总数', v: '148', c: 'linear-gradient(135deg,#5b8bff,#2f6bff)', icon: 'Cpu' },
-      { k: '在线设备', v: '22',  c: 'linear-gradient(135deg,#1fd29a,#16a36a)', icon: 'Connection' },
-      { k: '分组数量', v: '58',  c: 'linear-gradient(135deg,#ffb74d,#fb8c00)', icon: 'Folder' },
-      { k: '运行策略', v: '10',  c: 'linear-gradient(135deg,#a78bfa,#7c5cfc)', icon: 'SetUp' },
-    ];
-    const quickLinks = [
-      { menu: '设备分组', href: 'device-group.html', desc: '按类型管理分组', icon: 'Folder' },
-      { menu: '设备管理', href: 'device-management.html', desc: '查看设备运行状态', icon: 'Cpu' },
-      { menu: '灯杆管理', href: 'pole-management.html', desc: '管理智慧灯杆', icon: 'Sunny' },
-    ];
-    const openMenu = (m) => { const href = MENU_HREF[m]; if (href) window.location.href = href; };
-    return { ...shared, stats, quickLinks, openMenu };
+
+    /* ====================== Dashboard 数据（对应 yudao-ui-admin-vue3 /index） ====================== */
+    const dashboardLoading = ref(false);
+    const mapError = ref('');
+    const mapRef = ref(null);
+    const deviceTypeChart = ref(null);
+    const lightingTrendChart = ref(null);
+    const energyTrendChart = ref(null);
+
+    const summaryStats = ref([
+      { title: '灯杆总数', value: 14267, unit: '台', icon: 'ep:office-building', iconBg: '#1890ff', trend: 0.2 },
+      { title: '在线率', value: 29.9, suffix: '%', decimals: 1, icon: 'ep:connection', iconBg: '#13c2c2', trend: -1.2 },
+      { title: '亮灯率', value: 29.8, suffix: '%', decimals: 1, icon: 'ep:sunny', iconBg: '#fa8c16', trend: 2.5 },
+      { title: '今日告警', value: 12, unit: '条', icon: 'ep:bell', iconBg: '#f5222d', trend: -3, trendLabel: '较昨日' },
+      { title: '待处理工单', value: 3, unit: '条', icon: 'ep:document', iconBg: '#722ed1', trend: -1 },
+      { title: '今日节电', value: 1280, unit: 'kWh', icon: 'ep:lightning', iconBg: '#52c41a', trend: 5.6 }
+    ]);
+
+    const mapMarkers = ref([
+      { id: 1, name: '灯杆-A01', lng: 113.945, lat: 22.543, status: 'online' },
+      { id: 2, name: '灯杆-A02', lng: 113.952, lat: 22.548, status: 'online' },
+      { id: 3, name: '灯杆-B01', lng: 113.938, lat: 22.535, status: 'offline' },
+      { id: 4, name: '灯杆-B02', lng: 113.960, lat: 22.540, status: 'alarm' },
+      { id: 5, name: '灯杆-C01', lng: 113.948, lat: 22.530, status: 'online' },
+      { id: 6, name: '灯杆-C02', lng: 113.955, lat: 22.552, status: 'online' },
+      { id: 7, name: '灯杆-D01', lng: 113.930, lat: 22.545, status: 'offline' },
+      { id: 8, name: '灯杆-D02', lng: 113.965, lat: 22.538, status: 'online' }
+    ]);
+
+    const quickActions = ref([
+      { name: '智慧照明', icon: 'ep:sunny', color: '#fa8c16', bgColor: '#fff7e6', url: '/smart-pole/pole/smart-lighting' },
+      { name: '快捷指令', icon: 'ep:promotion', color: '#1890ff', bgColor: '#e6f4ff', url: '/smart-pole/scene/quick-command' },
+      { name: '异常项目', icon: 'ep:warning', color: '#f5222d', bgColor: '#fff1f0', url: '/smart-pole/dashboard/project-overview' },
+      { name: '设备策略', icon: 'ep:setting', color: '#722ed1', bgColor: '#f9f0ff', url: '/smart-pole/strategy/device-strategy' },
+      { name: '告警日志', icon: 'ep:bell', color: '#f5222d', bgColor: '#fff1f0', url: '/smart-pole/log/alert-log' },
+      { name: '能耗报表', icon: 'ep:data-line', color: '#52c41a', bgColor: '#f6ffed', url: '/smart-pole/report/energy-report' }
+    ]);
+
+    const deviceTypes = ref([
+      { name: '单灯控制器', value: 10200, color: '#1890ff' },
+      { name: '双色温', value: 2100, color: '#13c2c2' },
+      { name: '集中控制器', value: 860, color: '#722ed1' },
+      { name: '太阳能', value: 680, color: '#fa8c16' },
+      { name: '智能网关', value: 427, color: '#52c41a' }
+    ]);
+
+    const buildLightingTrend = () => {
+      const points = [];
+      for (let h = 0; h < 24; h += 2) {
+        const hour = String(h).padStart(2, '0') + ':00';
+        const isNight = h >= 18 || h < 6;
+        points.push({
+          hour,
+          onlineRate: +(28 + Math.random() * 5).toFixed(2),
+          lightRate: +(isNight ? 85 + Math.random() * 10 : 5 + Math.random() * 8).toFixed(2)
+        });
+      }
+      return points;
+    };
+    const lightingTrend = ref(buildLightingTrend());
+
+    const deviceAlarms = ref([
+      { id: 1, title: '灯杆倾斜角度超限', deviceName: '灯杆-B02 / SN20240156', projectName: '城市道路改造项目', level: 'critical', time: '10:32' },
+      { id: 2, title: '设备离线超过 2 小时', deviceName: '灯杆-B01 / SN20240123', projectName: '智慧园区照明项目', level: 'warning', time: '09:15' },
+      { id: 3, title: '电压异常波动', deviceName: '灯杆-D01 / SN20240308', projectName: '滨江路景观照明', level: 'warning', time: '08:47' },
+      { id: 4, title: '通信信号弱', deviceName: '灯杆-A03 / SN20240211', projectName: '智慧园区照明项目', level: 'info', time: '07:20' },
+      { id: 5, title: '过流保护触发', deviceName: '灯杆-C05 / SN20240402', projectName: '城市道路改造项目', level: 'critical', time: '06:55' }
+    ]);
+
+    const projectHealth = ref([
+      { id: 1, name: '城市道路改造项目', onlineRate: 72, alarmCount: 8, offlineCount: 12 },
+      { id: 2, name: '智慧园区照明项目', onlineRate: 88, alarmCount: 5, offlineCount: 2 },
+      { id: 3, name: '滨江路景观照明', onlineRate: 95, alarmCount: 1, offlineCount: 1 },
+      { id: 4, name: '高新区试点项目', onlineRate: 91, alarmCount: 2, offlineCount: 3 },
+      { id: 5, name: '市政广场照明', onlineRate: 98, alarmCount: 0, offlineCount: 0 }
+    ]);
+
+    const energyTrend = ref([
+      { date: '06-25', value: 980 },
+      { date: '06-26', value: 1050 },
+      { date: '06-27', value: 1120 },
+      { date: '06-28', value: 1080 },
+      { date: '06-29', value: 1150 },
+      { date: '06-30', value: 1200 },
+      { date: '07-01', value: 1280 }
+    ]);
+
+    const dispatchLogs = ref([
+      { id: 1, strategyName: '夜间自动开灯', projectName: '智慧园区照明项目', status: 'success', time: '18:00' },
+      { id: 2, strategyName: '雨天亮度下调 30%', projectName: '城市道路改造项目', status: 'success', time: '17:30' },
+      { id: 3, strategyName: '人感联动调光', projectName: '滨江路景观照明', status: 'running', time: '16:45' },
+      { id: 4, strategyName: '凌晨节能模式', projectName: '高新区试点项目', status: 'failed', time: '02:00' },
+      { id: 5, strategyName: '日出自动关灯', projectName: '市政广场照明', status: 'success', time: '06:12' }
+    ]);
+
+    const periodHint = computed(() => {
+      const hour = new Date().getHours();
+      if (hour >= 18 || hour < 6) {
+        return `当前处于开灯时段（${hour >= 18 ? '18:00' : '00:00'}-06:00），亮灯率应维持在较高水平`;
+      }
+      return '当前处于关灯时段（06:00-18:00），如有异常亮灯请关注告警';
+    });
+
+    /* ====================== 工具方法 ====================== */
+    const iconName = (icon) => {
+      if (!icon) return null;
+      if (icon.startsWith('ep:')) {
+        const name = icon.slice(3).replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+        return name.charAt(0).toUpperCase() + name.slice(1);
+      }
+      return icon;
+    };
+    const formatNumber = (val, decimals = 0) => {
+      if (decimals) return val.toFixed(decimals);
+      return val.toLocaleString();
+    };
+    const goUrl = (url) => {
+      const file = MENU_HREF[url] || url;
+      if (file.startsWith('/')) {
+        const mapped = file.replace(/^\/smart-pole\//, '').replace(/\//g, '-') + '.html';
+        const known = {
+          'pole-smart-lighting.html': 'pole-management.html',
+          'scene-quick-command.html': 'device-placeholder.html?type=quick-command',
+          'dashboard-project-overview.html': 'project-management.html',
+          'strategy-device-strategy.html': 'light-strategy.html',
+          'log-alert-log.html': 'device-placeholder.html?type=alert',
+          'report-energy-report.html': 'device-placeholder.html?type=energy',
+          'strategy-dispatch-log.html': 'device-placeholder.html?type=dispatch'
+        };
+        window.location.href = known[mapped] || mapped;
+      } else {
+        window.location.href = file;
+      }
+    };
+    const alarmLevelType = (level) => ({ critical: 'danger', warning: 'warning', info: 'info' }[level] || 'info');
+    const alarmLevelLabel = (level) => ({ critical: '严重', warning: '警告', info: '提示' }[level] || '提示');
+    const dispatchStatusType = (status) => ({ success: 'success', failed: 'danger', running: 'warning' }[status] || 'info');
+    const dispatchStatusLabel = (status) => ({ success: '成功', failed: '失败', running: '执行中' }[status] || status);
+    const progressColor = (rate) => {
+      if (rate >= 90) return '#52c41a';
+      if (rate >= 70) return '#faad14';
+      return '#f5222d';
+    };
+
+    /* ====================== ECharts ====================== */
+    let deviceTypeChartInst = null;
+    let lightingTrendChartInst = null;
+    let energyTrendChartInst = null;
+
+    const createDeviceTypeOptions = (items) => ({
+      tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
+      grid: { left: 80, right: 24, top: 16, bottom: 16 },
+      xAxis: { type: 'value', axisLabel: { fontSize: 11, color: '#999' }, splitLine: { lineStyle: { color: '#f0f0f0' } } },
+      yAxis: { type: 'category', data: items.map(i => i.name), axisLabel: { fontSize: 12, color: '#666' }, axisTick: { show: false }, axisLine: { show: false } },
+      series: [{ type: 'bar', data: items.map(i => ({ value: i.value, itemStyle: { color: i.color, borderRadius: [0, 4, 4, 0] } })), barWidth: 14 }]
+    });
+
+    const createLightingTrendOptions = (points) => ({
+      tooltip: { trigger: 'axis' },
+      legend: { data: ['在线率', '亮灯率'], right: 0, top: 0, itemWidth: 12, itemHeight: 8, textStyle: { fontSize: 12, color: '#666' } },
+      grid: { left: 40, right: 16, top: 32, bottom: 24 },
+      xAxis: { type: 'category', boundaryGap: false, data: points.map(p => p.hour), axisLabel: { fontSize: 11, color: '#999' }, axisLine: { lineStyle: { color: '#e8e8e8' } } },
+      yAxis: { type: 'value', min: 0, max: 100, axisLabel: { formatter: '{value}%', fontSize: 11, color: '#999' }, splitLine: { lineStyle: { color: '#f0f0f0' } } },
+      series: [
+        { name: '在线率', type: 'line', smooth: true, symbol: 'none', data: points.map(p => p.onlineRate), lineStyle: { width: 2, color: '#13c2c2' }, areaStyle: { color: 'rgba(19, 194, 194, 0.08)' } },
+        { name: '亮灯率', type: 'line', smooth: true, symbol: 'none', data: points.map(p => p.lightRate), lineStyle: { width: 2, color: '#fa8c16' }, areaStyle: { color: 'rgba(250, 140, 22, 0.08)' } }
+      ]
+    });
+
+    const createEnergyTrendOptions = (points) => ({
+      tooltip: { trigger: 'axis', formatter: '{b}<br/>节电量: {c} kWh' },
+      grid: { left: 48, right: 16, top: 16, bottom: 24 },
+      xAxis: { type: 'category', data: points.map(p => p.date), axisLabel: { fontSize: 11, color: '#999' }, axisLine: { lineStyle: { color: '#e8e8e8' } } },
+      yAxis: { type: 'value', axisLabel: { formatter: '{value}', fontSize: 11, color: '#999' }, splitLine: { lineStyle: { color: '#f0f0f0' } } },
+      series: [{
+        type: 'line', smooth: true, symbol: 'circle', symbolSize: 6,
+        data: points.map(p => p.value), lineStyle: { width: 2, color: '#52c41a' }, itemStyle: { color: '#52c41a' },
+        areaStyle: { color: { type: 'linear', x: 0, y: 0, x2: 0, y2: 1, colorStops: [{ offset: 0, color: 'rgba(82, 196, 26, 0.2)' }, { offset: 1, color: 'rgba(82, 196, 26, 0.02)' }] } }
+      }]
+    });
+
+    const renderCharts = () => {
+      if (deviceTypeChart.value) {
+        deviceTypeChartInst = echarts.init(deviceTypeChart.value);
+        deviceTypeChartInst.setOption(createDeviceTypeOptions(deviceTypes.value));
+      }
+      if (lightingTrendChart.value) {
+        lightingTrendChartInst = echarts.init(lightingTrendChart.value);
+        lightingTrendChartInst.setOption(createLightingTrendOptions(lightingTrend.value));
+      }
+      if (energyTrendChart.value) {
+        energyTrendChartInst = echarts.init(energyTrendChart.value);
+        energyTrendChartInst.setOption(createEnergyTrendOptions(energyTrend.value));
+      }
+    };
+
+    const resizeCharts = () => {
+      deviceTypeChartInst && deviceTypeChartInst.resize();
+      lightingTrendChartInst && lightingTrendChartInst.resize();
+      energyTrendChartInst && energyTrendChartInst.resize();
+    };
+
+    /* ====================== AMap ====================== */
+    let amapInst = null;
+    let AMapClass = null;
+    let amapMarkers = [];
+
+    const STATUS_COLOR = { online: '#52c41a', offline: '#bfbfbf', alarm: '#f5222d' };
+
+    const renderAmapMarkers = () => {
+      if (!amapInst || !AMapClass) return;
+      amapInst.remove(amapMarkers);
+      amapMarkers = mapMarkers.value.map(m => new AMapClass.CircleMarker({
+        center: [m.lng, m.lat], radius: 6, strokeColor: '#fff', strokeWeight: 1,
+        fillColor: STATUS_COLOR[m.status], fillOpacity: 0.9, zIndex: m.status === 'alarm' ? 12 : 10
+      }));
+      amapMarkers.forEach(marker => marker.setMap(amapInst));
+      if (mapMarkers.value.length > 0) {
+        amapInst.setFitView(amapMarkers, false, [40, 40, 40, 40]);
+      }
+    };
+
+    const initAmap = async () => {
+      if (!mapRef.value) return;
+      try {
+        AMapClass = await AMapLoader.load({ key: AMAP_KEY, version: '2.0', plugins: [] });
+        amapInst = new AMapClass.Map(mapRef.value, {
+          zoom: 12, center: [113.95, 22.54], viewMode: '2D', mapStyle: 'amap://styles/whitesmoke'
+        });
+        renderAmapMarkers();
+      } catch (e) {
+        console.error(e);
+        mapError.value = '地图加载失败，请检查高德地图配置';
+      }
+    };
+
+    /* ====================== 生命周期 ====================== */
+    onMounted(async () => {
+      dashboardLoading.value = true;
+      await nextTick();
+      renderCharts();
+      await initAmap();
+      dashboardLoading.value = false;
+      window.addEventListener('resize', resizeCharts);
+    });
+
+    onBeforeUnmount(() => {
+      window.removeEventListener('resize', resizeCharts);
+      deviceTypeChartInst && deviceTypeChartInst.dispose();
+      lightingTrendChartInst && lightingTrendChartInst.dispose();
+      energyTrendChartInst && energyTrendChartInst.dispose();
+      amapInst && amapInst.destroy();
+      amapInst = null;
+    });
+
+    return {
+      ...shared,
+      dashboardLoading,
+      summaryStats, mapMarkers, quickActions, deviceTypes, lightingTrend,
+      deviceAlarms, projectHealth, energyTrend, dispatchLogs, periodHint,
+      mapError, mapRef, deviceTypeChart, lightingTrendChart, energyTrendChart,
+      iconName, formatNumber, goUrl,
+      alarmLevelType, alarmLevelLabel, dispatchStatusType, dispatchStatusLabel, progressColor
+    };
   }
 });
 registerIcons(app);
