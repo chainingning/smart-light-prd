@@ -100,35 +100,49 @@
     .quota-cell .quota-bar-mini > span { display: block; height: 100%; background: var(--brand); }
     .el-tabs__nav-wrap::after { background: var(--line-soft) !important; }
   </style>
+  <link rel="stylesheet" href="shared-sidebar.css">
 </head>
 <body>
   <div id="app">
     <div class="shell">
-      <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
-        <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
-        <nav class="nav">
-          <div v-for="g in menuGroups" :key="g.title" class="nav-group" :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
-            <div class="nav-title" @click="toggleGroup(g)">
-              <el-icon class="ng-ic"><component :is="g.icon"></component></el-icon>
-              <span class="ng-txt">{{ g.title }}</span>
-              <el-icon class="caret"><ArrowDown></el-icon>
-            </div>
-            <div class="nav-children" v-show="g.open && !collapsed">
-              <a v-for="item in g.items" :key="item" :href="menuHref[item] || '#'" class="nav-item" :class="{ active: activeMenu === item }" @click="onMenuClick(item, $event)">
-                <el-icon v-if="submenuIcon(item)" class="ni-ic"><component :is="iconComp(submenuIcon(item))"></component></el-icon>
-                <span v-else class="dot"></span>
-                <span class="ni-txt">{{ item }}</span>
-              </a>
-            </div>
+    <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
+      <nav class="nav">
+        <div v-for="g in menuGroups" :key="g.title" class="nav-group"
+             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) || (g.singleLink && g.title === activeMenu) }">
+          <a v-if="g.singleLink" class="nav-title nav-link"
+             :href="menuHref[g.title] || '#'"
+             :class="{ active: g.title === activeMenu }"
+             @click="onMenuClick(g.title, $event)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+          </a>
+          <div v-else class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
           </div>
-        </nav>
-        <div class="sb-foot">
-          <div class="sb-collapse" @click="collapsed = !collapsed">
-            <el-icon><Expand v-if="!collapsed"></Expand><Fold v-else></el-icon>
-            <span v-if="!collapsed">收起菜单</span>
+          <div v-if="!g.singleLink" class="nav-children" v-show="g.open && !collapsed">
+            <a v-for="item in g.items" :key="item"
+               :href="menuHref[item] || '#'"
+               class="nav-item"
+               :class="{ active: item === activeMenu }"
+               @click="onMenuClick(item, $event)">
+              <el-icon v-if="submenuIcon(item)" class="ni-ic"><component :is="iconComp(submenuIcon(item))"></component></el-icon>
+              <span v-else class="dot"></span>
+              <span class="ni-txt">{{ item }}</span>
+            </a>
           </div>
         </div>
-      </aside>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
+          <el-icon><component :is="iconComp(collapsed ? 'Expand' : 'Fold')"></component></el-icon>
+          <span v-if="!collapsed">收起菜单</span>
+        </div>
+      </div>
+    </aside>
+    <div class="nav-backdrop" v-if="mobileNav" @click="mobileNav = false"></div>
       <div class="main">
         <header class="topbar">
           <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Menu></Menu></el-icon></span>
@@ -495,55 +509,18 @@
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
 <script src="js/shared-data.js"></script>
 <script src="https://webapi.amap.com/loader.js"></script>
+<script src="shared-menu.js"></script>
 <script>
 const { createApp, ref, reactive, computed, watch, nextTick } = Vue;
 
-const MENU_DATA = [
-  { title: '首页', icon: 'HomeFilled', open: true, items: [] },
-  { title: '设备管理', icon: 'Monitor', open: false, items: ['产品分类','产品管理','设备管理','设备分组'] },
-  { title: '智慧灯杆', icon: 'Sunny', open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
-  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },
-  { title: '综合运维', icon: 'SetUp', open: false, items: ['灯控策略','策略下发日志'] },
-  { title: '系统运维', icon: 'DataLine', open: false, items: ['运维概览','日志管理','监控告警'] },
-  { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','分级管理','用户管理','角色管理','菜单管理'] },
-];
-const MENU_HREF = {
-  '首页': 'index.html', '产品分类': 'product-management.html?tab=category', '产品管理': 'product-management.html?tab=product', '设备管理': 'device-management.html', '设备分组': 'device-group.html',
-  '灯杆管理': 'pole-management.html',
-  '太阳能照明': 'device-placeholder.html?type=solar',
-  '智慧网关': 'device-placeholder.html?type=gateway',
-  '视频监控': 'device-placeholder.html?type=camera',
-  'LED显示屏': 'device-placeholder.html?type=led',
-  '公共广播': 'device-placeholder.html?type=broadcast',
-  '环境监测': 'device-placeholder.html?type=environment',
-  '无线网络': 'device-placeholder.html?type=wifi',
-  '智慧充电桩': 'device-placeholder.html?type=charging',
-  '一键呼叫': 'device-placeholder.html?type=call',
-  '井盖管理': 'device-placeholder.html?type=cover',
-  '电缆防盗': 'device-placeholder.html?type=cable',
-  '集中管理器': 'device-placeholder.html?type=controller', '灯控策略': 'light-strategy.html',
-  '项目列表': 'project-management.html', '项目分配': 'project-management.html', '配额看板': 'project-management.html', '分配流水': 'project-management.html',
-  '租户列表': 'tenant-management.html', '配额管理': 'tenant-management.html', '邀请码': 'tenant-management.html',
-  '组织管理': 'organization-management.html',
-  '分级管理': 'dept-management.html',
-  '用户管理': 'user-management.html',
-  '角色管理': 'role-management.html',
-  '菜单管理': 'menu-management.html',
-};
+
+
 
 const app = createApp({
   setup() {
     const SD = window.SharedData;
-    const collapsed = ref(false);
-    const mobileNav = ref(false);
-    const activeMenu = ref('项目列表');
-    const menuGroups = reactive(MENU_DATA);
-    const menuHref = MENU_HREF;
-    const toggleGroup = (g) => { g.open = !g.open; };
-
-    /* 图标查找 */
-    const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
-    const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
+    const shared = createSharedSetup('项目列表');
+    const { collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup, iconComp, submenuIcon } = shared;
 
     /* 租户切换 */
     const savedTenant = localStorage.getItem('currentTenantId');
@@ -717,7 +694,7 @@ const app = createApp({
     const myQuota = computed(() => SD.TENANT_QUOTAS.find(q => q.tenantId === currentTenantId.value) || { poleTotal: 0, poleUsed: 0, projectTotal: 0, projectUsed: 0 });
     const grantedQuota = computed(() => {
       const out = SD.PROJECT_ALLOCATIONS.filter(a => a.fromTenantId === currentTenantId.value && a.status === 'active');
-      return { pole: out.reduce((s, a) => s + a.poleQuota, 0), project: out.reduce((s, a) => s + a.projectQuota, 0) };
+      return { ...shared, pole: out.reduce((s, a) => s + a.poleQuota, 0), project: out.reduce((s, a) => s + a.projectQuota, 0) };
     });
     const receivedQuota = computed(() => {
       const inc = SD.PROJECT_ALLOCATIONS.filter(a => a.toTenantId === currentTenantId.value && a.status === 'active');

@@ -87,35 +87,49 @@
     .drawer-json-head{padding:12px 16px;border-bottom:1px solid var(--line-soft);font-size:13px;font-weight:600;color:var(--ink-3)}
     .empty-cell{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:var(--fs-sm)}
   </style>
+  <link rel="stylesheet" href="shared-sidebar.css">
 </head>
 <body>
   <div id="app">
     <div class="shell">
-      <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
-        <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
-        <nav class="nav">
-          <div v-for="g in menuGroups" :key="g.title" class="nav-group" :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
-            <div class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
-              <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
-              <span class="ng-txt">{{ g.title }}</span>
-              <el-icon v-if="!g.singleLink" class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
-            </div>
-            <div v-if="!g.singleLink" class="nav-children" v-show="g.open && !collapsed">
-              <a v-for="item in g.items" :key="item" :href="menuHref[item] || '#'" class="nav-item" :class="{ active: activeMenu === item }" @click="onMenuClick(item, $event)">
-                <el-icon v-if="submenuIcon(item)" class="ni-ic"><component :is="iconComp(submenuIcon(item))"></component></el-icon>
-                <span v-else class="dot"></span>
-                <span class="ni-txt">{{ item }}</span>
-              </a>
-            </div>
+    <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+      <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
+      <nav class="nav">
+        <div v-for="g in menuGroups" :key="g.title" class="nav-group"
+             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) || (g.singleLink && g.title === activeMenu) }">
+          <a v-if="g.singleLink" class="nav-title nav-link"
+             :href="menuHref[g.title] || '#'"
+             :class="{ active: g.title === activeMenu }"
+             @click="onMenuClick(g.title, $event)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+          </a>
+          <div v-else class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
           </div>
-        </nav>
-        <div class="sb-foot">
-          <div class="sb-collapse" @click="collapsed = !collapsed">
-            <el-icon><component :is="iconComp(collapsed ? 'Expand' : 'Fold')"></component></el-icon>
-            <span v-if="!collapsed">收起菜单</span>
+          <div v-if="!g.singleLink" class="nav-children" v-show="g.open && !collapsed">
+            <a v-for="item in g.items" :key="item"
+               :href="menuHref[item] || '#'"
+               class="nav-item"
+               :class="{ active: item === activeMenu }"
+               @click="onMenuClick(item, $event)">
+              <el-icon v-if="submenuIcon(item)" class="ni-ic"><component :is="iconComp(submenuIcon(item))"></component></el-icon>
+              <span v-else class="dot"></span>
+              <span class="ni-txt">{{ item }}</span>
+            </a>
           </div>
         </div>
-      </aside>
+      </nav>
+      <div class="sb-foot">
+        <div class="sb-collapse" tabindex="0" @click="collapsed = !collapsed" @keyup.enter="collapsed = !collapsed">
+          <el-icon><component :is="iconComp(collapsed ? 'Expand' : 'Fold')"></component></el-icon>
+          <span v-if="!collapsed">收起菜单</span>
+        </div>
+      </div>
+    </aside>
+    <div class="nav-backdrop" v-if="mobileNav" @click="mobileNav = false"></div>
       <div class="main">
         <header class="topbar">
           <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Menu></Menu></el-icon></span>
@@ -454,23 +468,12 @@
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
 <script src="js/shared-data.js"></script>
+<script src="shared-menu.js"></script>
 <script>
 const { createApp, ref, reactive, computed, watch } = Vue;
 
-const MENU_DATA = [
-  { title: '设备管理', icon: 'Monitor', open: true, items: ['产品分类','产品管理','设备管理','设备分组'] },
-  { title: '智慧灯杆', icon: 'Sunny', open: false, items: ['灯杆管理','灯控策略'] },
-  { title: '项目管理', icon: 'Folder', open: false, items: ['项目列表','项目分配','配额看板','分配流水'] },
-  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },
-];
-const MENU_HREF = {
-  '产品分类': 'product-management.html?tab=category',
-  '产品管理': 'product-management.html?tab=product',
-  '设备管理': 'device-management.html',
-  '设备分组': 'device-group.html',
-  '灯杆管理': 'pole-management.html',
-  '灯控策略': 'light-strategy.html',
-};
+
+
 
 const urlTab = new URLSearchParams(location.search).get('tab') || 'product';
 const activeMenuInitial = urlTab === 'category' ? '产品分类' : '产品管理';
@@ -478,16 +481,8 @@ const activeMenuInitial = urlTab === 'category' ? '产品分类' : '产品管理
 const app = createApp({
   setup() {
     const SD = window.SharedData;
-    const collapsed = ref(false);
-    const mobileNav = ref(false);
-    const activeMenu = ref(activeMenuInitial);
-    const menuGroups = reactive(MENU_DATA);
-    const menuHref = MENU_HREF;
-    const toggleGroup = (g) => { g.open = !g.open; };
-    const onMenuClick = (item) => { activeMenu.value = item; };
-
-    const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
-    const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
+    const shared = createSharedSetup(activeMenuInitial);
+    const { collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick, iconComp, submenuIcon } = shared;
 
     const savedTenant = localStorage.getItem('currentTenantId');
     const currentTenantId = ref(savedTenant || 'T1');
@@ -668,7 +663,7 @@ const app = createApp({
         });
     };
 
-    return {
+    return { ...shared,
       collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick,
       iconComp, submenuIcon,
       currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: SD,

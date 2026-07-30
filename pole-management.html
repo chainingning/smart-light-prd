@@ -228,6 +228,22 @@
     .page-head .ph-title small { font-weight: 400; color: var(--ink-3); font-size: var(--fs-sm); margin-left: 10px; }
     .toolbar { display: flex; align-items: center; gap: 12px; padding: 16px 20px; flex-wrap: wrap; border-bottom: 1px solid var(--line); }
     .toolbar .lbl { font-size: var(--fs-sm); color: var(--ink-2); white-space: nowrap; }
+    /* 工具栏按钮对比度增强 */
+    .toolbar .el-button { font-weight: 600; }
+    .toolbar .el-button--default:not(.is-disabled) { color: #303133; border-color: #c0c4cc; background: #ffffff; }
+    .toolbar .el-button--default:not(.is-disabled):hover { color: var(--el-color-primary); border-color: var(--el-color-primary); background: #ecf5ff; }
+    .toolbar-right { margin-left: auto; display: flex; align-items: center; }
+    /* 列设置弹层 */
+    .col-setting { padding: 4px 6px; }
+    .col-setting .cs-title { font-size: 13px; font-weight: 600; color: var(--ink-1, #303133); margin-bottom: 8px; }
+    .col-setting .cs-tip { font-weight: 400; color: #909399; font-size: 12px; }
+    .col-setting .cs-list { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 14px; max-height: 280px; overflow-y: auto; }
+    .col-setting .cs-item { margin-right: 0; height: 26px; }
+    /* 表格横向滚动条 */
+    .table-zone .el-table__body-wrapper::-webkit-scrollbar { height: 10px; }
+    .table-zone .el-table__body-wrapper::-webkit-scrollbar-thumb { background: #c0c4cc; border-radius: 5px; }
+    .table-zone .el-table__body-wrapper::-webkit-scrollbar-thumb:hover { background: #909399; }
+    .table-zone .el-table__body-wrapper::-webkit-scrollbar-track { background: #f4f4f5; }
 
     /* ============ Grouping page ============ */
     .split { display: flex; min-height: 520px; }
@@ -389,6 +405,8 @@
       .content { padding: 14px; }
     }
   </style>
+
+  <link rel="stylesheet" href="shared-sidebar.css">
 </head>
 <body>
 <div id="app">
@@ -398,11 +416,18 @@
       <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
       <nav class="nav">
         <div v-for="g in menuGroups" :key="g.title" class="nav-group"
-             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
-          <div class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) || (g.singleLink && g.title === activeMenu) }">
+          <a v-if="g.singleLink" class="nav-title nav-link"
+             :href="menuHref[g.title] || '#'"
+             :class="{ active: g.title === activeMenu }"
+             @click="onMenuClick(g.title, $event)">
             <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
             <span class="ng-txt">{{ g.title }}</span>
-            <el-icon v-if="!g.singleLink" class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
+          </a>
+          <div v-else class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
           </div>
           <div v-if="!g.singleLink" class="nav-children" v-show="g.open && !collapsed">
             <a v-for="item in g.items" :key="item"
@@ -489,18 +514,18 @@
           <div class="panel">
             <div class="toolbar">
               <span class="lbl">灯杆名称</span>
-              <el-input v-model="poleSearchForm.name" placeholder="请输入" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
+              <el-input v-model="poleSearchForm.name" placeholder="请输入灯杆" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
               <span class="lbl">序列号</span>
-              <el-input v-model="poleSearchForm.sn" placeholder="请输入" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
+              <el-input v-model="poleSearchForm.sn" placeholder="请输入序列号" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
               <span class="lbl">设备状态</span>
               <el-select v-model="poleSearchForm.status" placeholder="请选择" style="width: 130px" clearable>
                 <el-option label="未注册" value="unregistered"></el-option><el-option label="在线" value="online"></el-option><el-option label="离线" value="offline"></el-option>
               </el-select>
-              <span class="lbl">分组名称</span>
-              <el-select v-model="poleSearchForm.groupName" placeholder="请选择" style="width: 160px" clearable filterable>
-                <el-option v-for="g in allGroupNames" :key="g" :label="g" :value="g"></el-option>
-              </el-select>
               <template v-if="poleShowMore">
+                <span class="lbl">分组名称</span>
+                <el-select v-model="poleSearchForm.groupName" placeholder="请选择" style="width: 160px" clearable filterable>
+                  <el-option v-for="g in allGroupNames" :key="g" :label="g" :value="g"></el-option>
+                </el-select>
                 <span class="lbl">项目名称</span>
                 <el-select v-model="poleSearchForm.projectName" placeholder="请选择" style="width: 180px" clearable filterable>
                   <el-option v-for="p in poleProjectOptions" :key="p" :label="p" :value="p"></el-option>
@@ -513,7 +538,7 @@
               <el-button type="primary" :icon="Search" @click="poleDoSearch">搜索</el-button>
               <el-button :icon="RefreshRight" @click="poleResetSearch">重置</el-button>
               <el-button text type="primary" @click="poleShowMore = !poleShowMore">
-                {{ poleShowMore ? '收起' : '展开' }}<el-icon><component :is="poleShowMore ? 'ArrowUp' : 'ArrowDown'"></component></el-icon>
+                {{ poleShowMore ? '收起' : '高级' }}<el-icon><component :is="poleShowMore ? 'ArrowUp' : 'ArrowDown'"></component></el-icon>
               </el-button>
             </div>
           </div>
@@ -523,55 +548,86 @@
               <el-button type="primary" size="small" :icon="Plus" @click="openAddPole">新增</el-button>
               <el-button size="small" :icon="Upload" @click="poleImportVisible = true">导入</el-button>
               <el-button size="small" :icon="Download" @click="poleExport">导出</el-button>
+              <el-dropdown size="small" @command="poleGroupLightCmd">
+                <el-button type="success" size="small" :icon="Menu">分组开灯/关灯<i class="el-icon-arrow-down el-icon--right"></i></el-button>
+                <template #dropdown><el-dropdown-menu>
+                  <el-dropdown-item command="on" :icon="Lightning">分组开灯</el-dropdown-item>
+                  <el-dropdown-item command="off" :icon="MuteNotification">分组关灯</el-dropdown-item>
+                </el-dropdown-menu></template>
+              </el-dropdown>
+              <el-button size="small" :disabled="true">迁移</el-button>
+              <el-button size="small" type="success" :disabled="true">分组</el-button>
+              <el-button size="small" type="success" :icon="Remove" :disabled="true">解组</el-button>
               <el-divider direction="vertical"></el-divider>
-              
-              <el-button size="small" type="success" plain :icon="Lightning" @click="poleLightOn">开灯</el-button>
-              <el-button size="small" type="primary" plain :icon="MuteNotification" @click="poleLightOff">关灯</el-button>
+              <el-button size="small" type="warning" :icon="Lightning" :disabled="!selectedPoles.length" @click="poleLightOn">开灯</el-button>
+              <el-button size="small" type="info" :icon="MuteNotification" :disabled="!selectedPoles.length" @click="poleLightOff">关灯</el-button>
+              <el-button size="small" type="success" :disabled="!selectedPoles.length" @click="poleSetLightControl(true)">光控开</el-button>
+              <el-button size="small" type="primary" :disabled="!selectedPoles.length" @click="poleSetLightControl(false)">光控关</el-button>
+              <el-button size="small" type="success" :disabled="!selectedPoles.length" @click="poleSetBodySense(true)">感应开</el-button>
+              <el-button size="small" type="primary" :disabled="!selectedPoles.length" @click="poleSetBodySense(false)">感应关</el-button>
               <el-divider direction="vertical"></el-divider>
-              <el-button size="small" type="success" :icon="Lightning" @click="poleLightAllOn">全部开</el-button>
-              <el-button size="small" type="danger" :icon="MuteNotification" @click="poleLightAllOff">全部关</el-button>
+              <el-button size="small" type="primary" :icon="SetUp" :disabled="!selectedPoles.length" @click="openPoleStrategyPick">下发策略</el-button>
+              <el-button size="small" type="primary" :icon="Close" :disabled="!selectedPoles.length" @click="poleCancelStrategy">取消策略</el-button>
+              <el-button size="small" type="danger" :icon="Delete" :disabled="!selectedPoles.length" @click="poleBatchDelete">删除</el-button>
               <el-divider direction="vertical"></el-divider>
-              <el-button size="small" type="primary" plain :icon="SetUp" @click="openPoleStrategyPick">下发策略</el-button>
-              <el-button size="small" type="primary" plain :icon="Close" @click="poleCancelStrategy">取消策略</el-button>
-              <el-divider direction="vertical"></el-divider>
-              <el-button size="small" type="success" plain :icon="Download" @click="poleBatchExport" :disabled="!selectedPoles.length">批量导出</el-button>
-              <el-button size="small" type="danger" plain :icon="Delete" @click="poleBatchDelete" :disabled="!selectedPoles.length">批量删除</el-button>
+              <el-button size="small" :icon="DataLine" @click="openBigScreen">大屏</el-button>
+              <div class="toolbar-right">
+                <el-popover placement="bottom-end" :width="220" trigger="click">
+                  <template #reference>
+                    <el-button size="small" :icon="Setting">列设置</el-button>
+                  </template>
+                  <div class="col-setting">
+                    <div class="cs-title">显示字段<span class="cs-tip">（取消勾选可隐藏）</span></div>
+                    <div class="cs-list">
+                      <el-checkbox v-for="c in colSettingOptions" :key="c" v-model="colVis[c]" :label="c" size="small" class="cs-item"></el-checkbox>
+                    </div>
+                  </div>
+                </el-popover>
+              </div>
             </div>
             <div class="table-zone">
               <el-table :data="pagedPoles" stripe style="width:100%" :header-cell-style="tableHeaderStyle" @selection-change="poleSelectionChange">
                 <el-table-column type="selection" width="42"></el-table-column>
-                <el-table-column prop="name" label="灯杆名称" min-width="90" show-overflow-tooltip sortable></el-table-column>
-                <el-table-column prop="sn" label="序列号" width="120" show-overflow-tooltip sortable></el-table-column>
-                <el-table-column prop="address" label="地址" min-width="100" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="product" label="所属产品" min-width="90" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="projectName" label="项目名称" min-width="90" show-overflow-tooltip></el-table-column>
-                <el-table-column prop="groupName" label="分组" min-width="70" show-overflow-tooltip></el-table-column>
-                <el-table-column label="状态" width="80" align="center">
+                <el-table-column prop="name" label="灯杆名称" min-width="100" show-overflow-tooltip sortable fixed="left"></el-table-column>
+                <el-table-column v-if="colVis['灯杆序列号']" prop="sn" label="灯杆序列号" width="130" show-overflow-tooltip sortable></el-table-column>
+                <el-table-column v-if="colVis['灯杆地址']" prop="address" label="灯杆地址" min-width="140" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['设备状态']" label="设备状态" width="90" align="center">
                   <template #default="{ row }"><el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag></template>
                 </el-table-column>
-                <el-table-column label="开关" width="60" align="center">
-                  <template #default="{ row }"><el-tag :type="row.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ row.switchOn ? '开' : '关' }}</el-tag></template>
+                <el-table-column v-if="colVis['开关状态']" label="开关状态" width="80" align="center">
+                  <template #default="{ row }"><el-tag :type="row.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ row.switchOn ? '开灯' : '关灯' }}</el-tag></template>
                 </el-table-column>
-                <el-table-column prop="voltage" label="电压(V)" width="75" align="right"></el-table-column>
-                <el-table-column prop="power" label="功率(W)" width="75" align="right"></el-table-column>
-                <el-table-column prop="brightness" label="亮度(%)" width="75" align="right"></el-table-column>
-                <el-table-column label="光控" width="60" align="center">
-                  <template #default="{ row }"><el-switch v-model="row.lightControl" size="small"></el-switch></template>
+                <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="96" align="right"></el-table-column>
+                <el-table-column v-if="colVis['亮度(%)']" prop="brightness" label="亮度(%)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['运行时间(H)']" prop="runHours" label="运行时间(H)" width="96" align="right"></el-table-column>
+                <el-table-column v-if="colVis['光控状态']" label="光控状态" width="80" align="center">
+                  <template #default="{ row }"><el-tag :type="row.lightControl ? 'success' : 'info'" size="small" effect="plain">{{ row.lightControl ? '开启' : '关闭' }}</el-tag></template>
                 </el-table-column>
-                <el-table-column label="人体感应" width="80" align="center">
-                  <template #default="{ row }"><el-switch v-model="row.bodySense" size="small"></el-switch></template>
+                <el-table-column v-if="colVis['人体感应']" label="人体感应" width="80" align="center">
+                  <template #default="{ row }"><el-tag :type="row.bodySense ? 'success' : 'info'" size="small" effect="plain">{{ row.bodySense ? '开启' : '关闭' }}</el-tag></template>
                 </el-table-column>
-                <el-table-column label="杆体倾斜" width="80" align="center">
+                <el-table-column v-if="colVis['杆体倾斜']" label="杆体倾斜" width="80" align="center">
                   <template #default="{ row }"><el-tag :type="poleTiltType(row.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(row.tilt) }}</el-tag></template>
                 </el-table-column>
-                <el-table-column label="操作" width="220" align="center" fixed="right">
+                <el-table-column v-if="colVis['频率(Hz)']" prop="frequency" label="频率(Hz)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['灯具类型']" prop="lampType" label="灯具类型" min-width="90" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['所属产品']" prop="product" label="所属产品" min-width="100" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['项目名称']" prop="projectName" label="项目名称" min-width="110" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['分组']" prop="groupName" label="分组" min-width="80" show-overflow-tooltip></el-table-column>
+                <el-table-column label="操作" width="300" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
-                      <el-button link type="primary" :icon="View" @click="openPoleDetail(row)">详情</el-button>
+                      <el-button size="small" type="primary" :icon="View" @click="openPoleDetail(row)">详情</el-button>
                       <el-divider direction="vertical"></el-divider>
-                      <el-button link type="primary" :icon="Edit" @click="openEditPole(row)">编辑</el-button>
+                      <el-button size="small" type="primary" :icon="Document" @click="poleStrategyReadback(row)">策略回读</el-button>
                       <el-divider direction="vertical"></el-divider>
-                      <el-button link type="danger" :icon="Delete" @click="poleHandleDelete(row)">删除</el-button>
+                      <el-button size="small" type="warning" :icon="Edit" @click="openEditPole(row)">编辑</el-button>
+                      <el-divider direction="vertical"></el-divider>
+                      <el-button size="small" type="danger" :icon="Delete" @click="poleHandleDelete(row)">删除</el-button>
                     </div>
                   </template>
                 </el-table-column>
@@ -789,8 +845,8 @@
         <div style="font-size:14px;font-weight:600;color:var(--ink);margin-bottom:8px;">设备控制</div>
         <div style="border:1px solid var(--line);border-radius:8px;padding:16px;background:var(--surface);margin-bottom:16px;">
           <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
-            <el-button type="success" :icon="Lightning" :disabled="poleDetailData.switchOn" @click="poleDetailCtrlOn">开灯</el-button>
-            <el-button type="danger" :icon="MuteNotification" :disabled="!poleDetailData.switchOn" @click="poleDetailCtrlOff">关灯</el-button>
+            <el-button type="warning" :icon="Lightning" :disabled="poleDetailData.switchOn" @click="poleDetailCtrlOn">开灯</el-button>
+            <el-button type="info" :icon="MuteNotification" :disabled="!poleDetailData.switchOn" @click="poleDetailCtrlOff">关灯</el-button>
           </div>
           <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
             <span style="font-size:var(--fs-sm);color:var(--ink-2);width:50px;flex-shrink:0;">调光</span>
@@ -954,6 +1010,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="shared-menu.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
 <script src="js/shared-data.js"></script>
@@ -1057,105 +1114,6 @@ for (let i = 1; i <= 42; i++) {
 /* ====================== 共享逻辑 ====================== */
 const { createApp, ref, reactive, computed, watch } = Vue;
 
-const MENU_DATA = [
-  { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
-  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
-  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
-  { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
-  { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','分级管理','用户管理','角色管理','菜单管理'] },
-  { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
-  { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
-];
-
-const MENU_HREF = {
-  '首页': 'index.html',
-  '设备分组': 'device-group.html',
-  '设备管理': 'device-management.html',
-  '灯杆管理': 'pole-management.html',
-  '太阳能照明': 'device-placeholder.html?type=solar',
-  '智慧网关': 'device-placeholder.html?type=gateway',
-  '视频监控': 'device-placeholder.html?type=camera',
-  'LED显示屏': 'device-placeholder.html?type=led',
-  '公共广播': 'device-placeholder.html?type=broadcast',
-  '环境监测': 'device-placeholder.html?type=environment',
-  '无线网络': 'device-placeholder.html?type=wifi',
-  '智慧充电桩': 'device-placeholder.html?type=charging',
-  '一键呼叫': 'device-placeholder.html?type=call',
-  '井盖管理': 'device-placeholder.html?type=cover',
-  '电缆防盗': 'device-placeholder.html?type=cable',
-  '集中管理器': 'device-placeholder.html?type=controller',
-  '灯控策略': 'light-strategy.html',
-  
-  '组织管理': 'organization-management.html',
-  '分级管理': 'dept-management.html',
-  '用户管理': 'user-management.html',
-  '角色管理': 'role-management.html',
-  '菜单管理': 'menu-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',  '产品分类': 'product-management.html?tab=category',
-  '产品管理': 'product-management.html?tab=product',
-
-};
-
-function createSharedSetup(activeMenuName) {
-  const collapsed = ref(false);
-  const mobileNav = ref(false);
-  const activeMenu = ref(activeMenuName);
-  const savedOpenState = localStorage.getItem('menuOpenState');
-  const savedOpen = savedOpenState ? JSON.parse(savedOpenState) : {};
-  const menuGroups = reactive(MENU_DATA.map(g => ({ ...g, open: savedOpen[g.title] !== undefined ? savedOpen[g.title] : g.open })));
-  const menuHref = MENU_HREF;
-  const toggleGroup = (g) => {
-    if (collapsed.value) { collapsed.value = false; g.open = true; }
-    else { g.open = !g.open; }
-    const openState = {};
-    menuGroups.forEach(grp => openState[grp.title] = grp.open);
-    localStorage.setItem('menuOpenState', JSON.stringify(openState));
-  };
-  const searchPop = ref(false);
-  const navQuery = ref('');
-  const allLeaves = MENU_DATA.flatMap(g => g.items);
-  const navMatches = computed(() => {
-    const q = navQuery.value.trim().toLowerCase();
-    return q ? allLeaves.filter(n => n.toLowerCase().includes(q)) : allLeaves.slice(0, 8);
-  });
-  const jumpMenu = (m) => {
-    const href = MENU_HREF[m];
-    if (href) window.location.href = href;
-    else ElementPlus.ElMessage.info(m + ' 模块建设中');
-    navQuery.value = ''; searchPop.value = false;
-  };
-  const toggleFull = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
-  const placeholder = (m) => ElementPlus.ElMessage.info((m || '该模块') + ' 建设中，敬请期待');
-  const onMenuClick = (item, e) => {
-    const href = MENU_HREF[item];
-    if (!href) { e.preventDefault(); placeholder(item); }
-    // 有 href 时，放行默认跳转，不 prevent
-  };
-  /* ===== 租户切换 ===== */
-  const savedTenant = localStorage.getItem('currentTenantId');
-  const currentTenantId = ref(savedTenant || 'T1');
-  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
-  const currentTenantName = computed(() => {
-    const t = availableTenants.value.find(t => t.id === currentTenantId.value);
-    return t ? t.name : '未知租户';
-  });
-  const switchTenant = (id) => {
-    if (id === currentTenantId.value) return;
-    currentTenantId.value = id;
-    localStorage.setItem('currentTenantId', id);
-    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
-    setTimeout(() => window.location.reload(), 600);
-  };
-  /* 图标查找（直接用组件对象） */
-  const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
-  const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
-  return {
-    collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
-    searchPop, navQuery, navMatches, jumpMenu, toggleFull, placeholder, onMenuClick,
-    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData,
-    iconComp, submenuIcon,
-  };
-}
-
 function registerIcons(app) {
   app.use(ElementPlus);
   try {
@@ -1178,6 +1136,10 @@ const app = createApp({
     const groups = reactive(groupsSeed);
     const allGroupNames = computed(() => groups.map(g => g.name));
     const poleSearchForm = reactive({ name: '', sn: '', status: '', projectName: '', simCard: '', gatewaySn: '', product: '', groupName: '' });
+
+    // 列显示/隐藏：始终显示 选择/灯杆名称/操作，其余字段可隐藏
+    const colSettingOptions = ['灯杆序列号','灯杆地址','设备状态','开关状态','电压(V)','电流(A)','功率(W)','功率因素(%)','亮度(%)','温度(℃)','运行时间(H)','光控状态','人体感应','杆体倾斜','频率(Hz)','灯具类型','所属产品','项目名称','分组'];
+    const colVis = reactive(Object.fromEntries(colSettingOptions.map(c => [c, true])));
     const poleApplied = reactive({ ...poleSearchForm });
     const poleShowMore = ref(false);
     const polePage = ref(1);
@@ -1204,6 +1166,7 @@ const app = createApp({
     });
     const poleDoSearch = () => { Object.assign(poleApplied, poleSearchForm); polePage.value = 1; };
     const poleResetSearch = () => { Object.assign(poleSearchForm, { name: '', sn: '', status: '', projectName: '', simCard: '', gatewaySn: '', product: '', groupName: '' }); Object.assign(poleApplied, poleSearchForm); polePage.value = 1; };
+    const poleRefresh = () => { polePage.value = 1; ElementPlus.ElMessage.success('列表已刷新'); };
     const selectedPoles = ref([]);
     const poleSelectionChange = (rows) => { selectedPoles.value = rows; };
     const poleCheckSelected = (fn) => { if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择设备'); return; } fn(); };
@@ -1253,6 +1216,23 @@ const app = createApp({
       link.click();
       ElementPlus.ElMessage.success(`已导出 ${selectedPoles.value.length} 条灯杆数据`);
     };
+    const poleGroupLightCmd = (cmd) => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
+      const on = cmd === 'on';
+      selectedPoles.value.forEach(p => p.switchOn = on);
+      ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆执行分组${on ? '开灯' : '关灯'}`);
+    };
+    const poleSetLightControl = (val) => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
+      selectedPoles.value.forEach(p => p.lightControl = val);
+      ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆${val ? '开启' : '关闭'}光控`);
+    };
+    const poleSetBodySense = (val) => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
+      selectedPoles.value.forEach(p => p.bodySense = val);
+      ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆${val ? '开启' : '关闭'}人体感应`);
+    };
+    const openBigScreen = () => window.open('big-screen.html', '_blank');
     const poleDownloadTemplate = () => {
       const csvContent = '\uFEFF' + [
         '灯杆名称,序列号,项目名称,产品类型,地址',
@@ -1291,6 +1271,15 @@ const app = createApp({
     const poleHandleDelete = (row) => {
       ElementPlus.ElMessageBox.confirm(`确认删除灯杆「${row.name}」？`, '提示', { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' })
         .then(() => { const i = poles.findIndex(p => p.id === row.id); if (i > -1) poles.splice(i, 1); ElementPlus.ElMessage.success('删除成功'); }).catch(() => {});
+    };
+    // 策略回读：查询该灯杆当前绑定的策略
+    const poleStrategyReadback = (row) => {
+      const bound = lightStrategies.value.filter(s => (s.boundPoleIds || []).includes(row.id));
+      if (bound.length) {
+        ElementPlus.ElMessage.success(`灯杆「${row.name}」回读成功，当前策略：${bound.map(s => s.name).join('、')}`);
+      } else {
+        ElementPlus.ElMessage.info(`灯杆「${row.name}」未绑定任何策略`);
+      }
     };
     const poleDetailVisible = ref(false);
     const poleDetailData = ref(null);
@@ -1358,6 +1347,68 @@ const app = createApp({
       if (mode === 'sunset') return '日落';
       return `${pad2(h)}:${pad2(m)}`;
     };
+    /* ====== 策略弹窗所需函数（从 light-strategy 复制） ====== */
+    const deviceTypes = ['智慧灯杆','太阳能灯杆','智慧网关','视频监控','信息发布LED','环境监测','智慧充电桩','一键呼叫'];
+    const strategyTypes = ['本地策略','平台策略'];
+    const loops = [1,2,3];
+    const cmd = reactive({ action:'', startTime: '', endTime: '', startOn: true, endOn: true, startBright: 80, endBright: 50 });
+    const cmdDialog = ref(false);
+    const cmdFormIndex = ref(-1);
+    const cmdFormRef = ref(null);
+    const openCmd = (formRef) => { cmdFormRef.value = formRef; cmdFormIndex.value = -1; cmd.action = ''; cmd.startTime = ''; cmd.endTime = ''; cmd.startOn = true; cmd.endOn = true; cmd.startBright = 80; cmd.endBright = 50; cmdDialog.value = true; };
+    const editAction = (formRef, idx) => {
+      cmdFormRef.value = formRef; cmdFormIndex.value = idx; const a = formRef.actions[idx];
+      cmd.action = a.action; cmd.startOn = a.startOn; cmd.endOn = a.endOn;
+      cmd.startBright = a.startBright; cmd.endBright = a.endBright;
+      cmd.startTime = pad2(a.startHour) + ':' + pad2(a.startMinute);
+      cmd.endTime = pad2(a.endHour) + ':' + pad2(a.endMinute);
+      cmdDialog.value = true;
+    };
+    const saveCmd = () => {
+      if (!cmd.action) { ElementPlus.ElMessage.warning('请选择动作'); return; }
+      if (!cmd.startTime || !cmd.endTime) { ElementPlus.ElMessage.warning('请选择时间'); return; }
+      const s = cmd.startTime.split(':'), e = cmd.endTime.split(':');
+      const entry = { action: cmd.action, startHour: +s[0], startMinute: +s[1], endHour: +e[0], endMinute: +e[1],
+        startOn: cmd.startOn, endOn: cmd.endOn, startBright: cmd.startBright, endBright: cmd.endBright };
+      if (!cmdFormRef.value) return;
+      if (cmdFormIndex.value >= 0) { cmdFormRef.value.actions[cmdFormIndex.value] = entry; }
+      else { cmdFormRef.value.actions.push(entry); }
+      cmdDialog.value = false;
+    };
+    /* ====== 策略编辑弹窗灯杆选择函数 ====== */
+    const stEditPoleSearch = reactive({ name: '', sn: '' });
+    const stEditSelectedIds = ref([]);
+    const stEditGroupFilter = ref('全部');
+    const filteredEditPoles = computed(() => {
+      let list = [...poles];
+      if (stEditGroupFilter.value !== '全部') list = list.filter(p => p.groupName === stEditGroupFilter.value);
+      if (stEditPoleSearch.name) list = list.filter(p => p.name.includes(stEditPoleSearch.name));
+      if (stEditPoleSearch.sn) list = list.filter(p => p.sn.includes(stEditPoleSearch.sn));
+      return list;
+    });
+    const toggleEditPole = (id, val) => {
+      if (val) { if (!stEditSelectedIds.value.includes(id)) stEditSelectedIds.value.push(id); }
+      else { stEditSelectedIds.value = stEditSelectedIds.value.filter(x => x !== id); }
+    };
+    /* ====== stEditForm / strategyEditDialog（仅在弹窗模板中引用，保持 setup 导出必有） ====== */
+    const stEditForm = reactive({ name: '', deviceType: '智慧灯杆', strategyType: '', loop: 1, remark: '', actions: [] });
+    const strategyEditDialog = ref(false);
+    const onEditDeviceChange = (val) => { stEditForm.strategyType = ''; stEditForm.loop = 1; };
+    const saveStrategyEdit = () => { ElementPlus.ElMessage.success('策略已保存'); strategyEditDialog.value = false; };
+    /* ====== stForm / strategyDialog（新增策略弹窗） ====== */
+    const stForm = reactive({ name: '', deviceType: '智慧灯杆', strategyType: '', loop: 1, remark: '', actions: [] });
+    const strategyDialog = ref(false);
+    const stFormRef = ref(null);
+    const stRules = { name: [{ required: true, message: '请输入策略名称', trigger: 'blur' }] };
+    const onDeviceChange = (val) => { stForm.strategyType = ''; stForm.loop = 1; };
+    const saveStrategy = () => { stFormRef.value?.validate?.((valid) => { if (!valid) return; ElementPlus.ElMessage.success('策略已保存'); strategyDialog.value = false; }); };
+    /* ====== 分组弹窗 ====== */
+    const groupDialog = ref(false);
+    const grpEditing = ref(false);
+    const groupFormRef = ref(null);
+    const groupForm = reactive({ name: '', seq: '', remark: '' });
+    const groupRules = { name: [{ required: true, message: '请输入分组名称', trigger: 'blur' }] };
+    const saveGroup = () => { groupFormRef.value?.validate?.((valid) => { if (!valid) return; ElementPlus.ElMessage.success('分组已保存'); groupDialog.value = false; }); };
     const sortPoleActions = (actions) => {
       return [...(actions || [])].sort((a, b) => {
         if (a.nextDay && !b.nextDay) return 1;
@@ -1369,22 +1420,33 @@ const app = createApp({
     };
     return { ...shared,
       poleProjectOptions, poleProductOptions, poles, poleSearchForm, poleShowMore, polePage, polePageSize,
-      filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleStats,
+      filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleGroupLightCmd, poleSetLightControl, poleSetBodySense, openBigScreen, poleStats,
       selectedPoles, poleSelectionChange,
       poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
       poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete,
       poleExport, poleDownloadTemplate, poleBatchExport,
-      poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete,
+      poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete, poleStrategyReadback,
       poleDetailVisible, poleDetailData, openPoleDetail, polePowerChart,
       poleDetailCtrl, poleDetailCtrlOn, poleDetailCtrlOff, poleDetailCtrlApplyDim, poleDetailCtrlApplyCCT,
       poleImportVisible, poleTsVisible, poleTsSn, poleTsData, poleHandleTimeStrategy,
       poleStrategyDialogVisible, poleStrategyPickId, lightStrategies, poleStrategyPickDetail, openPoleStrategyPick, confirmPoleStrategyPick,
       pad2, formatPoleActionTime, sortPoleActions, allGroupNames, tableHeaderStyle,
+      colSettingOptions, colVis,
+      /* 策略/指令弹窗 */
+      deviceTypes, strategyTypes, loops, cmd, cmdDialog, openCmd, editAction, saveCmd,
+      strategyDialog, stForm, stFormRef, stRules, onDeviceChange, saveStrategy,
+      strategyEditDialog, stEditForm, stEditSelectedIds, stEditGroupFilter, stEditPoleSearch, filteredEditPoles, toggleEditPole, onEditDeviceChange, saveStrategyEdit,
+      groupDialog, grpEditing, groupFormRef, groupForm, groupRules, saveGroup, groups,
       Search: ElementPlusIconsVue?.Search, RefreshRight: ElementPlusIconsVue?.RefreshRight, Plus: ElementPlusIconsVue?.Plus,
       Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, Download: ElementPlusIconsVue?.Download,
       Cpu: ElementPlusIconsVue?.Cpu, Connection: ElementPlusIconsVue?.Connection, Offline: ElementPlusIconsVue?.Offline, UserFilled: ElementPlusIconsVue?.UserFilled,
       OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
       View: ElementPlusIconsVue?.View, Lightning: ElementPlusIconsVue?.Lightning, MuteNotification: ElementPlusIconsVue?.MuteNotification,
+      CirclePlus: ElementPlusIconsVue?.CirclePlus, UploadFilled: ElementPlusIconsVue?.UploadFilled, Upload: ElementPlusIconsVue?.Upload,
+      SetUp: ElementPlusIconsVue?.SetUp, Close: ElementPlusIconsVue?.Close,
+      Menu: ElementPlusIconsVue?.Menu, DataLine: ElementPlusIconsVue?.DataLine, Remove: ElementPlusIconsVue?.Remove,
+      Setting: ElementPlusIconsVue?.Setting, SwitchButton: ElementPlusIconsVue?.SwitchButton, User: ElementPlusIconsVue?.User,
+      Document: ElementPlusIconsVue?.Document,
     };
   }
 });

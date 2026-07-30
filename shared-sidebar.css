@@ -1,0 +1,96 @@
+/* shared-sidebar.css
+ * 统一左侧菜单样式。由各页面在 <head> 末尾引入（晚于页面内联 <style>），
+ * 因此这里的规则会覆盖页面各自的内联侧栏样式，保证全站菜单视觉一致。
+ * 仅包含侧栏相关样式，不触碰页面主体 / 顶栏样式。
+ */
+
+.sidebar {
+  width: var(--sb-w); flex: 0 0 var(--sb-w);
+  background: linear-gradient(180deg, var(--side), var(--side-2));
+  color: #c3ccd9; display: flex; flex-direction: column;
+  transition: flex-basis .22s ease, width .22s ease, transform .25s ease;
+}
+.sidebar.collapsed { width: var(--sb-w-collapsed); flex-basis: var(--sb-w-collapsed); }
+
+.brand {
+  height: 60px; display: flex; align-items: center; gap: 11px;
+  padding: 0 20px; color: #fff; font-weight: 700; font-size: var(--fs-md);
+  letter-spacing: .3px; border-bottom: 1px solid rgba(255,255,255,.07); white-space: nowrap;
+}
+.brand .logo {
+  width: 30px; height: 30px; border-radius: var(--r-md); flex: 0 0 auto;
+  background: linear-gradient(135deg, #5b8bff, #2f6bff);
+  display: grid; place-items: center; font-size: 15px;
+  box-shadow: 0 4px 14px rgba(47,107,255,.5);
+}
+.brand .brand-txt { flex: 1; }
+.sidebar.collapsed .brand { padding: 0; justify-content: center; }
+.sidebar.collapsed .brand .brand-txt { display: none; }
+
+.version-tag {
+  display: inline-flex; align-items: center; font-size: 10px; font-weight: 500;
+  background: rgba(255,255,255,.15); color: rgba(255,255,255,.7);
+  padding: 1px 5px; border-radius: 4px; flex-shrink: 0; margin-left: 4px;
+}
+.sidebar.collapsed .version-tag { display: none; }
+
+.nav { flex: 1; overflow-y: auto; overflow-x: hidden; padding: 10px 10px; }
+.nav::-webkit-scrollbar { width: 6px; }
+.nav::-webkit-scrollbar-thumb { background: rgba(255,255,255,.12); border-radius: var(--r-pill); }
+
+.nav-group { margin-bottom: 2px; }
+.nav-group > .nav-title {
+  display: flex; align-items: center; gap: 11px;
+  padding: 11px 12px; border-radius: var(--r-md); font-size: var(--fs-sm);
+  color: #aab4c3; cursor: pointer; user-select: none; position: relative;
+  transition: color .15s, background .15s; white-space: nowrap;
+}
+.nav-title .ng-ic { font-size: 16px; flex: 0 0 auto; display: inline-flex; }
+.nav-title .ng-txt { flex: 1; }
+.nav-title .caret { font-size: 13px; opacity: .55; transition: transform .2s; }
+.nav-group.open > .nav-title .caret { transform: rotate(180deg); }
+.nav-title:hover { color: #fff; background: rgba(255,255,255,.05); }
+.nav-group.open > .nav-title,
+.nav-group.has-active > .nav-title { color: #fff; }
+.nav-link { text-decoration: none; }
+.nav-title.active { color: #fff; background: rgba(47,107,255,.18); }
+.nav-title.active::before { content: ''; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: #2f6bff; }
+
+.nav-children { overflow: hidden; padding: 2px 0 4px; }
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px 9px 38px; font-size: var(--fs-sm); color: #aab4c3;
+  cursor: pointer; position: relative; border-radius: var(--r-md);
+  transition: all .15s; white-space: nowrap; margin: 1px 0; text-decoration: none;
+}
+.nav-item .dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .4; flex: 0 0 auto; }
+.nav-item .ni-ic { font-size: 14px; flex: 0 0 auto; opacity: .8; }
+.nav-item .ni-txt { flex: 1; }
+.nav-item:hover { color: #fff; background: rgba(255,255,255,.05); }
+.nav-item:hover .ni-ic { opacity: 1; }
+.nav-item.active { color: #fff; background: rgba(47,107,255,.18); }
+.nav-item.active .dot { opacity: 1; background: #6f9bff; }
+.nav-item.active .ni-ic { opacity: 1; color: #6f9bff; }
+.nav-item.active::before {
+  content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px;
+  border-radius: var(--r-pill); background: var(--brand);
+}
+
+.sidebar.collapsed .nav-title { justify-content: center; padding: 13px 0; }
+.sidebar.collapsed .nav-title .ng-txt,
+.sidebar.collapsed .nav-title .caret { display: none; }
+.sidebar.collapsed .nav-children { display: none !important; }
+.sidebar.collapsed .nav-group.has-active > .nav-title { background: rgba(47,107,255,.18); }
+.sidebar.collapsed .nav-group.has-active > .nav-title .ng-ic { color: #6f9bff; }
+.sidebar.collapsed .nav-title.active { background: rgba(47,107,255,.18); }
+.sidebar.collapsed .nav-title.active .ng-ic { color: #6f9bff; }
+
+.sb-foot { border-top: 1px solid rgba(255,255,255,.07); padding: 10px; }
+.sb-collapse {
+  width: 100%; height: 36px; border-radius: var(--r-md); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: #aab4c3; font-size: var(--fs-sm); transition: all .15s; background: none; border: none;
+}
+.sb-collapse:hover { color: #fff; background: rgba(255,255,255,.07); }
+
+.nav-backdrop { position: fixed; inset: 0; background: rgba(12,18,28,.45); z-index: 55; }

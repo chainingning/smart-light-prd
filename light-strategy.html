@@ -415,6 +415,8 @@
       .content { padding: 14px; }
     }
   </style>
+
+  <link rel="stylesheet" href="shared-sidebar.css">
 </head>
 <body>
 <div id="app">
@@ -424,11 +426,18 @@
       <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
       <nav class="nav">
         <div v-for="g in menuGroups" :key="g.title" class="nav-group"
-             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
-          <div class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+             :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) || (g.singleLink && g.title === activeMenu) }">
+          <a v-if="g.singleLink" class="nav-title nav-link"
+             :href="menuHref[g.title] || '#'"
+             :class="{ active: g.title === activeMenu }"
+             @click="onMenuClick(g.title, $event)">
             <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
             <span class="ng-txt">{{ g.title }}</span>
-            <el-icon v-if="!g.singleLink" class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
+          </a>
+          <div v-else class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+            <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+            <span class="ng-txt">{{ g.title }}</span>
+            <el-icon class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
           </div>
           <div v-if="!g.singleLink" class="nav-children" v-show="g.open && !collapsed">
             <a v-for="item in g.items" :key="item"
@@ -919,7 +928,7 @@
     </div>
     <div class="pick-hint">
       <span>没有合适的分组？</span>
-      <el-link type="primary" class="ph-link" :underline="false" @click="poleGroupDialogVisible = false; openMenu('设备分组')">去分组管理新建 →</el-link>
+      <el-link type="primary" class="ph-link" :underline="false" @click="poleGroupDialogVisible = false; jumpMenu('设备分组')">去分组管理新建 →</el-link>
     </div>
     <template #footer>
       <el-button @click="poleGroupDialogVisible = false">取消</el-button>
@@ -992,6 +1001,7 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="shared-menu.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
 <script src="js/shared-data.js"></script>
@@ -1076,107 +1086,6 @@ for (let i = 1; i <= 42; i++) {
 
 /* ====================== 共享逻辑 ====================== */
 const { createApp, ref, reactive, computed, watch } = Vue;
-
-const MENU_DATA = [
-  { title: '设备管理', icon: 'Monitor', open: true,  items: ['产品分类','产品管理','设备管理','设备分组'] },
-  { title: '智慧灯杆', icon: 'Sunny',   open: false, items: ['灯杆管理','太阳能照明','智慧网关','视频监控','LED显示屏','公共广播','环境监测','无线网络','智慧充电桩','一键呼叫','井盖管理','电缆防盗','集中管理器'] },
-  { title: '项目管理', icon: 'Folder', open: true, items: ['项目列表','项目分配','配额看板','分配流水'] },  { title: '综合运维', icon: 'SetUp',   open: true,  items: ['灯控策略','策略下发日志'] },
-  { title: '系统运维', icon: 'DataLine',open: false, items: ['运维概览','日志管理','监控告警'] },
-  { title: '系统管理', icon: 'Setting', open: false, items: ['组织管理','分级管理','用户管理','角色管理','菜单管理'] },
-  { title: '基础设施', icon: 'OfficeBuilding', open: false, items: ['区域管理','点位管理'] },
-  { title: '工作流程', icon: 'Connection', open: false, items: ['流程定义','我的待办'] },
-];
-
-const MENU_HREF = {
-  '首页': 'index.html',
-  '设备分组': 'device-group.html',
-  '设备管理': 'device-management.html',
-  '灯杆管理': 'pole-management.html',
-  '太阳能照明': 'device-placeholder.html?type=solar',
-  '智慧网关': 'device-placeholder.html?type=gateway',
-  '视频监控': 'device-placeholder.html?type=camera',
-  'LED显示屏': 'device-placeholder.html?type=led',
-  '公共广播': 'device-placeholder.html?type=broadcast',
-  '环境监测': 'device-placeholder.html?type=environment',
-  '无线网络': 'device-placeholder.html?type=wifi',
-  '智慧充电桩': 'device-placeholder.html?type=charging',
-  '一键呼叫': 'device-placeholder.html?type=call',
-  '井盖管理': 'device-placeholder.html?type=cover',
-  '电缆防盗': 'device-placeholder.html?type=cable',
-  '集中管理器': 'device-placeholder.html?type=controller',
-  '灯控策略': 'light-strategy.html',
-  
-  '组织管理': 'organization-management.html',
-  '分级管理': 'dept-management.html',
-  '用户管理': 'user-management.html',
-  '角色管理': 'role-management.html',
-  '菜单管理': 'menu-management.html',  '项目列表': 'project-management.html',  '项目分配': 'project-management.html',  '配额看板': 'project-management.html',  '分配流水': 'project-management.html',  '租户列表': 'tenant-management.html',  '配额管理': 'tenant-management.html',  '邀请码': 'tenant-management.html',  '产品分类': 'product-management.html?tab=category',
-  '产品管理': 'product-management.html?tab=product',
-
-};
-
-function createSharedSetup(activeMenuName) {
-  const collapsed = ref(false);
-  const mobileNav = ref(false);
-  const activeMenu = ref(activeMenuName);
-  const savedOpenState = localStorage.getItem('menuOpenState');
-  const savedOpen = savedOpenState ? JSON.parse(savedOpenState) : {};
-  const menuGroups = reactive(MENU_DATA.map(g => ({ ...g, open: savedOpen[g.title] !== undefined ? savedOpen[g.title] : g.open })));
-  const menuHref = MENU_HREF;
-  const toggleGroup = (g) => {
-    if (collapsed.value) { collapsed.value = false; g.open = true; }
-    else { g.open = !g.open; }
-    const openState = {};
-    menuGroups.forEach(grp => openState[grp.title] = grp.open);
-    localStorage.setItem('menuOpenState', JSON.stringify(openState));
-  };
-  const searchPop = ref(false);
-  const navQuery = ref('');
-  const allLeaves = MENU_DATA.flatMap(g => g.items);
-  const navMatches = computed(() => {
-    const q = navQuery.value.trim().toLowerCase();
-    return q ? allLeaves.filter(n => n.toLowerCase().includes(q)) : allLeaves.slice(0, 8);
-  });
-  const jumpMenu = (m) => {
-    const href = MENU_HREF[m];
-    if (href) window.location.href = href;
-    else ElementPlus.ElMessage.info(m + ' 模块建设中');
-    navQuery.value = ''; searchPop.value = false;
-  };
-  const toggleFull = () => { if (!document.fullscreenElement) document.documentElement.requestFullscreen?.(); else document.exitFullscreen?.(); };
-  const placeholder = (m) => ElementPlus.ElMessage.info((m || '该模块') + ' 建设中，敬请期待');
-  const onMenuClick = (item, e) => {
-    const href = MENU_HREF[item];
-    if (!href) { e.preventDefault(); placeholder(item); }
-    // 有 href 时，放行默认跳转，不 prevent
-  };
-
-  /* ===== 租户切换 ===== */
-  const savedTenant = localStorage.getItem('currentTenantId');
-  const currentTenantId = ref(savedTenant || 'T1');
-  const availableTenants = computed(() => window.SharedData ? window.SharedData.TENANTS : []);
-  const currentTenantName = computed(() => {
-    const t = availableTenants.value.find(t => t.id === currentTenantId.value);
-    return t ? t.name : '未知租户';
-  });
-  const switchTenant = (id) => {
-    if (id === currentTenantId.value) return;
-    currentTenantId.value = id;
-    localStorage.setItem('currentTenantId', id);
-    ElementPlus.ElMessage.success('已切换到租户：' + (availableTenants.value.find(t => t.id === id)?.name || id));
-    setTimeout(() => window.location.reload(), 600);
-  };
-
-  /* 图标查找（直接用组件对象） */
-  const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
-  const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
-  return {
-    collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup,
-    searchPop, navQuery, navMatches, jumpMenu, toggleFull,
-    currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: window.SharedData, placeholder, onMenuClick,
-    iconComp, submenuIcon,
-  };
-}
 
 function registerIcons(app) {
   app.use(ElementPlus);
