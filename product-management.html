@@ -5,37 +5,696 @@
   <title>产品管理 · 云创智慧平台</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
   <style>
-    body { margin: 0; font-family: "Inter", "PingFang SC", sans-serif; background: #f4f6fb; color: #1b2533; }
-    #app { height: 100vh; display: flex; align-items: center; justify-content: center; }
-    .placeholder { text-align: center; max-width: 520px; padding: 32px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(16,24,40,.06); }
-    h1 { font-size: 24px; margin: 0 0 12px; }
-    p { color: #586273; margin: 6px 0; }
-    a { color: #2f6bff; text-decoration: none; display: inline-block; margin-top: 18px; }
-    .stats { display: flex; gap: 16px; justify-content: center; margin: 18px 0; }
-    .stat { background: #f4f6fb; border-radius: 8px; padding: 10px 18px; }
-    .stat b { color: #2f6bff; font-size: 20px; }
+    :root { --brand:#2f6bff; --brand-deep:#1f4fd6; --brand-soft:#ebf1ff; --ok:#16a36a; --off:#ef4d5e; --warn:#e6952c; --bg:#f4f6fb; --surface:#fff; --surface-2:#f8fafc; --line:#e6eaf2; --line-soft:#eef1f7; --ink:#1b2533; --ink-2:#586273; --ink-3:#7c8696; --r-sm:8px; --r-md:10px; --r-lg:14px; --r-pill:999px; --fs-cap:12px; --fs-sm:13px; --fs:14px; --fs-md:16px; --fs-lg:20px; --fs-xl:26px; }
+    *{box-sizing:border-box}
+    html,body{margin:0;height:100%}
+    body{font-family:"Inter","PingFang SC","Microsoft YaHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:var(--fs)}
+    #app{height:100vh}
+    .shell{display:flex;height:100vh;overflow:hidden}
+    .sidebar{width:226px;flex:0 0 226px;background:linear-gradient(180deg,#1b2330,#12171f);color:#c3ccd9;display:flex;flex-direction:column;transition:flex-basis .22s,width .22s}
+    .sidebar.collapsed{width:64px;flex-basis:64px}
+    .brand{height:60px;display:flex;align-items:center;gap:11px;padding:0 20px;color:#fff;font-weight:700;font-size:var(--fs-md);border-bottom:1px solid rgba(255,255,255,.07);white-space:nowrap}
+    .brand .logo{width:30px;height:30px;border-radius:var(--r-md);background:linear-gradient(135deg,#5b8bff,#2f6bff);display:grid;place-items:center;font-size:15px}
+    .version-tag{display:inline-flex;align-items:center;font-size:10px;background:rgba(255,255,255,.15);color:rgba(255,255,255,.7);padding:1px 5px;border-radius:4px;margin-left:4px;flex-shrink:0}
+    .nav{flex:1;overflow-y:auto;padding:10px}
+    .nav::-webkit-scrollbar{width:6px}
+    .nav::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:var(--r-pill)}
+    .nav-group{margin-bottom:2px}
+    .nav-group > .nav-title{display:flex;align-items:center;gap:11px;padding:11px 12px;border-radius:var(--r-md);font-size:var(--fs-sm);color:#aab4c3;cursor:pointer;user-select:none;transition:background .15s,color .15s;white-space:nowrap}
+    .nav-title .ng-ic{font-size:16px;flex:0 0 auto;display:inline-flex}
+    .nav-title .ng-txt{flex:1}
+    .nav-title .caret{font-size:13px;opacity:.55;transition:transform .2s}
+    .nav-group.open > .nav-title .caret{transform:rotate(180deg)}
+    .nav-title:hover{color:#fff;background:rgba(255,255,255,.05)}
+    .nav-group.open > .nav-title,.nav-group.has-active > .nav-title{color:#fff}
+    .nav-children{overflow:hidden;padding:2px 0 4px}
+    .nav-item{display:flex;align-items:center;gap:10px;padding:9px 12px 9px 38px;font-size:var(--fs-sm);color:#aab4c3;cursor:pointer;position:relative;border-radius:var(--r-md);margin:1px 0;white-space:nowrap}
+    .nav-item .dot{width:5px;height:5px;border-radius:50%;background:currentColor;opacity:.4;flex:0 0 auto}
+    .nav-item .ni-ic{font-size:14px;flex:0 0 auto;opacity:.8}
+    .nav-item .ni-txt{flex:1}
+    .nav-item:hover{color:#fff;background:rgba(255,255,255,.05)}
+    .nav-item:hover .ni-ic{opacity:1}
+    .nav-item.active{color:#fff;background:rgba(47,107,255,.18)}
+    .nav-item.active .dot{opacity:1;background:#6f9bff}
+    .nav-item.active .ni-ic{opacity:1;color:#6f9bff}
+    .nav-item.active::before{content:"";position:absolute;left:0;top:8px;bottom:8px;width:3px;border-radius:var(--r-pill);background:var(--brand)}
+    .sb-foot{border-top:1px solid rgba(255,255,255,.07);padding:10px}
+    .sb-collapse{width:100%;height:36px;border-radius:var(--r-md);cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;color:#aab4c3;font-size:var(--fs-sm)}
+    .sb-collapse:hover{color:#fff;background:rgba(255,255,255,.07)}
+    .main{flex:1;display:flex;flex-direction:column;min-width:0}
+    .topbar{height:60px;background:var(--surface);display:flex;align-items:center;padding:0 18px;gap:14px;border-bottom:1px solid var(--line)}
+    .crumb{display:flex;align-items:center;gap:8px;color:var(--ink-2);font-size:var(--fs)}
+    .crumb .sep{color:var(--ink-3)}
+    .crumb .cur{color:var(--ink);font-weight:600}
+    .topbar .spacer{flex:1}
+    .top-actions{display:flex;align-items:center;gap:4px;color:var(--ink-2);font-size:var(--fs-sm)}
+    .top-actions .ico{font-size:18px;color:var(--ink-2);cursor:pointer;padding:8px;border-radius:var(--r-sm)}
+    .top-actions .ico:hover{color:var(--brand);background:var(--brand-soft)}
+    .top-actions .ico .mini{font-size:12px;opacity:.7}
+    .top-actions .tenant-switcher{display:inline-flex;align-items:center;gap:5px;height:32px;padding:0 8px !important;border:1px solid var(--line);border-radius:var(--r-md);background:var(--surface);color:var(--ink)}
+    .top-actions .tenant-switcher:hover{border-color:var(--brand)}
+    .top-actions .tenant-switcher .tenant-name{font-size:13px;font-weight:500;max-width:100px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .content{flex:1;overflow:hidden;padding:20px;display:flex;flex-direction:column}
+    .work-area{flex:1;display:flex;border-radius:var(--r-lg);overflow:hidden;box-shadow:0 1px 2px rgba(16,24,40,.05);background:var(--surface);min-height:0}
+    .cat-panel{width:260px;flex:0 0 260px;border-right:1px solid var(--line-soft);display:flex;flex-direction:column}
+    .cat-head{padding:14px 16px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:var(--fs-sm)}
+    .cat-head .ph-act{font-weight:400}
+    .cat-head .ph-act span{cursor:pointer;color:var(--brand)}
+    .cat-tree{flex:1;overflow-y:auto;padding:8px 4px}
+    .cat-tree .el-tree-node__content{height:30px}
+    .cat-tree .cat-active{color:var(--brand);font-weight:600}
+    .list-panel{flex:1;min-width:0;display:flex;flex-direction:column;min-height:0}
+    .list-toolbar{padding:12px 16px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;gap:10px}
+    .list-toolbar .lt-search{flex:1;max-width:280px}
+    .list-table-wrap{flex:1;overflow:auto;min-height:0}
+    .thing-editor{padding:0 16px 16px}
+    .thing-tab-label{display:flex;align-items:center;gap:6px}
+    .thing-tab-label .badge{background:var(--brand-soft);color:var(--brand);border-radius:10px;padding:0 6px;font-size:12px}
+    .drawer-section{padding:16px 20px}
+    .drawer-section + .drawer-section{border-top:1px solid var(--line-soft)}
+    .drawer-section h4{margin:0 0 12px;font-size:13px;color:var(--ink-3);font-weight:500}
+    .drawer-body{flex:1;overflow:auto;padding:0 0 16px}
+    .json-preview{background:#1e1e1e;color:#d4d4d4;font-family:Menlo,Monaco,Consolas,monospace;font-size:12px;padding:12px;line-height:1.5;flex:1;overflow:auto;white-space:pre-wrap;word-break:break-all;margin:0}
+    .json-key{color:#9cdcfe}
+    .json-string{color:#ce9178}
+    .json-number{color:#b5cea8}
+    .json-bool{color:#569cd6}
+    .json-null{color:#c586c0}
+    .stat-pill{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;background:var(--brand-soft);color:var(--brand);border-radius:10px;font-size:12px}
+    .drawer-flex{display:flex;height:100%}
+    .drawer-main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .drawer-json{width:300px;border-left:1px solid var(--line-soft);background:#fafbfc;display:flex;flex-direction:column;min-height:0}
+    .drawer-json-head{padding:12px 16px;border-bottom:1px solid var(--line-soft);font-size:13px;font-weight:600;color:var(--ink-3)}
+    .empty-cell{padding:40px 20px;text-align:center;color:var(--ink-3);font-size:var(--fs-sm)}
   </style>
 </head>
 <body>
   <div id="app">
-    <div class="placeholder">
-      <h1>📦 产品管理（IoT 阶段 A 骨架）</h1>
-      <p>数据层已就位，阶段 B 将完成完整 CRUD + 物模型编辑器</p>
-      <div class="stats">
-        <div class="stat"><b id="cats">-</b><br><small>产品分类</small></div>
-        <div class="stat"><b id="prods">-</b><br><small>产品</small></div>
-        <div class="stat"><b id="props">-</b><br><small>物模型属性</small></div>
+    <div class="shell">
+      <aside class="sidebar" :class="{ collapsed, 'mobile-open': mobileNav }">
+        <div class="brand"><span class="logo">云</span><span class="brand-txt">云创智慧平台</span><span class="version-tag">v1.0.2</span></div>
+        <nav class="nav">
+          <div v-for="g in menuGroups" :key="g.title" class="nav-group" :class="{ open: g.open && !collapsed, 'has-active': g.items.includes(activeMenu) }">
+            <div class="nav-title" @click="toggleGroup(g)" :tabindex="0" @keyup.enter="toggleGroup(g)">
+              <el-icon class="ng-ic"><component :is="iconComp(g.icon)"></component></el-icon>
+              <span class="ng-txt">{{ g.title }}</span>
+              <el-icon v-if="!g.singleLink" class="caret"><component :is="iconComp('ArrowDown')"></component></el-icon>
+            </div>
+            <div v-if="!g.singleLink" class="nav-children" v-show="g.open && !collapsed">
+              <a v-for="item in g.items" :key="item" :href="menuHref[item] || '#'" class="nav-item" :class="{ active: activeMenu === item }" @click="onMenuClick(item, $event)">
+                <el-icon v-if="submenuIcon(item)" class="ni-ic"><component :is="iconComp(submenuIcon(item))"></component></el-icon>
+                <span v-else class="dot"></span>
+                <span class="ni-txt">{{ item }}</span>
+              </a>
+            </div>
+          </div>
+        </nav>
+        <div class="sb-foot">
+          <div class="sb-collapse" @click="collapsed = !collapsed">
+            <el-icon><component :is="iconComp(collapsed ? 'Expand' : 'Fold')"></component></el-icon>
+            <span v-if="!collapsed">收起菜单</span>
+          </div>
+        </div>
+      </aside>
+      <div class="main">
+        <header class="topbar">
+          <span class="ico hamburger" @click="mobileNav = !mobileNav"><el-icon><Menu></Menu></el-icon></span>
+          <div class="crumb">
+            <a href="index.html" style="color:inherit;text-decoration:none">首页</a>
+            <span class="sep">/</span><span>设备管理</span>
+            <span class="sep">/</span><span class="cur">{{ activeMenu }}</span>
+          </div>
+          <div class="spacer"></div>
+          <div class="top-actions">
+            <el-dropdown trigger="click" @command="switchTenant">
+              <span class="ico tenant-switcher" :title="'当前租户: ' + currentTenantName">
+                <el-icon><OfficeBuilding></OfficeBuilding></el-icon>
+                <span class="tenant-name">{{ currentTenantName }}</span>
+                <el-icon class="mini"><ArrowDown></ArrowDown></el-icon>
+              </span>
+              <template #dropdown><el-dropdown-menu>
+                <el-dropdown-item v-for="t in availableTenants" :key="t.id" :command="t.id" :disabled="t.id === currentTenantId">
+                  <el-icon><Check v-if="t.id === currentTenantId"></Check></el-icon>
+                  {{ t.name }}
+                </el-dropdown-item>
+              </el-dropdown-menu></template>
+            </el-dropdown>
+          </div>
+        </header>
+        <main class="content">
+          <div class="work-area">
+            <div class="cat-panel">
+              <div class="cat-head">
+                <span>产品分类</span>
+                <div class="ph-act"><span @click="openCategoryDialog(null)">+ 新建</span></div>
+              </div>
+              <div class="cat-tree">
+                <el-tree
+                  ref="catTree"
+                  :data="categoryTree"
+                  :props="{ label: 'name', children: 'children' }"
+                  node-key="id"
+                  :expand-on-click-node="false"
+                  highlight-current
+                  @node-click="onCategoryClick"
+                >
+                  <template #default="{ node, data }">
+                    <span :class="{'cat-active': selectedCategoryId === data.id}" style="flex:1">
+                      <el-icon v-if="iconComp(data.icon)" style="font-size:13px;margin-right:4px;vertical-align:middle;color:var(--ink-2)"><component :is="iconComp(data.icon)"></component></el-icon>
+                      {{ node.label }}
+                    </span>
+                    <span style="margin-left:6px">
+                      <el-button link size="small" @click.stop="openCategoryDialog(data)"><el-icon><Edit></Edit></el-icon></el-button>
+                      <el-button link size="small" type="danger" @click.stop="deleteCategory(data)"><el-icon><Delete></Delete></el-icon></el-button>
+                    </span>
+                  </template>
+                </el-tree>
+              </div>
+            </div>
+            <div class="list-panel">
+              <div class="list-toolbar">
+                <el-input v-model="searchKw" placeholder="搜索产品名称 / productKey" size="default" clearable :prefix-icon="Search" class="lt-search"></el-input>
+                <el-select v-model="filterStatus" placeholder="状态" size="default" clearable style="width:120px">
+                  <el-option label="启用" value="0"></el-option>
+                  <el-option label="停用" value="1"></el-option>
+                </el-select>
+                <el-button type="primary" :icon="Plus" @click="openProductDialog()">新增产品</el-button>
+              </div>
+              <div class="list-table-wrap">
+                <el-table :data="filteredProducts" border stripe size="default" :header-cell-style="{background:'#f5f8fd',color:'#586273',fontWeight:'600',fontSize:'13px'}">
+                  <el-table-column type="index" width="50" align="center" fixed></el-table-column>
+                  <el-table-column prop="name" label="产品名称" min-width="160" show-overflow-tooltip>
+                    <template #default="{ row }">
+                      <el-icon v-if="iconComp(row.icon)" style="margin-right:6px;vertical-align:middle;color:var(--brand)"><component :is="iconComp(row.icon)"></component></el-icon>
+                      {{ row.name }}
+                    </template>
+                  </el-table-column>
+                  <el-table-column prop="productKey" label="ProductKey" width="160"></el-table-column>
+                  <el-table-column label="分类" width="140">
+                    <template #default="{ row }"><span class="stat-pill">{{ categoryName(row.categoryId) }}</span></template>
+                  </el-table-column>
+                  <el-table-column label="联网方式" width="100" align="center">
+                    <template #default="{ row }">
+                      <el-tag size="small" :type="netTypeColor(row.networkType)" effect="plain">{{ row.networkType || '-' }}</el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="认证" width="80" align="center">
+                    <template #default="{ row }">{{ row.authType === 'dynamic' ? '动态' : '一机一密' }}</template>
+                  </el-table-column>
+                  <el-table-column label="物模型" width="100" align="center">
+                    <template #default="{ row }">
+                      <el-tag size="small" effect="plain">{{ (row.thingModel?.properties?.length || 0) + (row.thingModel?.services?.length || 0) + (row.thingModel?.events?.length || 0) }} 项</el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="状态" width="80" align="center">
+                    <template #default="{ row }">
+                      <el-tag size="small" :type="row.status === '0' ? 'success' : 'info'" effect="plain">{{ row.status === '0' ? '启用' : '停用' }}</el-tag>
+                    </template>
+                  </el-table-column>
+                  <el-table-column label="操作" width="180" align="center" fixed="right">
+                    <template #default="{ row }">
+                      <el-button link type="primary" size="small" @click="openDrawer(row)">详情</el-button>
+                      <el-button link type="primary" size="small" @click="openProductDialog(row)">编辑</el-button>
+                      <el-button link type="danger" size="small" @click="deleteProduct(row)">删除</el-button>
+                    </template>
+                  </el-table-column>
+                </el-table>
+              </div>
+            </div>
+          </div>
+        </main>
       </div>
-      <p style="font-size:13px; color:#7c8696">此页为占位页。数据来自 js/shared-data.js（PRODUCT_CATEGORIES / PRODUCTS）</p>
-      <a href="index.html">← 返回首页</a>
     </div>
+
+    <el-dialog v-model="catDialog" :title="catEditing ? '编辑分类' : '新建分类'" width="440px">
+      <el-form :model="catForm" label-width="80px">
+        <el-form-item label="分类名称"><el-input v-model="catForm.name" placeholder="请输入"></el-input></el-form-item>
+        <el-form-item label="父分类">
+          <el-select v-model="catForm.parentId" placeholder="顶级分类" clearable style="width:100%">
+            <el-option v-for="c in parentCategoryOptions" :key="c.id" :label="c.name" :value="c.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="图标"><el-input v-model="catForm.icon" placeholder="如 Sunny / Cpu / Connection"></el-input></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="catDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveCategory">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-dialog v-model="prodDialog" :title="prodEditing ? '编辑产品' : '新增产品'" width="560px" top="6vh">
+      <el-form :model="prodForm" label-width="100px" :rules="prodRules" ref="prodFormRef">
+        <el-form-item label="产品名称" prop="name"><el-input v-model="prodForm.name"></el-input></el-form-item>
+        <el-form-item label="ProductKey" prop="productKey"><el-input v-model="prodForm.productKey"></el-input></el-form-item>
+        <el-form-item label="所属分类" prop="categoryId">
+          <el-select v-model="prodForm.categoryId" placeholder="选择分类" style="width:100%" filterable>
+            <el-option v-for="c in SharedData.PRODUCT_CATEGORIES" :key="c.id" :label="c.name" :value="c.id"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="联网方式">
+          <el-select v-model="prodForm.networkType" style="width:100%">
+            <el-option label="WiFi" value="WiFi"></el-option>
+            <el-option label="4G" value="4G"></el-option>
+            <el-option label="Ethernet" value="Ethernet"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="认证方式">
+          <el-radio-group v-model="prodForm.authType"><el-radio label="one-device-one-secret">一机一密</el-radio><el-radio label="dynamic">动态注册</el-radio></el-radio-group>
+        </el-form-item>
+        <el-form-item label="状态">
+          <el-radio-group v-model="prodForm.status"><el-radio label="0">启用</el-radio><el-radio label="1">停用</el-radio></el-radio-group>
+        </el-form-item>
+        <el-form-item label="描述"><el-input v-model="prodForm.description" type="textarea" :rows="2"></el-input></el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="prodDialog = false">取消</el-button>
+        <el-button type="primary" @click="saveProduct">确定</el-button>
+      </template>
+    </el-dialog>
+
+    <el-drawer v-model="drawerVisible" :title="drawerTitle" direction="rtl" size="820px" destroy-on-close>
+      <div v-if="drawerProduct" class="drawer-flex">
+        <div class="drawer-main">
+          <el-tabs v-model="drawerTab" style="padding:0 20px;flex-shrink:0">
+            <el-tab-pane label="基础信息"></el-tab-pane>
+            <el-tab-pane>
+              <template #label><span class="thing-tab-label">属性<span class="badge">{{ drawerProduct.thingModel?.properties?.length || 0 }}</span></span></template>
+            </el-tab-pane>
+            <el-tab-pane>
+              <template #label><span class="thing-tab-label">服务<span class="badge">{{ drawerProduct.thingModel?.services?.length || 0 }}</span></span></template>
+            </el-tab-pane>
+            <el-tab-pane>
+              <template #label><span class="thing-tab-label">事件<span class="badge">{{ drawerProduct.thingModel?.events?.length || 0 }}</span></span></template>
+            </el-tab-pane>
+            <el-tab-pane label="Topic"></el-tab-pane>
+          </el-tabs>
+          <div class="drawer-body">
+            <div v-show="drawerTab === '0'" class="drawer-section">
+              <h4>产品标识</h4>
+              <el-form :model="drawerProduct" label-width="100px" size="default">
+                <el-form-item label="产品名称"><el-input v-model="drawerProduct.name"></el-input></el-form-item>
+                <el-form-item label="ProductKey"><el-input v-model="drawerProduct.productKey"></el-input></el-form-item>
+                <el-form-item label="所属分类">
+                  <el-select v-model="drawerProduct.categoryId" style="width:100%">
+                    <el-option v-for="c in SharedData.PRODUCT_CATEGORIES" :key="c.id" :label="c.name" :value="c.id"></el-option>
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="联网方式">
+                  <el-select v-model="drawerProduct.networkType" style="width:100%">
+                    <el-option label="WiFi" value="WiFi"></el-option>
+                    <el-option label="4G" value="4G"></el-option>
+                    <el-option label="Ethernet" value="Ethernet"></el-option>
+                  </el-select>
+                </el-form-item>
+                <el-form-item label="认证方式">
+                  <el-radio-group v-model="drawerProduct.authType"><el-radio label="one-device-one-secret">一机一密</el-radio><el-radio label="dynamic">动态注册</el-radio></el-radio-group>
+                </el-form-item>
+                <el-form-item label="状态">
+                  <el-radio-group v-model="drawerProduct.status"><el-radio label="0">启用</el-radio><el-radio label="1">停用</el-radio></el-radio-group>
+                </el-form-item>
+                <el-form-item label="产品描述"><el-input v-model="drawerProduct.description" type="textarea" :rows="3"></el-input></el-form-item>
+                <el-form-item>
+                  <el-button type="primary" @click="saveDrawerBasic">保存基础信息</el-button>
+                </el-form-item>
+              </el-form>
+            </div>
+            <div v-show="drawerTab === '1'" class="thing-editor">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                <div style="color:var(--ink-3);font-size:13px">设备上报/下发的数据字段</div>
+                <el-button type="primary" size="small" :icon="Plus" @click="addThingProp">新增属性</el-button>
+              </div>
+              <el-table :data="drawerProduct.thingModel.properties" border size="small">
+                <el-table-column label="名称" width="140"><template #default="{ row }"><el-input v-model="row.name" size="small"></el-input></template></el-table-column>
+                <el-table-column label="标识符" width="140"><template #default="{ row }"><el-input v-model="row.identifier" size="small"></el-input></template></el-table-column>
+                <el-table-column label="读写" width="100">
+                  <template #default="{ row }">
+                    <el-select v-model="row.accessType" size="small">
+                      <el-option label="只读" value="r"></el-option>
+                      <el-option label="读写" value="rw"></el-option>
+                      <el-option label="只写" value="w"></el-option>
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column label="必选" width="60" align="center">
+                  <template #default="{ row }"><el-checkbox v-model="row.required"></el-checkbox></template>
+                </el-table-column>
+                <el-table-column label="类型" width="100">
+                  <template #default="{ row }">
+                    <el-select v-model="row.dataType" size="small">
+                      <el-option label="int" value="int"></el-option>
+                      <el-option label="float" value="float"></el-option>
+                      <el-option label="bool" value="bool"></el-option>
+                      <el-option label="enum" value="enum"></el-option>
+                      <el-option label="text" value="text"></el-option>
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column label="取值范围/单位">
+                  <template #default="{ row }">
+                    <div style="display:flex;gap:4px;align-items:center">
+                      <template v-if="row.dataType === 'int' || row.dataType === 'float'">
+                        <el-input-number v-model="row.specs.min" :min="-99999" size="small" controls-position="right" placeholder="min" style="width:75px"></el-input-number>
+                        <span>~</span>
+                        <el-input-number v-model="row.specs.max" :min="-99999" size="small" controls-position="right" placeholder="max" style="width:75px"></el-input-number>
+                        <el-input v-model="row.specs.unit" size="small" placeholder="单位" style="width:55px"></el-input>
+                      </template>
+                      <template v-else-if="row.dataType === 'enum'">
+                        <el-input :model-value="enumOptionsText(row)" size="small" placeholder="k=v,k=v" @blur="parseEnumOptions(row)" style="flex:1"></el-input>
+                      </template>
+                      <template v-else>-</template>
+                    </div>
+                  </template>
+                </el-table-column>
+                <el-table-column label="操作" width="60" align="center" fixed="right">
+                  <template #default="{ $index }">
+                    <el-button link type="danger" size="small" @click="delThingProp($index)">删</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div v-show="drawerTab === '2'" class="thing-editor">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                <div style="color:var(--ink-3);font-size:13px">设备可被调用的能力</div>
+                <el-button type="primary" size="small" :icon="Plus" @click="addThingService">新增服务</el-button>
+              </div>
+              <el-table :data="drawerProduct.thingModel.services" border size="small">
+                <el-table-column label="名称" width="160"><template #default="{ row }"><el-input v-model="row.name" size="small"></el-input></template></el-table-column>
+                <el-table-column label="标识符" width="160"><template #default="{ row }"><el-input v-model="row.identifier" size="small"></el-input></template></el-table-column>
+                <el-table-column label="调用方式" width="120">
+                  <template #default="{ row }">
+                    <el-select v-model="row.callType" size="small">
+                      <el-option label="同步" value="sync"></el-option>
+                      <el-option label="异步" value="async"></el-option>
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column label="入参数" width="90" align="center">
+                  <template #default="{ row }"><el-input-number :model-value="row.inputs.length" :min="0" :max="10" size="small" controls-position="right" @change="v => syncServiceArgs(row, 'inputs', v)"></el-input-number></template>
+                </el-table-column>
+                <el-table-column label="出参数" width="90" align="center">
+                  <template #default="{ row }"><el-input-number :model-value="row.output.length" :min="0" :max="10" size="small" controls-position="right" @change="v => syncServiceArgs(row, 'output', v)"></el-input-number></template>
+                </el-table-column>
+                <el-table-column label="操作" width="60" align="center" fixed="right">
+                  <template #default="{ $index }">
+                    <el-button link type="danger" size="small" @click="delThingService($index)">删</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div v-show="drawerTab === '3'" class="thing-editor">
+              <div style="display:flex;justify-content:space-between;margin-bottom:10px">
+                <div style="color:var(--ink-3);font-size:13px">设备主动上报的通知</div>
+                <el-button type="primary" size="small" :icon="Plus" @click="addThingEvent">新增事件</el-button>
+              </div>
+              <el-table :data="drawerProduct.thingModel.events" border size="small">
+                <el-table-column label="名称" width="160"><template #default="{ row }"><el-input v-model="row.name" size="small"></el-input></template></el-table-column>
+                <el-table-column label="标识符" width="160"><template #default="{ row }"><el-input v-model="row.identifier" size="small"></el-input></template></el-table-column>
+                <el-table-column label="级别" width="100">
+                  <template #default="{ row }">
+                    <el-select v-model="row.level" size="small">
+                      <el-option label="info" value="info"></el-option>
+                      <el-option label="warn" value="warn"></el-option>
+                      <el-option label="error" value="error"></el-option>
+                    </el-select>
+                  </template>
+                </el-table-column>
+                <el-table-column label="出参数" width="90" align="center">
+                  <template #default="{ row }"><el-input-number :model-value="row.output.length" :min="0" :max="10" size="small" controls-position="right" @change="v => syncEventArgs(row, v)"></el-input-number></template>
+                </el-table-column>
+                <el-table-column label="操作" width="60" align="center" fixed="right">
+                  <template #default="{ $index }">
+                    <el-button link type="danger" size="small" @click="delThingEvent($index)">删</el-button>
+                  </template>
+                </el-table-column>
+              </el-table>
+            </div>
+            <div v-show="drawerTab === '4'" class="thing-editor">
+              <h4 style="margin:0 0 12px">设备 Topic 类（占位编辑）</h4>
+              <el-form label-width="120px" size="default">
+                <el-form-item label="发布 Topic"><el-input v-model="(drawerProduct.thingModel.topics || {}).post" placeholder="/sys/{productKey}/{deviceCode}/event/post"></el-input></el-form-item>
+                <el-form-item label="响应 Topic"><el-input v-model="(drawerProduct.thingModel.topics || {}).reply"></el-input></el-form-item>
+                <el-form-item label="订阅 Topic"><el-input v-model="(drawerProduct.thingModel.topics || {}).subscribe"></el-input></el-form-item>
+              </el-form>
+            </div>
+          </div>
+          <div style="padding:12px 20px;border-top:1px solid var(--line-soft);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0">
+            <el-button @click="drawerVisible = false">关闭</el-button>
+            <el-button type="primary" @click="saveThingModel">保存物模型</el-button>
+          </div>
+        </div>
+        <div class="drawer-json">
+          <div class="drawer-json-head">物模型 JSON</div>
+          <pre class="json-preview" v-html="syntaxHighlight(drawerProduct.thingModel)"></pre>
+        </div>
+      </div>
+    </el-drawer>
   </div>
-  <script src="js/shared-data.js"></script>
-  <script>
-    document.getElementById('cats').textContent = SharedData.PRODUCT_CATEGORIES.length;
-    document.getElementById('prods').textContent = SharedData.PRODUCTS.length;
-    const total = SharedData.PRODUCTS.reduce((s, p) => s + (p.thingModel?.properties?.length || 0), 0);
-    document.getElementById('props').textContent = total;
-  </script>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@3.5.13/dist/vue.global.prod.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@element-plus/icons-vue@2.3.1/dist/index.iife.min.js"></script>
+<script src="js/shared-data.js"></script>
+<script>
+const { createApp, ref, reactive, computed, watch } = Vue;
+
+const MENU_DATA = [
+  { title: '设备管理', icon: 'Monitor', open: true, items: ['产品分类','产品管理','设备管理','设备分组'] },
+  { title: '智慧灯杆', icon: 'Sunny', open: false, items: ['灯杆管理','灯控策略'] },
+  { title: '项目管理', icon: 'Folder', open: false, items: ['项目列表','项目分配','配额看板','分配流水'] },
+  { title: '租户管理', icon: 'OfficeBuilding', open: false, items: ['租户列表','配额管理','邀请码'] },
+];
+const MENU_HREF = {
+  '产品分类': 'product-management.html?tab=category',
+  '产品管理': 'product-management.html?tab=product',
+  '设备管理': 'device-management.html',
+  '设备分组': 'device-group.html',
+  '灯杆管理': 'pole-management.html',
+  '灯控策略': 'light-strategy.html',
+};
+
+const urlTab = new URLSearchParams(location.search).get('tab') || 'product';
+const activeMenuInitial = urlTab === 'category' ? '产品分类' : '产品管理';
+
+const app = createApp({
+  setup() {
+    const SD = window.SharedData;
+    const collapsed = ref(false);
+    const mobileNav = ref(false);
+    const activeMenu = ref(activeMenuInitial);
+    const menuGroups = reactive(MENU_DATA);
+    const menuHref = MENU_HREF;
+    const toggleGroup = (g) => { g.open = !g.open; };
+    const onMenuClick = (item) => { activeMenu.value = item; };
+
+    const iconComp = (name) => (window.ElementPlusIconsVue && window.ElementPlusIconsVue[name]) || null;
+    const submenuIcon = (name) => (window.SharedData && window.SharedData.SUBMENU_ICONS[name]) || null;
+
+    const savedTenant = localStorage.getItem('currentTenantId');
+    const currentTenantId = ref(savedTenant || 'T1');
+    const availableTenants = computed(() => SD.TENANTS);
+    const currentTenantName = computed(() => SD.TENANTS.find(t => t.id === currentTenantId.value)?.name || '未知租户');
+    const switchTenant = (id) => {
+      if (id === currentTenantId.value) return;
+      currentTenantId.value = id;
+      localStorage.setItem('currentTenantId', id);
+      ElementPlus.ElMessage.success('已切换租户');
+      setTimeout(() => window.location.reload(), 600);
+    };
+
+    const categoryTree = computed(() => {
+      const map = new Map();
+      SD.PRODUCT_CATEGORIES.forEach(c => map.set(c.id, { ...c, children: [] }));
+      const roots = [];
+      SD.PRODUCT_CATEGORIES.forEach(c => {
+        if (c.parentId && map.has(c.parentId)) map.get(c.parentId).children.push(map.get(c.id));
+        else roots.push(map.get(c.id));
+      });
+      return roots;
+    });
+    const selectedCategoryId = ref(null);
+    const onCategoryClick = (data) => { selectedCategoryId.value = data.id; };
+    const categoryName = (id) => SD.PRODUCT_CATEGORIES.find(c => c.id === id)?.name || '-';
+
+    const searchKw = ref('');
+    const filterStatus = ref('');
+    const filteredProducts = computed(() => {
+      return SD.PRODUCTS.filter(p => {
+        if (selectedCategoryId.value != null) {
+          const cat = SD.PRODUCT_CATEGORIES.find(c => c.id === p.categoryId);
+          if (!cat) return false;
+          // 选中分类或子分类
+          if (cat.id !== selectedCategoryId.value && cat.parentId !== selectedCategoryId.value) return false;
+        }
+        if (filterStatus.value && p.status !== filterStatus.value) return false;
+        if (searchKw.value && !(p.name.includes(searchKw.value) || p.productKey.toLowerCase().includes(searchKw.value.toLowerCase()))) return false;
+        return true;
+      });
+    });
+    const netTypeColor = (t) => t === '4G' ? 'success' : t === 'WiFi' ? 'warning' : 'info';
+
+    const catDialog = ref(false);
+    const catEditing = ref(false);
+    const catForm = reactive({ id: null, name: '', parentId: null, icon: '', sort: 0 });
+    const parentCategoryOptions = computed(() => SD.PRODUCT_CATEGORIES.filter(c => c.id !== catForm.id));
+    const openCategoryDialog = (data) => {
+      catEditing.value = !!data;
+      Object.assign(catForm, data ? { id: data.id, name: data.name, parentId: data.parentId || null, icon: data.icon || '', sort: data.sort || 0 } : { id: null, name: '', parentId: null, icon: '', sort: 0 });
+      catDialog.value = true;
+    };
+    const saveCategory = () => {
+      if (!catForm.name) { ElementPlus.ElMessage.warning('请输入分类名'); return; }
+      if (catEditing.value) {
+        const idx = SD.PRODUCT_CATEGORIES.findIndex(c => c.id === catForm.id);
+        if (idx > -1) Object.assign(SD.PRODUCT_CATEGORIES[idx], catForm);
+        ElementPlus.ElMessage.success('已更新');
+      } else {
+        const newId = Math.max(...SD.PRODUCT_CATEGORIES.map(c => c.id), 0) + 1;
+        SD.PRODUCT_CATEGORIES.push({ ...catForm, id: newId });
+        ElementPlus.ElMessage.success('已创建');
+      }
+      catDialog.value = false;
+    };
+    const deleteCategory = (data) => {
+      const childCount = SD.PRODUCT_CATEGORIES.filter(c => c.parentId === data.id).length;
+      const prodCount = SD.PRODUCTS.filter(p => p.categoryId === data.id).length;
+      if (childCount > 0) { ElementPlus.ElMessage.warning('该分类有 ' + childCount + ' 个子分类，无法删除'); return; }
+      if (prodCount > 0) { ElementPlus.ElMessage.warning('该分类有 ' + prodCount + ' 个产品，无法删除'); return; }
+      ElementPlus.ElMessageBox.confirm('确认删除分类「' + data.name + '」？', '提示', { type: 'warning' })
+        .then(() => {
+          const idx = SD.PRODUCT_CATEGORIES.findIndex(c => c.id === data.id);
+          if (idx > -1) { SD.PRODUCT_CATEGORIES.splice(idx, 1); ElementPlus.ElMessage.success('已删除'); }
+        }).catch(() => {});
+    };
+
+    const prodDialog = ref(false);
+    const prodEditing = ref(false);
+    const prodFormRef = ref();
+    const prodForm = reactive({ id: null, name: '', productKey: '', categoryId: null, networkType: '4G', authType: 'one-device-one-secret', status: '0', description: '' });
+    const prodRules = { name: [{ required: true, message: '请输入产品名称', trigger: 'blur' }], productKey: [{ required: true, message: '请输入 ProductKey', trigger: 'blur' }], categoryId: [{ required: true, message: '请选择分类', trigger: 'change' }] };
+    const openProductDialog = (data) => {
+      prodEditing.value = !!data;
+      Object.assign(prodForm, data ? { ...data } : { id: null, name: '', productKey: '', categoryId: selectedCategoryId.value || null, networkType: '4G', authType: 'one-device-one-secret', status: '0', description: '' });
+      prodDialog.value = true;
+    };
+    const saveProduct = async () => {
+      try { await prodFormRef.value.validate(); } catch { return; }
+      if (prodEditing.value) {
+        const idx = SD.PRODUCTS.findIndex(p => p.id === prodForm.id);
+        if (idx > -1) {
+          SD.PRODUCTS[idx] = { ...SD.PRODUCTS[idx], ...prodForm, thingModel: SD.PRODUCTS[idx].thingModel };
+          ElementPlus.ElMessage.success('已更新');
+        }
+      } else {
+        const newId = Math.max(...SD.PRODUCTS.map(p => p.id), 0) + 1;
+        SD.PRODUCTS.push({
+          id: newId, name: prodForm.name, productKey: prodForm.productKey, categoryId: prodForm.categoryId,
+          icon: 'Box', description: prodForm.description, status: prodForm.status,
+          networkType: prodForm.networkType, authType: prodForm.authType,
+          thingModel: { properties: [], services: [], events: [], topics: {} },
+        });
+        ElementPlus.ElMessage.success('已创建');
+      }
+      prodDialog.value = false;
+    };
+    const deleteProduct = (row) => {
+      const devCount = SD.DEVICES.filter(d => d.productId === row.id).length;
+      if (devCount > 0) { ElementPlus.ElMessage.warning('该产品下有 ' + devCount + ' 台设备，无法删除'); return; }
+      ElementPlus.ElMessageBox.confirm('确认删除产品「' + row.name + '」？', '提示', { type: 'warning' })
+        .then(() => {
+          const idx = SD.PRODUCTS.findIndex(p => p.id === row.id);
+          if (idx > -1) { SD.PRODUCTS.splice(idx, 1); ElementPlus.ElMessage.success('已删除'); }
+        }).catch(() => {});
+    };
+
+    const drawerVisible = ref(false);
+    const drawerProduct = ref(null);
+    const drawerTab = ref('0');
+    const drawerTitle = computed(() => drawerProduct.value ? drawerProduct.value.name + ' · 物模型' : '');
+    const openDrawer = (row) => {
+      drawerProduct.value = JSON.parse(JSON.stringify(row));
+      if (!drawerProduct.value.thingModel) drawerProduct.value.thingModel = { properties: [], services: [], events: [], topics: {} };
+      if (!drawerProduct.value.thingModel.topics) drawerProduct.value.thingModel.topics = {};
+      drawerTab.value = '0';
+      drawerVisible.value = true;
+    };
+    const saveDrawerBasic = () => {
+      const idx = SD.PRODUCTS.findIndex(p => p.id === drawerProduct.value.id);
+      if (idx > -1) {
+        SD.PRODUCTS[idx].name = drawerProduct.value.name;
+        SD.PRODUCTS[idx].productKey = drawerProduct.value.productKey;
+        SD.PRODUCTS[idx].categoryId = drawerProduct.value.categoryId;
+        SD.PRODUCTS[idx].networkType = drawerProduct.value.networkType;
+        SD.PRODUCTS[idx].authType = drawerProduct.value.authType;
+        SD.PRODUCTS[idx].status = drawerProduct.value.status;
+        SD.PRODUCTS[idx].description = drawerProduct.value.description;
+        ElementPlus.ElMessage.success('基础信息已保存');
+      }
+    };
+    const saveThingModel = () => {
+      const idx = SD.PRODUCTS.findIndex(p => p.id === drawerProduct.value.id);
+      if (idx > -1) {
+        SD.PRODUCTS[idx].thingModel = JSON.parse(JSON.stringify(drawerProduct.value.thingModel));
+        ElementPlus.ElMessage.success('物模型已保存');
+      }
+    };
+
+    const addThingProp = () => { drawerProduct.value.thingModel.properties.push({ name:'', identifier:'', accessType:'r', required:false, dataType:'int', specs:{ min:0, max:100, unit:'' } }); };
+    const delThingProp = (i) => { drawerProduct.value.thingModel.properties.splice(i, 1); };
+    const enumOptionsText = (row) => (row.specs.options || []).map(o => o.label + '=' + o.value).join(',');
+    const parseEnumOptions = (row) => {
+      const t = enumOptionsText(row); if (!t) { row.specs.options = []; return; }
+      row.specs.options = t.split(',').map(s => { const [l, v] = s.split('='); return { label: l || '', value: isNaN(Number(v)) ? v : Number(v) }; });
+    };
+    const addThingService = () => { drawerProduct.value.thingModel.services.push({ name:'', identifier:'', callType:'async', inputs:[], output:[] }); };
+    const delThingService = (i) => { drawerProduct.value.thingModel.services.splice(i, 1); };
+    const syncServiceArgs = (row, key, n) => {
+      while (row[key].length < n) row[key].push({ name: 'param' + (row[key].length + 1), dataType: 'text' });
+      while (row[key].length > n) row[key].pop();
+    };
+    const addThingEvent = () => { drawerProduct.value.thingModel.events.push({ name:'', identifier:'', level:'info', output:[] }); };
+    const delThingEvent = (i) => { drawerProduct.value.thingModel.events.splice(i, 1); };
+    const syncEventArgs = (row, n) => syncServiceArgs(row, 'output', n);
+
+    const syntaxHighlight = (json) => {
+      const str = JSON.stringify(json, null, 2);
+      return str
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(\.\d*)?([eE][+\-]?\d+)?)/g, (m) => {
+          let cls = 'json-number';
+          if (/^"/.test(m)) cls = /:$/.test(m) ? 'json-key' : 'json-string';
+          else if (/true|false/.test(m)) cls = 'json-bool';
+          else if (/null/.test(m)) cls = 'json-null';
+          return '<span class="' + cls + '">' + m + '</span>';
+        });
+    };
+
+    return {
+      collapsed, mobileNav, activeMenu, menuGroups, menuHref, toggleGroup, onMenuClick,
+      iconComp, submenuIcon,
+      currentTenantId, currentTenantName, availableTenants, switchTenant, SharedData: SD,
+      categoryTree, selectedCategoryId, onCategoryClick, categoryName,
+      searchKw, filterStatus, filteredProducts, netTypeColor,
+      catDialog, catEditing, catForm, parentCategoryOptions, openCategoryDialog, saveCategory, deleteCategory,
+      prodDialog, prodEditing, prodForm, prodFormRef, prodRules, openProductDialog, saveProduct, deleteProduct,
+      drawerVisible, drawerProduct, drawerTab, drawerTitle, openDrawer, saveDrawerBasic, saveThingModel,
+      addThingProp, delThingProp, enumOptionsText, parseEnumOptions,
+      addThingService, delThingService, syncServiceArgs,
+      addThingEvent, delThingEvent, syncEventArgs,
+      syntaxHighlight,
+      Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete,
+      Search: ElementPlusIconsVue?.Search, Menu: ElementPlusIconsVue?.Menu, Fold: ElementPlusIconsVue?.Fold, Expand: ElementPlusIconsVue?.Expand,
+      OfficeBuilding: ElementPlusIconsVue?.OfficeBuilding, Check: ElementPlusIconsVue?.Check, ArrowDown: ElementPlusIconsVue?.ArrowDown,
+      Monitor: ElementPlusIconsVue?.Monitor, Sunny: ElementPlusIconsVue?.Sunny, Folder: ElementPlusIconsVue?.Folder, HomeFilled: ElementPlusIconsVue?.HomeFilled,
+      Box: ElementPlusIconsVue?.Box, Connection: ElementPlusIconsVue?.Connection, Setting: ElementPlusIconsVue?.Setting, Promotion: ElementPlusIconsVue?.Promotion,
+    };
+  }
+});
+
+app.use(ElementPlus);
+if (window.ElementPlusIconsVue) {
+  for (const [k, v] of Object.entries(window.ElementPlusIconsVue)) app.component(k, v);
+}
+app.mount('#app');
+</script>
 </body>
 </html>
