@@ -317,6 +317,142 @@
     return PROJECTS.filter(p => p.tenantId === tenantId).length;
   }
 
+  /* ============== IoT：产品分类 Seed ============== */
+  const PRODUCT_CATEGORIES = [
+    { id: 1, name: '智慧灯杆',   parentId: null, sort: 1, icon: 'Sunny' },
+    { id: 2, name: '智慧网关',   parentId: null, sort: 2, icon: 'Connection' },
+    { id: 3, name: '视频监控',   parentId: null, sort: 3, icon: 'VideoCamera' },
+    { id: 4, name: 'LED 显示屏', parentId: null, sort: 4, icon: 'Monitor' },
+    { id: 5, name: '环境监测',   parentId: null, sort: 5, icon: 'DataLine' },
+    { id: 6, name: '智慧充电桩', parentId: null, sort: 6, icon: 'Lightning' },
+    { id: 11, name: '标准型', parentId: 1, sort: 1, icon: 'Sunny' },
+    { id: 12, name: '经济型', parentId: 1, sort: 2, icon: 'Sunny' },
+    { id: 13, name: '旗舰型', parentId: 1, sort: 3, icon: 'Sunny' },
+  ];
+
+  /* ============== IoT：产品 Seed（含物模型） ============== */
+  const PRODUCTS = [
+    { id: 1, name: '智慧灯杆-标准型', categoryId: 11, productKey: 'LP-STD-001', icon: 'Sunny', description: '面向市政道路的标准化智慧灯杆', status: '0', networkType: '4G', authType: 'one-device-one-secret', thingModel: { properties: [
+      { name: '电压', identifier: 'voltage', accessType: 'r', required: false, dataType: 'float', specs: { min: 0, max: 300, unit: 'V' } },
+      { name: '电流', identifier: 'current', accessType: 'r', required: false, dataType: 'float', specs: { min: 0, max: 10, unit: 'A' } },
+      { name: '功率', identifier: 'power', accessType: 'r', required: false, dataType: 'float', specs: { min: 0, max: 500, unit: 'W' } },
+      { name: '功率因数', identifier: 'pf', accessType: 'r', required: false, dataType: 'float', specs: { min: 0, max: 1 } },
+      { name: '亮度', identifier: 'brightness', accessType: 'rw', required: true, dataType: 'int', specs: { min: 0, max: 100, unit: '%' } },
+      { name: '色温', identifier: 'cct', accessType: 'rw', required: false, dataType: 'int', specs: { min: 2700, max: 6500, unit: 'K' } },
+      { name: '芯片温度', identifier: 'temperature', accessType: 'r', required: false, dataType: 'float', specs: { min: -40, max: 85, unit: '℃' } },
+      { name: '信号质量', identifier: 'signal', accessType: 'r', required: false, dataType: 'int', specs: { min: 0, max: 31 } },
+      { name: '开关状态', identifier: 'switch_state', accessType: 'rw', required: true, dataType: 'bool', specs: {} },
+      { name: '告警', identifier: 'alarm', accessType: 'r', required: false, dataType: 'enum', specs: { options: [{label:'正常',value:0},{label:'告警',value:1}] } },
+    ], services: [
+      { name: '开关灯', identifier: 'switch', callType: 'async', inputs: [{ name: 'on', dataType: 'bool' }], output: [] },
+      { name: '调光', identifier: 'dim', callType: 'async', inputs: [{ name: 'level', dataType: 'int' }], output: [] },
+    ], events: [
+      { name: '故障告警', identifier: 'fault', level: 'error', output: [{ name: 'reason', dataType: 'text' }] },
+    ], topics: { post: '/sys/{productKey}/{deviceCode}/event/post', reply: '/sys/{productKey}/{deviceCode}/event/reply', subscribe: '/sys/{productKey}/{deviceCode}/event/+' } } },
+    { id: 2, name: '智慧灯杆-经济型', categoryId: 12, productKey: 'LP-ECO-002', icon: 'Sunny', description: '低成本款', status: '0', networkType: 'WiFi', authType: 'one-device-one-secret', thingModel: { properties: [{ name: '亮度', identifier: 'brightness', accessType: 'rw', dataType: 'int', specs: { min: 0, max: 100 } }], services: [], events: [], topics: {} } },
+    { id: 3, name: '智慧灯杆-旗舰型', categoryId: 13, productKey: 'LP-FLA-003', icon: 'Sunny', description: '高端款', status: '0', networkType: '4G', authType: 'dynamic', thingModel: { properties: [], services: [], events: [], topics: {} } },
+    { id: 4, name: '智慧网关',   categoryId: 2, productKey: 'GW-001',  icon: 'Connection', description: '通用物联网网关', status: '0', networkType: 'Ethernet', authType: 'one-device-one-secret', thingModel: { properties: [], services: [], events: [], topics: {} } },
+    { id: 5, name: '视频监控',   categoryId: 3, productKey: 'CAM-001', icon: 'VideoCamera', description: '高清摄像头', status: '0', networkType: 'WiFi', authType: 'one-device-one-secret', thingModel: { properties: [], services: [], events: [], topics: {} } },
+    { id: 6, name: 'LED 显示屏', categoryId: 4, productKey: 'LED-001', icon: 'Monitor', description: '户外 LED 屏', status: '0', networkType: '4G', authType: 'one-device-one-secret', thingModel: { properties: [], services: [], events: [], topics: {} } },
+    { id: 7, name: '环境监测',   categoryId: 5, productKey: 'ENV-001', icon: 'DataLine', description: '温湿度/PM2.5', status: '0', networkType: '4G', authType: 'one-device-one-secret', thingModel: { properties: [], services: [], events: [], topics: {} } },
+    { id: 8, name: '智慧充电桩', categoryId: 6, productKey: 'CHG-001', icon: 'Lightning', description: '电动汽车充电桩', status: '0', networkType: '4G', authType: 'one-device-one-secret', thingModel: { properties: [], services: [], events: [], topics: {} } },
+  ];
+
+  /* ============== IoT：设备分组 Seed（树形 3 层） ============== */
+  const DEVICE_GROUPS = [
+    { id: 1, name: '华东大区', parentId: null, sort: 1, owner: 'admin', remark: '华东区域设备' },
+    { id: 2, name: '上海',     parentId: 1,    sort: 1, owner: 'admin', remark: '' },
+    { id: 3, name: '苏州',     parentId: 1,    sort: 2, owner: 'admin', remark: '' },
+    { id: 4, name: '杭州',     parentId: 1,    sort: 3, owner: 'admin', remark: '' },
+    { id: 5, name: '浦东园区', parentId: 2,    sort: 1, owner: 'admin', remark: '' },
+    { id: 6, name: '虹桥园区', parentId: 2,    sort: 2, owner: 'admin', remark: '' },
+    { id: 7, name: '苏州工业园区', parentId: 3, sort: 1, owner: 'admin', remark: '' },
+    { id: 8, name: '华南大区', parentId: null, sort: 2, owner: 'admin', remark: '华南区域设备' },
+    { id: 9, name: '广州',     parentId: 8,    sort: 1, owner: 'admin', remark: '' },
+    { id: 10, name: '深圳',    parentId: 8,    sort: 2, owner: 'admin', remark: '' },
+    { id: 11, name: '天河区',  parentId: 9,    sort: 1, owner: 'admin', remark: '' },
+    { id: 12, name: '南沙区',  parentId: 9,    sort: 2, owner: 'admin', remark: '' },
+    { id: 13, name: '前海合作区', parentId: 10, sort: 1, owner: 'admin', remark: '' },
+    { id: 14, name: '华北大区', parentId: null, sort: 3, owner: 'admin', remark: '华北区域设备' },
+    { id: 15, name: '北京',     parentId: 14,   sort: 1, owner: 'admin', remark: '' },
+    { id: 16, name: '海淀',     parentId: 15,   sort: 1, owner: 'admin', remark: '' },
+    { id: 17, name: '华中大区', parentId: null, sort: 4, owner: 'admin', remark: '' },
+    { id: 18, name: '武汉',     parentId: 17,   sort: 1, owner: 'admin', remark: '' },
+    { id: 19, name: '智慧园区照明项目', parentId: null, sort: 5, owner: 'admin', remark: 'T1 项目 1' },
+    { id: 20, name: '城市道路改造项目', parentId: null, sort: 6, owner: 'admin', remark: 'T1 项目 2' },
+  ];
+
+  /* ============== IoT：设备 Seed（148 条） ============== */
+  const _deviceCodes = ['862041074724346','862041074848699','865743082867622','865743082882522','866522075609640','866522075661187','869978083918950','869978083926847','869978083928090','869978084012712','869978084012803','869978084253662'];
+  const _createdDates = ['2025-12-20','2025-12-20','2026-03-13','2026-03-13','2026-01-27','2026-01-27','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21','2026-05-21'];
+  const DEVICES = [];
+  for (let i = 0; i < 148; i++) {
+    const base = _deviceCodes[i % _deviceCodes.length];
+    const code = i < 12 ? base : (Number(base) + i).toString();
+    const status = i % 7 === 0 ? 'online' : 'offline';
+    const groupId = ((i * 3) % 20) + 1;
+    const productId = (i % 8) + 1;
+    DEVICES.push({
+      id: i + 1,
+      name: code,
+      code,
+      deviceKey: 'DK' + code.substring(0, 6),
+      deviceSecret: 'SK' + code.substring(8, 14) + i,
+      tenantId: 'T1',
+      productId,
+      groupId,
+      status,
+      thingInstance: {
+        voltage: 220 + (i % 10), current: +(0.5 + (i % 5) * 0.1).toFixed(2), power: 0, pf: 0.9,
+        brightness: 80, cct: 4000, temperature: 26 + (i % 15), signal: 31,
+        switch_state: status === 'online', alarm: 0,
+      },
+      location: { lng: '121.51292', lat: '31.225543', address: '上海' },
+      createdAt: _createdDates[i % _createdDates.length] + ' 09:00:00',
+      remark: '',
+    });
+  }
+
+  /* ============== IoT 工具函数 ============== */
+  function getProductsByCategory(categoryId) {
+    if (categoryId == null) return PRODUCTS.slice();
+    return PRODUCTS.filter(p => p.categoryId === categoryId);
+  }
+
+  function getDevicesByGroup(groupId, recursive) {
+    if (groupId == null) return DEVICES.slice();
+    if (!recursive) return DEVICES.filter(d => d.groupId === groupId);
+    const groupIds = new Set([groupId]);
+    const queue = [groupId];
+    while (queue.length) {
+      const id = queue.shift();
+      DEVICE_GROUPS.filter(g => g.parentId === id).forEach(g => { groupIds.add(g.id); queue.push(g.id); });
+    }
+    return DEVICES.filter(d => groupIds.has(d.groupId));
+  }
+
+  function getGroupTree() {
+    const map = new Map();
+    DEVICE_GROUPS.forEach(g => map.set(g.id, { ...g, children: [] }));
+    const roots = [];
+    DEVICE_GROUPS.forEach(g => {
+      if (g.parentId && map.has(g.parentId)) map.get(g.parentId).children.push(map.get(g.id));
+      else roots.push(map.get(g.id));
+    });
+    return roots;
+  }
+
+  function getDeviceCountInGroup(groupId, recursive) {
+    return getDevicesByGroup(groupId, recursive).length;
+  }
+
+  function moveDevicesToGroup(deviceIds, targetGroupId) {
+    const set = new Set(deviceIds);
+    let n = 0;
+    DEVICES.forEach(d => { if (set.has(d.id)) { d.groupId = targetGroupId; n++; } });
+    return n;
+  }
+
   /* ============== 暴露到全局 ============== */
   global.SharedData = {
     TENANTS,
@@ -331,6 +467,10 @@
     MENU_TREE,
     MENU_GROUPS,
     SUBMENU_ICONS,
+    PRODUCT_CATEGORIES,
+    PRODUCTS,
+    DEVICE_GROUPS,
+    DEVICES,
     // 工具函数
     getTenant,
     getTenantQuota,
@@ -344,8 +484,14 @@
     calcProjectPoleUsed,
     calcTenantPoleUsed,
     calcTenantProjectUsed,
+    getProductsByCategory,
+    getDevicesByGroup,
+    getGroupTree,
+    getDeviceCountInGroup,
+    moveDevicesToGroup,
     getSubmenuIcon,
     getMenuGroups,
   };
+
 
 })(window);

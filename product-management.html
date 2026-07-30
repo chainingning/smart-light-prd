@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <title>产品管理 · 云创智慧平台</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css" />
+  <style>
+    body { margin: 0; font-family: "Inter", "PingFang SC", sans-serif; background: #f4f6fb; color: #1b2533; }
+    #app { height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .placeholder { text-align: center; max-width: 520px; padding: 32px; background: #fff; border-radius: 12px; box-shadow: 0 2px 8px rgba(16,24,40,.06); }
+    h1 { font-size: 24px; margin: 0 0 12px; }
+    p { color: #586273; margin: 6px 0; }
+    a { color: #2f6bff; text-decoration: none; display: inline-block; margin-top: 18px; }
+    .stats { display: flex; gap: 16px; justify-content: center; margin: 18px 0; }
+    .stat { background: #f4f6fb; border-radius: 8px; padding: 10px 18px; }
+    .stat b { color: #2f6bff; font-size: 20px; }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <div class="placeholder">
+      <h1>📦 产品管理（IoT 阶段 A 骨架）</h1>
+      <p>数据层已就位，阶段 B 将完成完整 CRUD + 物模型编辑器</p>
+      <div class="stats">
+        <div class="stat"><b id="cats">-</b><br><small>产品分类</small></div>
+        <div class="stat"><b id="prods">-</b><br><small>产品</small></div>
+        <div class="stat"><b id="props">-</b><br><small>物模型属性</small></div>
+      </div>
+      <p style="font-size:13px; color:#7c8696">此页为占位页。数据来自 js/shared-data.js（PRODUCT_CATEGORIES / PRODUCTS）</p>
+      <a href="index.html">← 返回首页</a>
+    </div>
+  </div>
+  <script src="js/shared-data.js"></script>
+  <script>
+    document.getElementById('cats').textContent = SharedData.PRODUCT_CATEGORIES.length;
+    document.getElementById('prods').textContent = SharedData.PRODUCTS.length;
+    const total = SharedData.PRODUCTS.reduce((s, p) => s + (p.thingModel?.properties?.length || 0), 0);
+    document.getElementById('props').textContent = total;
+  </script>
+</body>
+</html>
