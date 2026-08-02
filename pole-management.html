@@ -532,6 +532,8 @@
               <el-input v-model="poleSearchForm.name" placeholder="请输入灯杆" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
               <span class="lbl">序列号</span>
               <el-input v-model="poleSearchForm.sn" placeholder="请输入序列号" style="width: 180px" clearable @keyup.enter="poleDoSearch"></el-input>
+              <span class="lbl">SIM卡号</span>
+              <el-input v-model="poleSearchForm.simCard" placeholder="请输入SIM卡号" style="width: 200px" clearable @keyup.enter="poleDoSearch"></el-input>
               <span class="lbl">设备状态</span>
               <el-select v-model="poleSearchForm.status" placeholder="请选择" style="width: 130px" clearable>
                 <el-option label="未注册" value="unregistered"></el-option><el-option label="在线" value="online"></el-option><el-option label="离线" value="offline"></el-option>
@@ -632,7 +634,7 @@
                 <el-table-column prop="name" label="灯杆名称" min-width="100" show-overflow-tooltip sortable fixed="left"></el-table-column>
                 <el-table-column v-if="colVis['灯杆序列号']" prop="sn" label="灯杆序列号" width="130" show-overflow-tooltip sortable></el-table-column>
                 <el-table-column v-if="colVis['灯杆地址']" prop="address" label="灯杆地址" min-width="140" show-overflow-tooltip></el-table-column>
-                <el-table-column v-if="colVis['设备状态']" label="设备状态" width="124" align="center">
+                <el-table-column v-if="colVis['设备状态']" label="设备状态" width="112" align="center">
                   <template #default="{ row }">
                     <div class="status-cell">
                       <span class="wifi" :title="row.status === 'online' ? ('信号强度: ' + (row.signal || 0) + '/3') : poleStatusLabel(row.status)">
@@ -641,16 +643,13 @@
                           <path d="M8.54 10.00 A4 4 0 0 1 15.46 10.00" :stroke="row.status === 'online' && row.signal >= 1 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
                           <path d="M5.07 8.00 A8 8 0 0 1 18.93 8.00" :stroke="row.status === 'online' && row.signal >= 2 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
                           <path d="M1.61 6.00 A12 12 0 0 1 22.39 6.00" :stroke="row.status === 'online' && row.signal >= 3 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
-                          <template v-if="row.status !== 'online'">
-                            <line x1="4" y1="20" x2="20" y2="4" stroke="#C0C4CC" stroke-width="1.8" stroke-linecap="round"></line>
-                          </template>
                         </svg>
                       </span>
                       <el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag>
                     </div>
                   </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['开关状态']" label="开关控制" width="96" align="center">
+                <el-table-column v-if="colVis['开关状态']" label="开关控制" width="92" align="center">
                   <template #default="{ row }">
                     <el-button size="small"
                       :type="row.switchOn ? 'warning' : 'info'"
@@ -663,12 +662,12 @@
                     </el-button>
                   </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="82" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="82" align="right" :formatter="(r,c,v)=>num(v,2)"></el-table-column>
-                <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="82" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="112" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['亮度(%)']" prop="brightness" label="亮度(%)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="82" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
+                <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="76" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
+                <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="76" align="right" :formatter="(r,c,v)=>num(v,2)"></el-table-column>
+                <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="76" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
+                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="104" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
+                <el-table-column v-if="colVis['亮度(%)']" prop="brightness" label="亮度(%)" width="76" align="right"></el-table-column>
+                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="76" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
                 <el-table-column v-if="colVis['运行时间(H)']" prop="runHours" label="运行时间(H)" width="96" align="right"></el-table-column>
                 <el-table-column v-if="colVis['光控状态']" label="光控控制" width="76" align="center">
                   <template #default="{ row }">
@@ -706,7 +705,7 @@
                 <el-table-column v-if="colVis['所属产品']" prop="product" label="所属产品" min-width="100" show-overflow-tooltip></el-table-column>
                 <el-table-column v-if="colVis['项目名称']" prop="projectName" label="项目名称" min-width="110" show-overflow-tooltip></el-table-column>
                 <el-table-column v-if="colVis['分组']" prop="groupName" label="分组" min-width="80" show-overflow-tooltip></el-table-column>
-                <el-table-column label="操作" min-width="160" align="center" fixed="right">
+                <el-table-column label="操作" min-width="120" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
                       <el-button size="small" type="primary" :icon="View" @click="openPoleDetail(row)">详情</el-button>
@@ -714,8 +713,8 @@
                         <el-button size="small">更多<i class="el-icon-arrow-down el-icon--right"></i></el-button>
                         <template #dropdown>
                           <el-dropdown-menu>
-                            <el-dropdown-item :icon="Document" command="readback">策略回读</el-dropdown-item>
                             <el-dropdown-item :icon="Edit" command="edit">编辑</el-dropdown-item>
+                            <el-dropdown-item :icon="Document" command="readback">策略回读</el-dropdown-item>
                           </el-dropdown-menu>
                         </template>
                       </el-dropdown>
@@ -1243,6 +1242,7 @@ const app = createApp({
     const filteredPoles = computed(() => poles.filter(p =>
       (!poleApplied.name || p.name.includes(poleApplied.name)) &&
       (!poleApplied.sn || p.sn.includes(poleApplied.sn)) &&
+      (!poleApplied.simCard || (p.simCard || '').includes(poleApplied.simCard)) &&
       (!poleApplied.status || p.status === poleApplied.status) &&
       (!poleApplied.projectName || p.projectName === poleApplied.projectName) &&
       (!poleApplied.product || p.product === poleApplied.product) &&
@@ -1390,8 +1390,8 @@ const app = createApp({
       }
     };
     const onRowCmd = (cmd, row) => {
-      if (cmd === 'readback') poleStrategyReadback(row);
-      else if (cmd === 'edit') openEditPole(row);
+      if (cmd === 'edit') openEditPole(row);
+      else if (cmd === 'readback') poleStrategyReadback(row);
     };
     const poleDetailVisible = ref(false);
     const poleDetailData = ref(null);
