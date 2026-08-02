@@ -616,12 +616,6 @@
               <el-select v-model="stForm.loop" placeholder="请选择" style="width:100%"><el-option v-for="l in loops" :key="l" :label="'回路 ' + l" :value="l"></el-option></el-select>
             </el-form-item>
           </template>
-          <el-form-item label="时区" prop="timezone">
-            <el-select v-model="stForm.timezone" placeholder="请选择" style="width:100%">
-              <el-option v-for="tz in timezoneOptions" :key="tz.value" :label="tz.label" :value="tz.value"></el-option>
-            </el-select>
-            <div style="margin-top:6px"><el-button link type="primary" size="small" :icon="MapLocation" @click="toggleMapPicker(stForm)">地图选点，自动判断时区</el-button></div>
-          </el-form-item>
           <el-form-item label="备注"><el-input v-model="stForm.remark" type="textarea" :rows="2" placeholder="请输入备注"></el-input></el-form-item>
         </el-form>
       </div>

@@ -298,7 +298,12 @@
     .bulb-ico { margin-right: 4px; vertical-align: -2px; transition: filter .2s; }
     .bulb-ico.is-on { filter: drop-shadow(0 0 3px rgba(255,255,255,.95)); }
     .status-cell { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .el-table .col-nowrap .cell { white-space: nowrap; }
+    .el-table .hdr-unit { display: block; text-align: center; }
+    .el-table .col-pf .cell { white-space: nowrap; }
+    .el-table .nowrap { white-space: nowrap; }
     .status-cell .wifi { display: inline-flex; line-height: 0; }
+    .status-cell .wifi svg { transform: translateY(2.5px); }
     /* 工具栏内联调光/色温进度条控制 */
     .mini-ctrl { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--bd, #e4e7ed); border-radius: 6px; background: #fff; cursor: pointer; transition: border-color .2s; }
     .mini-ctrl:hover { border-color: var(--brand, #409EFF); }
@@ -631,18 +636,18 @@
             <div class="table-zone">
               <el-table :data="pagedPoles" stripe style="width:100%" :header-cell-style="tableHeaderStyle" @selection-change="poleSelectionChange">
                 <el-table-column type="selection" width="42"></el-table-column>
-                <el-table-column prop="name" label="灯杆名称" min-width="100" show-overflow-tooltip sortable fixed="left"></el-table-column>
+                <el-table-column prop="name" label="灯杆名称" min-width="112" show-overflow-tooltip sortable fixed="left" :header-cell-class-name="'col-nowrap'"></el-table-column>
                 <el-table-column v-if="colVis['灯杆序列号']" prop="sn" label="灯杆序列号" width="130" show-overflow-tooltip sortable></el-table-column>
-                <el-table-column v-if="colVis['灯杆地址']" prop="address" label="灯杆地址" min-width="140" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['灯杆地址']" prop="address" label="灯杆地址" min-width="120" show-overflow-tooltip></el-table-column>
                 <el-table-column v-if="colVis['设备状态']" label="设备状态" width="112" align="center">
                   <template #default="{ row }">
                     <div class="status-cell">
-                      <span class="wifi" :title="row.status === 'online' ? ('信号强度: ' + (row.signal || 0) + '/3') : poleStatusLabel(row.status)">
+                      <span class="wifi" :title="'信号值: ' + (row.signal || 0) + '（' + (row.status === 'online' ? signalTier(row.signal) : poleStatusLabel(row.status)) + '）'">
                         <svg viewBox="0 0 24 24" width="18" height="18">
                           <circle cx="12" cy="12" r="1.3" :fill="row.status === 'online' ? '#67C23A' : '#C0C4CC'"></circle>
-                          <path d="M8.54 10.00 A4 4 0 0 1 15.46 10.00" :stroke="row.status === 'online' && row.signal >= 1 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
-                          <path d="M5.07 8.00 A8 8 0 0 1 18.93 8.00" :stroke="row.status === 'online' && row.signal >= 2 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
-                          <path d="M1.61 6.00 A12 12 0 0 1 22.39 6.00" :stroke="row.status === 'online' && row.signal >= 3 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M8.54 10.00 A4 4 0 0 1 15.46 10.00" :stroke="row.status === 'online' && signalBars(row.signal) >= 1 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M5.07 8.00 A8 8 0 0 1 18.93 8.00" :stroke="row.status === 'online' && signalBars(row.signal) >= 2 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M1.61 6.00 A12 12 0 0 1 22.39 6.00" :stroke="row.status === 'online' && signalBars(row.signal) >= 3 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
                         </svg>
                       </span>
                       <el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag>
@@ -662,13 +667,27 @@
                     </el-button>
                   </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="76" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="76" align="right" :formatter="(r,c,v)=>num(v,2)"></el-table-column>
-                <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="76" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="104" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['亮度(%)']" prop="brightness" label="亮度(%)" width="76" align="right"></el-table-column>
-                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="76" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
-                <el-table-column v-if="colVis['运行时间(H)']" prop="runHours" label="运行时间(H)" width="96" align="right"></el-table-column>
+                <el-table-column v-if="colVis['电压(V)']" prop="voltage" width="64" align="right" :formatter="(r,c,v)=>num(v,1)">
+                  <template #header>电压<br>(V)</template>
+                </el-table-column>
+                <el-table-column v-if="colVis['电流(A)']" prop="current" width="64" align="right" :formatter="(r,c,v)=>num(v,2)">
+                  <template #header>电流<br>(A)</template>
+                </el-table-column>
+                <el-table-column v-if="colVis['功率(W)']" prop="power" width="64" align="right" :formatter="(r,c,v)=>num(v,1)">
+                  <template #header>功率<br>(W)</template>
+                </el-table-column>
+                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" width="88" align="right" :formatter="(r,c,v)=>num(v,1)" :header-cell-class-name="'col-pf'">
+                  <template #header><span class="nowrap">功率因素</span><br>(%)</template>
+                </el-table-column>
+                <el-table-column v-if="colVis['亮度(%)']" prop="brightness" width="52" align="right">
+                  <template #header>亮度<br>(%)</template>
+                </el-table-column>
+                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" width="64" align="right" :formatter="(r,c,v)=>num(v,1)">
+                  <template #header>温度<br>(℃)</template>
+                </el-table-column>
+                <el-table-column v-if="colVis['运行时间(H)']" prop="runHours" width="90" align="right">
+                  <template #header>运行时间<br><span class="hdr-unit">(H)</span></template>
+                </el-table-column>
                 <el-table-column v-if="colVis['光控状态']" label="光控控制" width="76" align="center">
                   <template #default="{ row }">
                     <el-switch
@@ -697,14 +716,14 @@
                     </el-switch>
                   </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['杆体倾斜']" label="杆体倾斜" width="80" align="center">
+                <el-table-column v-if="colVis['杆体倾斜']" label="杆体倾斜" width="76" align="center">
                   <template #default="{ row }"><el-tag :type="poleTiltType(row.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(row.tilt) }}</el-tag></template>
                 </el-table-column>
-                <el-table-column v-if="colVis['频率(Hz)']" prop="frequency" label="频率(Hz)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['灯具类型']" prop="lampType" label="灯具类型" min-width="90" show-overflow-tooltip></el-table-column>
-                <el-table-column v-if="colVis['所属产品']" prop="product" label="所属产品" min-width="100" show-overflow-tooltip></el-table-column>
-                <el-table-column v-if="colVis['项目名称']" prop="projectName" label="项目名称" min-width="110" show-overflow-tooltip></el-table-column>
-                <el-table-column v-if="colVis['分组']" prop="groupName" label="分组" min-width="80" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['频率(Hz)']" prop="frequency" label="频率(Hz)" width="78" align="right"></el-table-column>
+                <el-table-column v-if="colVis['灯具类型']" prop="lampType" label="灯具类型" min-width="80" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['所属产品']" prop="product" label="所属产品" min-width="92" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['项目名称']" prop="projectName" label="项目名称" min-width="100" show-overflow-tooltip></el-table-column>
+                <el-table-column v-if="colVis['分组']" prop="groupName" label="分组" min-width="76" show-overflow-tooltip></el-table-column>
                 <el-table-column label="操作" min-width="120" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
@@ -1167,7 +1186,7 @@ for (let i = 1; i <= 42; i++) {
     sn: 'LP2026' + String(100000 + i),
     address: '上海市浦东新区示范路' + i + '号',
     status: i % 5 === 0 ? 'unregistered' : (i % 3 === 0 ? 'offline' : 'online'),
-    signal: (i % 5 === 0 || i % 3 === 0) ? 0 : (1 + (i % 3)),
+    signal: (i % 5 === 0 || i % 3 === 0) ? 0 : (1 + (i % 31)),
     switchOn: i % 3 !== 0,
     voltage: +(220 + (i % 10)).toFixed(1),
     current: +(0.5 + (i % 5) * 0.1).toFixed(2),
@@ -1231,7 +1250,7 @@ const app = createApp({
 
     // 列显示/隐藏：始终显示 选择/灯杆名称/操作，其余字段可隐藏
     const colSettingOptions = ['灯杆序列号','灯杆地址','设备状态','开关状态','电压(V)','电流(A)','功率(W)','功率因素(%)','亮度(%)','温度(℃)','运行时间(H)','光控状态','人体感应','杆体倾斜','频率(Hz)','灯具类型','所属产品','项目名称','分组'];
-    const colVis = reactive(Object.fromEntries(colSettingOptions.map(c => [c, true])));
+    const colVis = reactive(Object.fromEntries(colSettingOptions.map(c => [c, c !== '运行时间(H)'])));
     const poleApplied = reactive({ ...poleSearchForm });
     const poleShowMore = ref(false);
     const polePage = ref(1);
@@ -1273,6 +1292,19 @@ const app = createApp({
     };
     const poleStatusType = (s) => ({ online: 'success', offline: 'danger', unregistered: 'info' }[s] || 'info');
     const poleStatusLabel = (s) => ({ online: '在线', offline: '离线', unregistered: '未注册' }[s] || s);
+    // 信号值(1-31) → 格数：1-12 弱(1格) / 13-22 中(2格) / 23-31 满格(3格)
+    const signalBars = (v) => {
+      if (!v || v <= 0) return 0;
+      if (v <= 12) return 1;
+      if (v <= 22) return 2;
+      return 3;
+    };
+    const signalTier = (v) => {
+      if (!v || v <= 0) return '无信号';
+      if (v <= 12) return '1格(弱,1-12)';
+      if (v <= 22) return '2格(中,13-22)';
+      return '满格(强,23-31)';
+    };
     const poleTiltType = (t) => ({ normal: 'success', slight: 'warning', severe: 'danger' }[t] || 'info');
     const poleTiltLabel = (t) => ({ normal: '正常', slight: '微倾', severe: '严重倾斜' }[t] || t);
     const poleLightOn = () => poleConfirmAndExec('确定要对选中的灯杆执行【开灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = true); ElementPlus.ElMessage.success('开灯成功'); });
@@ -1546,7 +1578,7 @@ const app = createApp({
       poleProjectOptions, poleProductOptions, poles, poleSearchForm, poleShowMore, polePage, polePageSize,
       filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleSetLightControl, poleSetBodySense, openBigScreen, poleStats, dimValue, cctValue, applyDim, applyCCT,
       selectedPoles, poleSelectionChange,
-      poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
+      poleStatusType, poleStatusLabel, signalBars, signalTier, poleTiltType, poleTiltLabel,
       poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete, poleToggleSwitch, poleToggleLightControl, poleToggleBodySense,
       poleExport, poleDownloadTemplate, poleBatchExport,
       poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleStrategyReadback, onRowCmd,
