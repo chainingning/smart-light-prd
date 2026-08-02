@@ -556,8 +556,8 @@
                   <el-option v-for="p in poleProjectOptions" :key="p" :label="p" :value="p"></el-option>
                 </el-select>
                 <span class="lbl">所属产品</span>
-                <el-select v-model="poleSearchForm.product" placeholder="请选择" style="width: 180px" clearable>
-                  <el-option v-for="p in poleProductOptions" :key="p" :label="p" :value="p"></el-option>
+                <el-select v-model="poleSearchForm.product" placeholder="请选择" style="width: 180px" clearable filterable>
+                  <el-option v-for="p in poleProductOptions" :key="p.productKey || p.name" :label="p.name" :value="p.name"></el-option>
                 </el-select>
               </template>
               <el-button type="primary" :icon="Search" @click="poleDoSearch">搜索</el-button>
@@ -1245,7 +1245,10 @@ const app = createApp({
   setup() {
     const shared = createSharedSetup('灯杆管理');
     const poleProjectOptions = poleProjectOptionsSeed;
-    const poleProductOptions = poleProductOptionsSeed;
+    // 所属产品：引用物联网产品管理（js/shared-data.js 的 PRODUCTS 中「智慧灯杆」产品线），与产品管理模块保持一致
+    const poleProductOptions = (window.SharedData && typeof window.SharedData.getPoleProducts === 'function')
+      ? window.SharedData.getPoleProducts()
+      : poleProductOptionsSeed.map(name => ({ name }));
     const poles = reactive(polesSeed);
     const groups = reactive(groupsSeed);
     const allGroupNames = computed(() => groups.map(g => g.name));
@@ -1399,15 +1402,15 @@ const app = createApp({
     const blankPoleForm = () => ({ projectName: '', product: '', sn: '', name: '', lng: '', lat: '', address: '', remark: '' });
     const poleForm = reactive(blankPoleForm());
     const openAddPole = () => { poleEditingId.value = null; poleDialogTitle.value = '新增灯杆'; Object.assign(poleForm, blankPoleForm()); poleDialogVisible.value = true; };
-    const openEditPole = (row) => { poleEditingId.value = row.id; poleDialogTitle.value = '编辑灯杆信息'; Object.assign(poleForm, { projectName: row.projectName, product: row.product, sn: row.sn, name: row.name, lng: '', lat: '', address: row.address, remark: '' }); poleDialogVisible.value = true; };
+    const openEditPole = (row) => { poleEditingId.value = row.id; poleDialogTitle.value = '编辑灯杆信息'; Object.assign(poleForm, { projectName: row.projectName, product: row.product, sn: row.sn, name: row.name, lng: row.lng || '', lat: row.lat || '', address: row.address, remark: '' }); poleDialogVisible.value = true; };
     const savePole = () => {
       if (!poleForm.name || !poleForm.sn) { ElementPlus.ElMessage.warning('请填写灯杆名称和序列号'); return; }
       if (poleEditingId.value) {
         const t = poles.find(p => p.id === poleEditingId.value);
-        if (t) Object.assign(t, { name: poleForm.name, sn: poleForm.sn, product: poleForm.product, projectName: poleForm.projectName, address: poleForm.address });
+        if (t) Object.assign(t, { name: poleForm.name, sn: poleForm.sn, product: poleForm.product, projectName: poleForm.projectName, address: poleForm.address, lng: poleForm.lng, lat: poleForm.lat });
         ElementPlus.ElMessage.success('编辑成功');
       } else {
-        poles.unshift({ id: Date.now(), name: poleForm.name, sn: poleForm.sn, address: poleForm.address, status: 'unregistered', switchOn: false,
+        poles.unshift({ id: Date.now(), name: poleForm.name, sn: poleForm.sn, address: poleForm.address, lng: poleForm.lng, lat: poleForm.lat, status: 'unregistered', switchOn: false,
           voltage: 220, current: 0, power: 0, powerFactor: 90, brightness: 0, temperature: 25, runHours: 0,
           lightControl: false, bodySense: false, tilt: 'normal', frequency: 50, lampType: 'LED路灯',
           product: poleForm.product, projectName: poleForm.projectName, groupName: '' });

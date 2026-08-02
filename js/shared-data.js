@@ -419,6 +419,19 @@
     return PRODUCTS.filter(p => p.categoryId === categoryId);
   }
 
+  /** 递归获取某分类的全部子孙分类 ID（含自身） */
+  function getDescendantCategoryIds(categoryId, cats) {
+    const ids = [categoryId];
+    cats.filter(c => c.parentId === categoryId).forEach(c => ids.push(...getDescendantCategoryIds(c.id, cats)));
+    return ids;
+  }
+
+  /** 取「智慧灯杆」产品线下的全部物联网产品（含标准型/经济型/旗舰型子分类），供灯杆管理引用 */
+  function getPoleProducts() {
+    const poleCatIds = getDescendantCategoryIds(1, PRODUCT_CATEGORIES); // 智慧灯杆(1) + 子分类 11/12/13
+    return PRODUCTS.filter(p => poleCatIds.includes(p.categoryId));
+  }
+
   function getDevicesByGroup(groupId, recursive) {
     if (groupId == null) return DEVICES.slice();
     if (!recursive) return DEVICES.filter(d => d.groupId === groupId);
@@ -485,6 +498,7 @@
     calcTenantPoleUsed,
     calcTenantProjectUsed,
     getProductsByCategory,
+    getPoleProducts,
     getDevicesByGroup,
     getGroupTree,
     getDeviceCountInGroup,
