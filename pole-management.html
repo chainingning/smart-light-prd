@@ -295,6 +295,20 @@
     .dc-status.off { background: #fdecee; color: var(--off); }
     .dc-status.on { background: #e7f7f0; color: var(--ok); }
     .dc-status .s-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+    .bulb-ico { margin-right: 4px; vertical-align: -2px; transition: filter .2s; }
+    .bulb-ico.is-on { filter: drop-shadow(0 0 3px rgba(255,255,255,.95)); }
+    .status-cell { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
+    .status-cell .wifi { display: inline-flex; line-height: 0; }
+    /* 工具栏内联调光/色温进度条控制 */
+    .mini-ctrl { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px solid var(--bd, #e4e7ed); border-radius: 6px; background: #fff; cursor: pointer; transition: border-color .2s; }
+    .mini-ctrl:hover { border-color: var(--brand, #409EFF); }
+    .mini-ctrl .mc-label { font-size: 13px; color: var(--ink-2); white-space: nowrap; }
+    .mini-ctrl .mc-bar { width: 90px; }
+    .mini-ctrl .mc-bar .el-progress__text { font-size: 11px; }
+    .mini-ctrl .mc-val { font-size: 12px; color: var(--ink-3); min-width: 30px; text-align: right; }
+    .mc-pop { padding: 2px 4px; }
+    .mc-pop-title { font-size: 13px; color: var(--ink-2); margin-bottom: 6px; }
+    .mc-pop-title b { color: var(--brand, #409EFF); }
     .dc-info { display: grid; gap: 9px; }
     .dc-row { display: flex; font-size: var(--fs-sm); color: var(--ink-2); }
     .dc-row .k { color: var(--ink-3); width: 64px; flex: 0 0 auto; }
@@ -548,19 +562,16 @@
               <el-button type="primary" size="small" :icon="Plus" @click="openAddPole">新增</el-button>
               <el-button size="small" :icon="Upload" @click="poleImportVisible = true">导入</el-button>
               <el-button size="small" :icon="Download" @click="poleExport">导出</el-button>
-              <el-dropdown size="small" @command="poleGroupLightCmd">
-                <el-button type="success" size="small" :icon="Menu">分组开灯/关灯<i class="el-icon-arrow-down el-icon--right"></i></el-button>
-                <template #dropdown><el-dropdown-menu>
-                  <el-dropdown-item command="on" :icon="Lightning">分组开灯</el-dropdown-item>
-                  <el-dropdown-item command="off" :icon="MuteNotification">分组关灯</el-dropdown-item>
-                </el-dropdown-menu></template>
-              </el-dropdown>
               <el-button size="small" :disabled="true">迁移</el-button>
               <el-button size="small" type="success" :disabled="true">分组</el-button>
-              <el-button size="small" type="success" :icon="Remove" :disabled="true">解组</el-button>
+              <el-button size="small" type="success" :disabled="true">解组</el-button>
               <el-divider direction="vertical"></el-divider>
-              <el-button size="small" type="warning" :icon="Lightning" :disabled="!selectedPoles.length" @click="poleLightOn">开灯</el-button>
-              <el-button size="small" type="info" :icon="MuteNotification" :disabled="!selectedPoles.length" @click="poleLightOff">关灯</el-button>
+              <el-button size="small" type="warning" :disabled="!selectedPoles.length" @click="poleLightOn">
+                <el-icon class="bulb-ico is-on"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"></path></svg></el-icon>全开
+              </el-button>
+              <el-button size="small" type="info" :disabled="!selectedPoles.length" @click="poleLightOff">
+                <el-icon class="bulb-ico"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"></path></svg></el-icon>全关
+              </el-button>
               <el-button size="small" type="success" :disabled="!selectedPoles.length" @click="poleSetLightControl(true)">光控开</el-button>
               <el-button size="small" type="primary" :disabled="!selectedPoles.length" @click="poleSetLightControl(false)">光控关</el-button>
               <el-button size="small" type="success" :disabled="!selectedPoles.length" @click="poleSetBodySense(true)">感应开</el-button>
@@ -571,6 +582,35 @@
               <el-button size="small" type="danger" :icon="Delete" :disabled="!selectedPoles.length" @click="poleBatchDelete">删除</el-button>
               <el-divider direction="vertical"></el-divider>
               <el-button size="small" :icon="DataLine" @click="openBigScreen">大屏</el-button>
+              <el-divider direction="vertical"></el-divider>
+              <el-popover placement="bottom" :width="240" trigger="click">
+                <template #reference>
+                  <div class="mini-ctrl" title="点击调节调光">
+                    <span class="mc-label">调光</span>
+                    <el-progress :percentage="dimValue" :stroke-width="12" :color="'#E6A23C'" class="mc-bar"></el-progress>
+                    <span class="mc-val">{{ dimValue }}%</span>
+                  </div>
+                </template>
+                <div class="mc-pop">
+                  <div class="mc-pop-title">调光 <b>{{ dimValue }}%</b></div>
+                  <el-slider v-model="dimValue" :min="0" :max="100" show-input></el-slider>
+                  <el-button size="small" type="primary" style="width:100%;margin-top:4px;" :disabled="!selectedPoles.length" @click="applyDim">应用到选中灯杆</el-button>
+                </div>
+              </el-popover>
+              <el-popover placement="bottom" :width="240" trigger="click">
+                <template #reference>
+                  <div class="mini-ctrl" title="点击调节色温">
+                    <span class="mc-label">色温</span>
+                    <el-progress :percentage="cctValue" :stroke-width="12" :color="'#409EFF'" class="mc-bar"></el-progress>
+                    <span class="mc-val">{{ cctValue }}%</span>
+                  </div>
+                </template>
+                <div class="mc-pop">
+                  <div class="mc-pop-title">色温 <b>{{ cctValue }}%</b></div>
+                  <el-slider v-model="cctValue" :min="0" :max="100" show-input></el-slider>
+                  <el-button size="small" type="primary" style="width:100%;margin-top:4px;" :disabled="!selectedPoles.length" @click="applyCCT">应用到选中灯杆</el-button>
+                </div>
+              </el-popover>
               <div class="toolbar-right">
                 <el-popover placement="bottom-end" :width="220" trigger="click">
                   <template #reference>
@@ -591,24 +631,68 @@
                 <el-table-column prop="name" label="灯杆名称" min-width="100" show-overflow-tooltip sortable fixed="left"></el-table-column>
                 <el-table-column v-if="colVis['灯杆序列号']" prop="sn" label="灯杆序列号" width="130" show-overflow-tooltip sortable></el-table-column>
                 <el-table-column v-if="colVis['灯杆地址']" prop="address" label="灯杆地址" min-width="140" show-overflow-tooltip></el-table-column>
-                <el-table-column v-if="colVis['设备状态']" label="设备状态" width="90" align="center">
-                  <template #default="{ row }"><el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag></template>
+                <el-table-column v-if="colVis['设备状态']" label="设备状态" width="124" align="center">
+                  <template #default="{ row }">
+                    <div class="status-cell">
+                      <span class="wifi" :title="'信号强度: ' + (row.signal || 0) + '/3'">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                          <circle cx="12" cy="12" r="1.3" :fill="row.signal > 0 ? '#67C23A' : '#C0C4CC'"></circle>
+                          <path d="M8.54 10.00 A4 4 0 0 1 15.46 10.00" :stroke="row.signal >= 1 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M5.07 8.00 A8 8 0 0 1 18.93 8.00" :stroke="row.signal >= 2 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M1.61 6.00 A12 12 0 0 1 22.39 6.00" :stroke="row.signal >= 3 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                        </svg>
+                      </span>
+                      <el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag>
+                    </div>
+                  </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['开关状态']" label="开关状态" width="80" align="center">
-                  <template #default="{ row }"><el-tag :type="row.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ row.switchOn ? '开灯' : '关灯' }}</el-tag></template>
+                <el-table-column v-if="colVis['开关状态']" label="开关控制" width="96" align="center">
+                  <template #default="{ row }">
+                    <el-button size="small"
+                      :type="row.switchOn ? 'warning' : 'info'"
+                      :title="row.switchOn ? '点击关灯' : '点击开灯'"
+                      @click="poleToggleSwitch(row)">
+                      <el-icon class="bulb-ico" :class="{ 'is-on': row.switchOn }">
+                        <svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"></path></svg>
+                      </el-icon>
+                      {{ row.switchOn ? '开灯' : '关灯' }}
+                    </el-button>
+                  </template>
                 </el-table-column>
                 <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="82" align="right"></el-table-column>
                 <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="82" align="right"></el-table-column>
                 <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="96" align="right"></el-table-column>
+                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="112" align="right"></el-table-column>
                 <el-table-column v-if="colVis['亮度(%)']" prop="brightness" label="亮度(%)" width="82" align="right"></el-table-column>
                 <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="82" align="right"></el-table-column>
                 <el-table-column v-if="colVis['运行时间(H)']" prop="runHours" label="运行时间(H)" width="96" align="right"></el-table-column>
-                <el-table-column v-if="colVis['光控状态']" label="光控状态" width="80" align="center">
-                  <template #default="{ row }"><el-tag :type="row.lightControl ? 'success' : 'info'" size="small" effect="plain">{{ row.lightControl ? '开启' : '关闭' }}</el-tag></template>
+                <el-table-column v-if="colVis['光控状态']" label="光控控制" width="76" align="center">
+                  <template #default="{ row }">
+                    <el-switch
+                      :model-value="row.lightControl"
+                      :active-color="'#67C23A'"
+                      :inactive-color="'#C0C4CC'"
+                      inline-prompt
+                      active-text="开"
+                      inactive-text="关"
+                      :title="row.lightControl ? '点击关闭光控' : '点击开启光控'"
+                      @change="(v) => poleToggleLightControl(row, v)">
+                    </el-switch>
+                  </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['人体感应']" label="人体感应" width="80" align="center">
-                  <template #default="{ row }"><el-tag :type="row.bodySense ? 'success' : 'info'" size="small" effect="plain">{{ row.bodySense ? '开启' : '关闭' }}</el-tag></template>
+                <el-table-column v-if="colVis['人体感应']" label="人体感应" width="76" align="center">
+                  <template #default="{ row }">
+                    <el-switch
+                      :model-value="row.bodySense"
+                      :active-color="'#67C23A'"
+                      :inactive-color="'#C0C4CC'"
+                      inline-prompt
+                      active-text="开"
+                      inactive-text="关"
+                      :title="row.bodySense ? '点击关闭人体感应' : '点击开启人体感应'"
+                      @change="(v) => poleToggleBodySense(row, v)">
+                    </el-switch>
+                  </template>
                 </el-table-column>
                 <el-table-column v-if="colVis['杆体倾斜']" label="杆体倾斜" width="80" align="center">
                   <template #default="{ row }"><el-tag :type="poleTiltType(row.tilt)" size="small" effect="dark" round>{{ poleTiltLabel(row.tilt) }}</el-tag></template>
@@ -1074,6 +1158,7 @@ for (let i = 1; i <= 42; i++) {
     sn: 'LP2026' + String(100000 + i),
     address: '上海市浦东新区示范路' + i + '号',
     status: i % 5 === 0 ? 'unregistered' : (i % 3 === 0 ? 'offline' : 'online'),
+    signal: (i % 5 === 0 || i % 3 === 0) ? 0 : (1 + (i % 3)),
     switchOn: i % 3 !== 0,
     voltage: +(220 + (i % 10)).toFixed(1),
     current: +(0.5 + (i % 5) * 0.1).toFixed(2),
@@ -1141,6 +1226,9 @@ const app = createApp({
     const poleShowMore = ref(false);
     const polePage = ref(1);
     const polePageSize = ref(10);
+    // 调光 / 色温全局控制值（进度条展示，0-100）
+    const dimValue = ref(80);
+    const cctValue = ref(50);
     const filteredPoles = computed(() => poles.filter(p =>
       (!poleApplied.name || p.name.includes(poleApplied.name)) &&
       (!poleApplied.sn || p.sn.includes(poleApplied.sn)) &&
@@ -1178,6 +1266,18 @@ const app = createApp({
     const poleTiltLabel = (t) => ({ normal: '正常', slight: '微倾', severe: '严重倾斜' }[t] || t);
     const poleLightOn = () => poleConfirmAndExec('确定要对选中的灯杆执行【开灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = true); ElementPlus.ElMessage.success('开灯成功'); });
     const poleLightOff = () => poleConfirmAndExec('确定要对选中的灯杆执行【关灯】操作吗？', () => { selectedPoles.value.forEach(p => p.switchOn = false); ElementPlus.ElMessage.success('关灯成功'); });
+    const poleToggleSwitch = (row) => {
+      row.switchOn = !row.switchOn;
+      ElementPlus.ElMessage.success(`灯杆「${row.name}」已${row.switchOn ? '开灯' : '关灯'}`);
+    };
+    const poleToggleLightControl = (row, val) => {
+      row.lightControl = val;
+      ElementPlus.ElMessage.success(`灯杆「${row.name}」光控已${val ? '开启' : '关闭'}`);
+    };
+    const poleToggleBodySense = (row, val) => {
+      row.bodySense = val;
+      ElementPlus.ElMessage.success(`灯杆「${row.name}」人体感应已${val ? '开启' : '关闭'}`);
+    };
     const poleLightAllOn = () => {
       if (!filteredPoles.value.length) { ElementPlus.ElMessage.warning('当前没有可操作的灯杆'); return; }
       ElementPlus.ElMessageBox.confirm(`确定要对全部 ${filteredPoles.value.length} 台灯杆执行【全部开灯】操作吗？`, '操作确认', { confirmButtonText: '确定', cancelButtonText: '取消', type: 'warning' })
@@ -1213,12 +1313,6 @@ const app = createApp({
       link.click();
       ElementPlus.ElMessage.success(`已导出 ${selectedPoles.value.length} 条灯杆数据`);
     };
-    const poleGroupLightCmd = (cmd) => {
-      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
-      const on = cmd === 'on';
-      selectedPoles.value.forEach(p => p.switchOn = on);
-      ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆执行分组${on ? '开灯' : '关灯'}`);
-    };
     const poleSetLightControl = (val) => {
       if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
       selectedPoles.value.forEach(p => p.lightControl = val);
@@ -1230,6 +1324,16 @@ const app = createApp({
       ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆${val ? '开启' : '关闭'}人体感应`);
     };
     const openBigScreen = () => window.open('big-screen.html', '_blank');
+    const applyDim = () => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
+      selectedPoles.value.forEach(p => p.brightness = dimValue.value);
+      ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆下发调光 ${dimValue.value}%`);
+    };
+    const applyCCT = () => {
+      if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择灯杆'); return; }
+      selectedPoles.value.forEach(p => p.cct = cctValue.value);
+      ElementPlus.ElMessage.success(`已对选中的 ${selectedPoles.value.length} 台灯杆下发色温 ${cctValue.value}%`);
+    };
     const poleDownloadTemplate = () => {
       const csvContent = '\uFEFF' + [
         '灯杆名称,序列号,项目名称,产品类型,地址',
@@ -1417,10 +1521,10 @@ const app = createApp({
     };
     return { ...shared,
       poleProjectOptions, poleProductOptions, poles, poleSearchForm, poleShowMore, polePage, polePageSize,
-      filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleGroupLightCmd, poleSetLightControl, poleSetBodySense, openBigScreen, poleStats,
+      filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleSetLightControl, poleSetBodySense, openBigScreen, poleStats, dimValue, cctValue, applyDim, applyCCT,
       selectedPoles, poleSelectionChange,
       poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
-      poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete,
+      poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete, poleToggleSwitch, poleToggleLightControl, poleToggleBodySense,
       poleExport, poleDownloadTemplate, poleBatchExport,
       poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete, poleStrategyReadback,
       poleDetailVisible, poleDetailData, openPoleDetail, polePowerChart,
@@ -1441,7 +1545,7 @@ const app = createApp({
       View: ElementPlusIconsVue?.View, Lightning: ElementPlusIconsVue?.Lightning, MuteNotification: ElementPlusIconsVue?.MuteNotification,
       CirclePlus: ElementPlusIconsVue?.CirclePlus, UploadFilled: ElementPlusIconsVue?.UploadFilled, Upload: ElementPlusIconsVue?.Upload,
       SetUp: ElementPlusIconsVue?.SetUp, Close: ElementPlusIconsVue?.Close,
-      Menu: ElementPlusIconsVue?.Menu, DataLine: ElementPlusIconsVue?.DataLine, Remove: ElementPlusIconsVue?.Remove,
+      Menu: ElementPlusIconsVue?.Menu, DataLine: ElementPlusIconsVue?.DataLine,
       Setting: ElementPlusIconsVue?.Setting, SwitchButton: ElementPlusIconsVue?.SwitchButton, User: ElementPlusIconsVue?.User,
       Document: ElementPlusIconsVue?.Document,
     };
