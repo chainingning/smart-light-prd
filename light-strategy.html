@@ -344,10 +344,6 @@
     /* 动作内联编辑 */
     .act-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
     .act-count { display: inline-block; min-width: 20px; padding: 0 7px; margin-left: 4px; font-size: 12px; line-height: 18px; text-align: center; color: #fff; background: var(--brand); border-radius: 10px; }
-    .act-quick { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-    .aq-label { font-size: var(--fs-sm); color: var(--ink-3); }
-    .aq-chip { cursor: pointer; user-select: none; transition: all .15s; }
-    .aq-chip:hover { color: var(--brand); border-color: var(--brand); }
     .act-scene { font-size: 12px; line-height: 18px; padding: 0 8px; border-radius: 10px; font-weight: 600; white-space: nowrap; }
     .act-list { display: flex; flex-direction: column; gap: 12px; }
     .act-card { border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); overflow: hidden; }
@@ -360,6 +356,10 @@
     .seg-lbl { font-size: var(--fs-sm); color: var(--ink-3); }
     .seg-val { width: 40px; font-size: var(--fs-sm); color: var(--ink); }
     .seg-hint { font-size: var(--fs-sm); color: var(--ink-3); }
+    .seg-arrow { color: var(--brand); font-weight: 700; margin: 0 2px; }
+    .coord-tag { font-size: var(--fs-sm); color: var(--ink-2); background: var(--bg-soft, #f5f7fa); border: 1px solid var(--line); border-radius: 10px; padding: 1px 8px; display: inline-flex; align-items: center; gap: 6px; }
+    .act-type-lbl { margin-left: 4px; }
+    .act-summary { margin-top: 2px; padding: 7px 10px; background: var(--brand-soft, #eef4ff); border-radius: 6px; font-size: var(--fs-sm); color: var(--brand, #2f6bff); line-height: 1.4; }
     .act-empty { padding: 8px 0; }
 
     /* ============ 灯杆管理 / 批量条 / 选择详情提示 ============ */
@@ -654,25 +654,17 @@
     <div style="border-top:1px solid var(--line); padding-top:16px; margin-top:16px">
       <div class="act-head">
         <div class="cat-head" style="padding:0">执行动作 <span class="act-count">{{ stForm.actions.length }}</span></div>
-        <div class="act-quick">
-          <span class="aq-label">快捷模板</span>
-          <el-tag v-for="t in actionTemplates" :key="t.key" class="aq-chip" effect="plain" @click="applyTemplate(stForm, t)">{{ t.label }}</el-tag>
-          <el-button type="primary" size="small" :icon="CirclePlus" @click="addActionCard(stForm)">添加动作</el-button>
-        </div>
+        <el-button type="primary" size="small" :icon="CirclePlus" @click="addActionCard(stForm)">添加动作</el-button>
       </div>
       <div v-if="stForm.actions.length" class="act-list">
         <div v-for="(a, i) in stForm.actions" :key="i" class="act-card">
           <div class="act-card-head">
             <span class="act-idx">动作 {{ i + 1 }}</span>
             <span v-if="a.scene" class="act-scene" :style="{ color: sceneColor(a.scene), background: sceneColor(a.scene) + '1a' }">{{ a.scene }}</span>
+            <span class="seg-lbl act-type-lbl">动作类型</span>
             <el-select v-model="a.action" size="small" style="width:104px">
               <el-option label="开关灯" value="开关灯"></el-option>
               <el-option label="调光" value="调光"></el-option>
-            </el-select>
-            <el-select v-model="a.triggerType" size="small" style="width:116px">
-              <el-option label="定时" value="timed"></el-option>
-              <el-option label="日出" value="sunrise"></el-option>
-              <el-option label="日落" value="sunset"></el-option>
             </el-select>
             <div class="act-card-spacer"></div>
             <el-button link type="danger" size="small" :icon="Delete" @click="stForm.actions.splice(i, 1)">删除</el-button>
@@ -680,42 +672,70 @@
           <div class="act-card-body">
             <div class="act-seg">
               <span class="seg-title">开始</span>
+              <el-select v-model="a.triggerType" size="small" style="width:92px">
+                <el-option label="定时" value="timed"></el-option>
+                <el-option label="日出" value="sunrise"></el-option>
+                <el-option label="日落" value="sunset"></el-option>
+              </el-select>
+              <template v-if="a.triggerType === 'timed'">
+                <el-time-picker v-model="a.startTime" format="HH:mm" value-format="HH:mm" size="small" style="width:108px" placeholder="开始时间"></el-time-picker>
+              </template>
+              <template v-else>
+                <span class="seg-lbl">偏移</span>
+                <el-input-number v-model="a.startOffset" :min="-120" :max="120" :step="5" size="small" style="width:92px"></el-input-number>
+                <span class="seg-hint">分</span>
+                <el-button link type="primary" size="small" :icon="MapLocation" @click="openCoordPicker(a, 'startLng', 'startLat')">经纬度</el-button>
+                <span v-if="hasCoord(a, 'startLng', 'startLat')" class="coord-tag">
+                  经{{ fmtCoord(a.startLng) }} 纬{{ fmtCoord(a.startLat) }}
+                  <el-button link type="success" size="small" @click="recommendOffset(stForm.timezone, a, 'startLng', 'startLat', 'startOffset')">推荐偏移</el-button>
+                </span>
+              </template>
+              <span class="seg-arrow">→</span>
               <template v-if="a.action === '开关灯'">
                 <el-switch v-model="a.startOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
               </template>
               <template v-else>
                 <span class="seg-lbl">亮度</span>
-                <el-slider v-model="a.startBright" :max="100" style="width:120px"></el-slider>
+                <el-slider v-model="a.startBright" :max="100" style="width:110px"></el-slider>
                 <span class="seg-val">{{ a.startBright }}%</span>
-              </template>
-              <template v-if="a.triggerType === 'timed'">
-                <span class="seg-lbl">时间</span>
-                <el-time-picker v-model="a.startTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="开始时间"></el-time-picker>
-              </template>
-              <template v-else>
-                <span class="seg-lbl">偏移</span>
-                <el-input-number v-model="a.startOffset" :min="-120" :max="120" :step="5" size="small" style="width:104px"></el-input-number>
-                <span class="seg-hint">分</span>
               </template>
             </div>
             <div class="act-seg">
               <span class="seg-title">结束</span>
+              <el-select v-model="a.endTrigger" size="small" style="width:92px">
+                <el-option label="定时" value="timed"></el-option>
+                <el-option label="日出" value="sunrise"></el-option>
+                <el-option label="日落" value="sunset"></el-option>
+              </el-select>
+              <template v-if="a.endTrigger === 'timed'">
+                <el-time-picker v-model="a.endTime" format="HH:mm" value-format="HH:mm" size="small" style="width:108px" placeholder="结束时间"></el-time-picker>
+              </template>
+              <template v-else>
+                <span class="seg-lbl">偏移</span>
+                <el-input-number v-model="a.endOffset" :min="-120" :max="120" :step="5" size="small" style="width:92px"></el-input-number>
+                <span class="seg-hint">分</span>
+                <el-button link type="primary" size="small" :icon="MapLocation" @click="openCoordPicker(a, 'endLng', 'endLat')">经纬度</el-button>
+                <span v-if="hasCoord(a, 'endLng', 'endLat')" class="coord-tag">
+                  经{{ fmtCoord(a.endLng) }} 纬{{ fmtCoord(a.endLat) }}
+                  <el-button link type="success" size="small" @click="recommendOffset(stForm.timezone, a, 'endLng', 'endLat', 'endOffset')">推荐偏移</el-button>
+                </span>
+              </template>
+              <span class="seg-arrow">→</span>
               <template v-if="a.action === '开关灯'">
                 <el-switch v-model="a.endOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
               </template>
               <template v-else>
                 <span class="seg-lbl">亮度</span>
-                <el-slider v-model="a.endBright" :max="100" style="width:120px"></el-slider>
+                <el-slider v-model="a.endBright" :max="100" style="width:110px"></el-slider>
                 <span class="seg-val">{{ a.endBright }}%</span>
               </template>
-              <span class="seg-lbl">时间</span>
-              <el-time-picker v-model="a.endTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="结束时间"></el-time-picker>
             </div>
+            <div class="act-summary">{{ summarizeAction(a) }}</div>
           </div>
         </div>
       </div>
       <div v-else class="act-empty">
-        <el-empty description="暂无动作，点击「添加动作」或选择左侧快捷模板" :image-size="56"></el-empty>
+        <el-empty description="暂无动作，点击「添加动作」" :image-size="56"></el-empty>
       </div>
     </div>
     <template #footer>
@@ -782,25 +802,17 @@
         <div style="border-top:1px solid var(--line); padding-top:12px; margin-top:12px">
           <div class="act-head">
             <div class="cat-head" style="padding:0">执行动作 <span class="act-count">{{ stEditForm.actions.length }}</span></div>
-            <div class="act-quick">
-              <span class="aq-label">快捷模板</span>
-              <el-tag v-for="t in actionTemplates" :key="t.key" class="aq-chip" effect="plain" @click="applyTemplate(stEditForm, t)">{{ t.label }}</el-tag>
-              <el-button type="primary" size="small" :icon="CirclePlus" @click="addActionCard(stEditForm)">添加动作</el-button>
-            </div>
+            <el-button type="primary" size="small" :icon="CirclePlus" @click="addActionCard(stEditForm)">添加动作</el-button>
           </div>
           <div v-if="stEditForm.actions.length" class="act-list">
             <div v-for="(a, i) in stEditForm.actions" :key="i" class="act-card">
               <div class="act-card-head">
                 <span class="act-idx">动作 {{ i + 1 }}</span>
             <span v-if="a.scene" class="act-scene" :style="{ color: sceneColor(a.scene), background: sceneColor(a.scene) + '1a' }">{{ a.scene }}</span>
+                <span class="seg-lbl act-type-lbl">动作类型</span>
                 <el-select v-model="a.action" size="small" style="width:104px">
                   <el-option label="开关灯" value="开关灯"></el-option>
                   <el-option label="调光" value="调光"></el-option>
-                </el-select>
-                <el-select v-model="a.triggerType" size="small" style="width:116px">
-                  <el-option label="定时" value="timed"></el-option>
-                  <el-option label="日出" value="sunrise"></el-option>
-                  <el-option label="日落" value="sunset"></el-option>
                 </el-select>
                 <div class="act-card-spacer"></div>
                 <el-button link type="danger" size="small" :icon="Delete" @click="stEditForm.actions.splice(i, 1)">删除</el-button>
@@ -808,42 +820,70 @@
               <div class="act-card-body">
                 <div class="act-seg">
                   <span class="seg-title">开始</span>
+                  <el-select v-model="a.triggerType" size="small" style="width:92px">
+                    <el-option label="定时" value="timed"></el-option>
+                    <el-option label="日出" value="sunrise"></el-option>
+                    <el-option label="日落" value="sunset"></el-option>
+                  </el-select>
+                  <template v-if="a.triggerType === 'timed'">
+                    <el-time-picker v-model="a.startTime" format="HH:mm" value-format="HH:mm" size="small" style="width:108px" placeholder="开始时间"></el-time-picker>
+                  </template>
+                  <template v-else>
+                    <span class="seg-lbl">偏移</span>
+                    <el-input-number v-model="a.startOffset" :min="-120" :max="120" :step="5" size="small" style="width:92px"></el-input-number>
+                    <span class="seg-hint">分</span>
+                    <el-button link type="primary" size="small" :icon="MapLocation" @click="openCoordPicker(a, 'startLng', 'startLat')">经纬度</el-button>
+                    <span v-if="hasCoord(a, 'startLng', 'startLat')" class="coord-tag">
+                      经{{ fmtCoord(a.startLng) }} 纬{{ fmtCoord(a.startLat) }}
+                      <el-button link type="success" size="small" @click="recommendOffset(stEditForm.timezone, a, 'startLng', 'startLat', 'startOffset')">推荐偏移</el-button>
+                    </span>
+                  </template>
+                  <span class="seg-arrow">→</span>
                   <template v-if="a.action === '开关灯'">
                     <el-switch v-model="a.startOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
                   </template>
                   <template v-else>
                     <span class="seg-lbl">亮度</span>
-                    <el-slider v-model="a.startBright" :max="100" style="width:120px"></el-slider>
+                    <el-slider v-model="a.startBright" :max="100" style="width:110px"></el-slider>
                     <span class="seg-val">{{ a.startBright }}%</span>
-                  </template>
-                  <template v-if="a.triggerType === 'timed'">
-                    <span class="seg-lbl">时间</span>
-                    <el-time-picker v-model="a.startTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="开始时间"></el-time-picker>
-                  </template>
-                  <template v-else>
-                    <span class="seg-lbl">偏移</span>
-                    <el-input-number v-model="a.startOffset" :min="-120" :max="120" :step="5" size="small" style="width:104px"></el-input-number>
-                    <span class="seg-hint">分</span>
                   </template>
                 </div>
                 <div class="act-seg">
                   <span class="seg-title">结束</span>
+                  <el-select v-model="a.endTrigger" size="small" style="width:92px">
+                    <el-option label="定时" value="timed"></el-option>
+                    <el-option label="日出" value="sunrise"></el-option>
+                    <el-option label="日落" value="sunset"></el-option>
+                  </el-select>
+                  <template v-if="a.endTrigger === 'timed'">
+                    <el-time-picker v-model="a.endTime" format="HH:mm" value-format="HH:mm" size="small" style="width:108px" placeholder="结束时间"></el-time-picker>
+                  </template>
+                  <template v-else>
+                    <span class="seg-lbl">偏移</span>
+                    <el-input-number v-model="a.endOffset" :min="-120" :max="120" :step="5" size="small" style="width:92px"></el-input-number>
+                    <span class="seg-hint">分</span>
+                    <el-button link type="primary" size="small" :icon="MapLocation" @click="openCoordPicker(a, 'endLng', 'endLat')">经纬度</el-button>
+                    <span v-if="hasCoord(a, 'endLng', 'endLat')" class="coord-tag">
+                      经{{ fmtCoord(a.endLng) }} 纬{{ fmtCoord(a.endLat) }}
+                      <el-button link type="success" size="small" @click="recommendOffset(stEditForm.timezone, a, 'endLng', 'endLat', 'endOffset')">推荐偏移</el-button>
+                    </span>
+                  </template>
+                  <span class="seg-arrow">→</span>
                   <template v-if="a.action === '开关灯'">
                     <el-switch v-model="a.endOn" size="small" active-text="开" inactive-text="关" inline-prompt></el-switch>
                   </template>
                   <template v-else>
                     <span class="seg-lbl">亮度</span>
-                    <el-slider v-model="a.endBright" :max="100" style="width:120px"></el-slider>
+                    <el-slider v-model="a.endBright" :max="100" style="width:110px"></el-slider>
                     <span class="seg-val">{{ a.endBright }}%</span>
                   </template>
-                  <span class="seg-lbl">时间</span>
-                  <el-time-picker v-model="a.endTime" format="HH:mm" value-format="HH:mm" size="small" style="width:120px" placeholder="结束时间"></el-time-picker>
                 </div>
+                <div class="act-summary">{{ summarizeAction(a) }}</div>
               </div>
             </div>
           </div>
           <div v-else class="act-empty">
-            <el-empty description="暂无动作，点击「添加动作」或选择左侧快捷模板" :image-size="56"></el-empty>
+            <el-empty description="暂无动作，点击「添加动作」" :image-size="56"></el-empty>
           </div>
         </div>
       </div>
@@ -985,17 +1025,26 @@
   </el-dialog>
 
   <!-- ============ 地图选点时区 ============ -->
-  <el-dialog v-model="mapPickerVisible" title="地图选点 - 自动判断时区" width="680px" :close-on-click-modal="false" destroy-on-close @opened="onMapDialogOpened">
+  <el-dialog v-model="mapPickerVisible" :title="mapPickerMode === 'coord' ? '地图选点 - 经纬度' : '地图选点 - 自动判断时区'" width="680px" :close-on-click-modal="false" destroy-on-close @opened="onMapDialogOpened">
     <div style="display:flex; flex-direction:column; gap:12px">
-      <div ref="mapContainer" style="width:100%; height:360px; border-radius:var(--r-md); border:1px solid var(--line);"></div>
-      <div style="display:flex; align-items:center; gap:12px; font-size:var(--fs-sm); color:var(--ink-2)">
-        <span>点击地图任意位置标点，系统自动根据经纬度判断时区。</span>
-        <el-tag v-if="mapDetectedTz" size="small" type="success" effect="dark">检测到时区：{{ timezoneOptions.find(t=>t.value===mapDetectedTz)?.label || mapDetectedTz }}</el-tag>
+      <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap">
+        <span class="seg-lbl">经度</span>
+        <el-input-number v-model="mapInputLng" :min="-180" :max="180" :step="0.0001" :precision="4" size="small" style="width:152px" @change="onManualCoordChange"></el-input-number>
+        <span class="seg-lbl">纬度</span>
+        <el-input-number v-model="mapInputLat" :min="-90" :max="90" :step="0.0001" :precision="4" size="small" style="width:152px" @change="onManualCoordChange"></el-input-number>
+      </div>
+      <div ref="mapContainer" style="width:100%; height:320px; border-radius:var(--r-md); border:1px solid var(--line);"></div>
+      <div style="display:flex; align-items:center; gap:12px; font-size:var(--fs-sm); color:var(--ink-2); flex-wrap:wrap">
+        <span v-if="mapPickerMode === 'coord'">点击地图标点，或手填经纬度后点击「确定」。</span>
+        <span v-else>点击地图任意位置标点，系统自动根据经纬度判断时区。</span>
+        <el-tag v-if="mapPickerMode === 'coord' && mapInputLng != null && mapInputLat != null" size="small" type="primary" effect="plain">已选：经 {{ mapInputLng }} 纬 {{ mapInputLat }}</el-tag>
+        <el-tag v-else-if="mapDetectedTz" size="small" type="success" effect="dark">检测到时区：{{ timezoneOptions.find(t=>t.value===mapDetectedTz)?.label || mapDetectedTz }}</el-tag>
       </div>
     </div>
     <template #footer>
       <el-button @click="mapPickerVisible = false">取 消</el-button>
-      <el-button type="primary" :disabled="!mapDetectedTz" @click="applyDetectedTz">应用该时区</el-button>
+      <el-button v-if="mapPickerMode === 'coord'" type="primary" :disabled="mapInputLng == null || mapInputLat == null" @click="applyCoordPick">确 定</el-button>
+      <el-button v-else type="primary" :disabled="!mapDetectedTz" @click="applyDetectedTz">应用该时区</el-button>
     </template>
   </el-dialog>
 </div>
@@ -1125,7 +1174,11 @@ const app = createApp({
     const stFormRef = ref();
     const blankForm = () => ({ name:'', deviceType:'', strategyType:'', loop:'', timezone:'Asia/Shanghai', remark:'', enabled:true, actions:[] });
     const stForm = reactive(blankForm());
-    const stRules = { name: [{ required:true, message:'请输入策略名称', trigger:'blur' }], deviceType: [{ required:true, message:'请选择设备类型', trigger:'change' }] };
+    const stRules = {
+      name: [{ required:true, message:'请输入策略名称', trigger:'blur' }],
+      deviceType: [{ required:true, message:'请选择设备类型', trigger:'change' }],
+      actions: [{ required:true, type:'array', min:1, message:'请至少添加 1 个执行动作', trigger:'change', defaultField: {} }],
+    };
     const stAddProductFilter = ref('全部');
     const stAddGroupFilter = ref('全部');
     const stAddPoleSearch = reactive({ name:'', sn:'' });
@@ -1145,6 +1198,7 @@ const app = createApp({
     const formatNow = () => { const d = new Date(), p = n => String(n).padStart(2,'0'); return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`; };
     const saveStrategy = async () => {
       try { await stFormRef.value.validate(); } catch { return; }
+      if (!stForm.actions.length) { ElementPlus.ElMessage.warning('请至少添加 1 个执行动作'); return; }
       const payload = JSON.parse(JSON.stringify(stForm));
       payload.id = ++uid; payload.createTime = formatNow(); payload.boundPoleIds = [...stAddSelectedIds.value];
       strategies.unshift(payload);
@@ -1181,7 +1235,9 @@ const app = createApp({
     };
     const onEditDeviceChange = () => { if (stEditForm.deviceType === '智慧灯杆') { if(!stEditForm.strategyType) stEditForm.strategyType='本地策略'; } else { stEditForm.strategyType=''; stEditForm.loop=''; } };
     const openEditStrategy = (row) => {
-      Object.assign(stEditForm, blankEditForm(), JSON.parse(JSON.stringify(row)));
+      const src = JSON.parse(JSON.stringify(row));
+      (src.actions || []).forEach(a => { if (a.endTrigger === undefined) a.endTrigger = 'timed'; if (a.endOffset === undefined) a.endOffset = 0; if (a.startLng === undefined) a.startLng = null; if (a.startLat === undefined) a.startLat = null; if (a.endLng === undefined) a.endLng = null; if (a.endLat === undefined) a.endLat = null; });
+      Object.assign(stEditForm, blankEditForm(), src);
       stEditId.value = row.id;
       stEditProductFilter.value = '全部';
       stEditGroupFilter.value = '全部';
@@ -1191,40 +1247,28 @@ const app = createApp({
     };
     const saveStrategyEdit = () => {
       if (!stEditForm.name) { ElementPlus.ElMessage.warning('请输入策略名称'); return; }
+      if (!stEditForm.actions.length) { ElementPlus.ElMessage.warning('请至少添加 1 个执行动作'); return; }
       const idx = strategies.findIndex(i => i.id === stEditId.value);
       if (idx > -1) Object.assign(strategies[idx], JSON.parse(JSON.stringify(stEditForm)), { boundPoleIds: [...stEditSelectedIds.value] });
       ElementPlus.ElMessage.success('修改成功');
       strategyEditDialog.value = false;
     };
     /* ===== 动作内联编辑 ===== */
-    const blankAction = () => ({ action: '开关灯', triggerType: 'timed', scene: '', startOn: true, startBright: 50, startTime: '18:00', startOffset: 0, endOn: false, endBright: 30, endTime: '23:00' });
+    const blankAction = () => ({ action: '开关灯', triggerType: 'timed', endTrigger: 'timed', scene: '', startOn: true, startBright: 50, startTime: '18:00', startOffset: 0, startLng: null, startLat: null, endOn: false, endBright: 30, endTime: '23:00', endOffset: 0, endLng: null, endLat: null });
     const addActionCard = (form) => { if (!form.actions) form.actions = []; form.actions.push(blankAction()); };
-    const actionTemplates = [
-      { key: 'sun',     label: '日落开 · 日出关', action: '开关灯', triggerType: 'sunset', startOn: true, startOffset: 0, endTime: '06:00', endOn: false },
-      { key: 't1',      label: '18:00亮80% · 23:00关', action: '调光', triggerType: 'timed', startBright: 80, startTime: '18:00', endBright: 0, endTime: '23:00' },
-      { key: 't2',      label: '19:00开 · 06:00关', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
-      { key: 'all',     label: '全天亮60%', action: '调光', triggerType: 'timed', startBright: 60, startTime: '00:00', endBright: 60, endTime: '23:59' },
-      { key: 'holiday', label: '节假日策略', scene: '节假日', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '00:00', endOn: true, endTime: '23:59' },
-      { key: 'light',   label: '光感策略', scene: '光感', action: '调光', triggerType: 'sunset', startBright: 70, startOffset: 0, endOn: false, endTime: '06:00' },
-      { key: 'pir',     label: '人体感应', scene: '感应', action: '开关灯', triggerType: 'timed', startOn: true, startTime: '19:00', endOn: false, endTime: '06:00' },
-      { key: 'eco',     label: '节能模式', scene: '节能', action: '调光', triggerType: 'timed', startBright: 30, startTime: '22:00', endBright: 0, endTime: '06:00' },
-      { key: 'dawn',    label: '晨间渐亮', scene: '渐亮', action: '调光', triggerType: 'timed', startBright: 40, startTime: '06:00', endBright: 100, endTime: '08:00' },
-      { key: 'noon',    label: '午间全亮', scene: '午间', action: '调光', triggerType: 'timed', startBright: 100, startTime: '11:00', endBright: 100, endTime: '14:00' },
-    ];
-    const applyTemplate = (form, t) => {
-      const { key, label, ...rest } = t;
-      if (!form.actions) form.actions = [];
-      form.actions.push({ ...blankAction(), ...rest });
-    };
     const sceneColor = (s) => {
       const m = { '日常': '#64748b', '节假日': '#ff9f43', '光感': '#5b8bff', '感应': '#22c55e', '节能': '#14b8a6', '渐亮': '#a855f7', '午间': '#f59e0b' };
       return m[s] || '#909399';
     };
-    /* ===== 地图选点时区 ===== */
+    /* ===== 地图选点 / 经纬度 / 时区算法 ===== */
     const mapPickerVisible = ref(false);
     const mapContainer = ref(null);
     const mapDetectedTz = ref('');
-    const mapPickerHost = ref(null);
+    const mapPickerMode = ref('tz');            // 'tz' = 自动判断时区；'coord' = 选经纬度
+    const mapPickerHost = ref(null);            // tz 模式：目标表单
+    const mapPickerCoordTarget = ref(null);     // coord 模式：{ node, lngKey, latKey }
+    const mapInputLng = ref(null);
+    const mapInputLat = ref(null);
     let mapInstance = null;
     let mapMarker = null;
     const detectTimezoneFromCoords = (lng, lat) => {
@@ -1240,21 +1284,54 @@ const app = createApp({
       return tzMap[offset] || 'Asia/Shanghai';
     };
     const toggleMapPicker = (host) => {
+      mapPickerMode.value = 'tz';
       mapPickerHost.value = host;
+      mapPickerCoordTarget.value = null;
+      mapInputLng.value = null; mapInputLat.value = null;
       mapDetectedTz.value = '';
       mapPickerVisible.value = true;
+    };
+    const openCoordPicker = (node, lngKey, latKey) => {
+      mapPickerMode.value = 'coord';
+      mapPickerHost.value = null;
+      mapPickerCoordTarget.value = { node, lngKey, latKey };
+      mapInputLng.value = (node[lngKey] != null && isFinite(Number(node[lngKey]))) ? Number(node[lngKey]) : null;
+      mapInputLat.value = (node[latKey] != null && isFinite(Number(node[latKey]))) ? Number(node[latKey]) : null;
+      mapDetectedTz.value = '';
+      mapPickerVisible.value = true;
+    };
+    const onManualCoordChange = () => {
+      if (mapInstance && isFinite(Number(mapInputLat.value)) && isFinite(Number(mapInputLng.value))) {
+        const lat = Number(mapInputLat.value), lng = Number(mapInputLng.value);
+        mapInstance.setView([lat, lng], mapInstance.getZoom());
+        if (mapMarker) mapMarker.setLatLng([lat, lng]); else mapMarker = L.marker([lat, lng]).addTo(mapInstance);
+      }
     };
     const onMapDialogOpened = () => {
       if (!mapContainer.value) return;
       if (mapInstance) { mapInstance.remove(); mapInstance = null; }
-      mapInstance = L.map(mapContainer.value).setView([31.2304, 121.4737], 4);
+      const coordMode = mapPickerMode.value === 'coord';
+      const lat0 = (coordMode && isFinite(Number(mapInputLat.value))) ? Number(mapInputLat.value) : 31.2304;
+      const lng0 = (coordMode && isFinite(Number(mapInputLng.value))) ? Number(mapInputLng.value) : 121.4737;
+      mapInstance = L.map(mapContainer.value).setView([lat0, lng0], coordMode ? 11 : 4);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '&copy; OpenStreetMap' }).addTo(mapInstance);
       if (mapMarker) { mapMarker.remove(); mapMarker = null; }
+      if (isFinite(lat0) && isFinite(lng0)) mapMarker = L.marker([lat0, lng0]).addTo(mapInstance);
       mapInstance.on('click', (e) => {
         const { lat, lng } = e.latlng;
+        mapInputLat.value = +lat.toFixed(4); mapInputLng.value = +lng.toFixed(4);
         if (mapMarker) mapMarker.setLatLng([lat, lng]); else mapMarker = L.marker([lat, lng]).addTo(mapInstance);
-        mapDetectedTz.value = detectTimezoneFromCoords(lng, lat);
+        if (mapPickerMode.value === 'tz') mapDetectedTz.value = detectTimezoneFromCoords(lng, lat);
       });
+    };
+    const applyCoordPick = () => {
+      const t = mapPickerCoordTarget.value;
+      if (t && isFinite(Number(mapInputLng.value)) && isFinite(Number(mapInputLat.value))) {
+        t.node[t.lngKey] = Number(mapInputLng.value);
+        t.node[t.latKey] = Number(mapInputLat.value);
+        ElementPlus.ElMessage.success('经纬度已更新');
+      }
+      mapPickerVisible.value = false;
     };
     const applyDetectedTz = () => {
       if (mapPickerHost.value && mapDetectedTz.value) {
@@ -1263,18 +1340,43 @@ const app = createApp({
       }
       mapPickerVisible.value = false;
     };
-    const toMin = (t) => { if (!t) return 0; const [h, m] = String(t).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
-    const formatLightStart = (a) => {
-      const off = a.startOffset || 0;
-      const offText = off ? `${off > 0 ? '+' : ''}${off}分钟` : '';
-      if (a.triggerType === 'sunrise') return `日出${offText}`;
-      if (a.triggerType === 'sunset') return `日落${offText}`;
-      if (a.startTime) return `${a.startTime.split(':')[0]}时${(a.startTime.split(':')[1] || '00')}分`;
-      return `${(a.startHour || 0)}时${(a.startMinute || 0).toString().padStart(2, '0')}分`;
+    /* 时区 → UTC 偏移（小时） */
+    const TZ_UTC_OFFSET = { 'Asia/Shanghai': 8, 'Europe/London': 0, 'Asia/Kolkata': 5.5, 'Asia/Tokyo': 9, 'America/Los_Angeles': -8, 'America/New_York': -5 };
+    /* 时差方程（Equation of Time），单位：分钟，随日期变化 */
+    const equationOfTime = (date) => {
+      const start = new Date(date.getFullYear(), 0, 0);
+      const dayOfYear = (date - start) / 86400000;
+      const B = 2 * Math.PI * (dayOfYear - 81) / 365;
+      return 9.87 * Math.sin(2 * B) - 7.53 * Math.cos(B) - 1.5 * Math.sin(B);
     };
-    const formatLightEnd = (a) => a.endTime
-      ? `${a.endTime.split(':')[0]}时${(a.endTime.split(':')[1] || '00')}分`
-      : `${(a.endHour || 0)}时${(a.endMinute || 0).toString().padStart(2, '0')}分`;
+    const fmtCoord = (v) => (v == null || !isFinite(Number(v))) ? '--' : Number(v).toFixed(4);
+    const hasCoord = (node, lngKey, latKey) => isFinite(Number(node[lngKey])) && isFinite(Number(node[latKey]));
+    /* 根据经纬度 + 时区，推荐日出/日落偏移（分钟） */
+    const recommendOffset = (tz, node, lngKey, latKey, offKey) => {
+      const lng = Number(node[lngKey]); const lat = Number(node[latKey]);
+      if (!isFinite(lng) || !isFinite(lat)) { ElementPlus.ElMessage.warning('请先填写或地图选点经纬度'); return; }
+      const stdMeridian = (TZ_UTC_OFFSET[tz] ?? 8) * 15;          // 时区标准经线（度）
+      let off = (lng - stdMeridian) * 4 + equationOfTime(new Date());  // 经度差×4分/度 + 时差方程
+      off = Math.max(-120, Math.min(120, Math.round(off)));
+      node[offKey] = off;
+      ElementPlus.ElMessage.success(`已根据经纬度与时区推荐偏移 ${off} 分钟（经度相对时区标准经线差 + 时差方程修正）`);
+    };
+    const toMin = (t) => { if (!t) return 0; const [h, m] = String(t).split(':').map(Number); return (h || 0) * 60 + (m || 0); };
+    const sunLabel = (t) => t === 'sunrise' ? '日出' : t === 'sunset' ? '日落' : '';
+    const fmtTriggerText = (trg, time, off) => {
+      if (trg === 'sunrise') return `日出${off ? (off > 0 ? '+' : '') + off + '分' : ''}`;
+      if (trg === 'sunset') return `日落${off ? (off > 0 ? '+' : '') + off + '分' : ''}`;
+      return time ? `${String(time).split(':')[0]}时${(String(time).split(':')[1] || '00').padStart(2, '0')}分` : '--:--';
+    };
+    const formatLightStart = (a) => fmtTriggerText(a.triggerType, a.startTime, a.startOffset);
+    const formatLightEnd = (a) => fmtTriggerText(a.endTrigger || 'timed', a.endTime, a.endOffset);
+    const summarizeAction = (a) => {
+      const startVal = a.action === '开关灯' ? (a.startOn ? '开灯' : '关灯') : `亮度${a.startBright}%`;
+      const endVal = a.action === '开关灯' ? (a.endOn ? '开灯' : '关灯') : `亮度${a.endBright}%`;
+      let s = `${fmtTriggerText(a.triggerType, a.startTime, a.startOffset)} ${startVal} → ${fmtTriggerText(a.endTrigger || 'timed', a.endTime, a.endOffset)} ${endVal}`;
+      if ((a.triggerType === 'sunrise' || a.triggerType === 'sunset') && hasCoord(a, 'startLng', 'startLat')) s += `｜经${fmtCoord(a.startLng)} 纬${fmtCoord(a.startLat)}`;
+      return s;
+    };
     const sortLightActions = (actions) => {
       return [...(actions || [])].sort((a, b) => {
         if (a.nextDay && !b.nextDay) return 1;
@@ -1289,8 +1391,8 @@ const app = createApp({
       strategyDialog, stEditing, stForm, stRules, stFormRef, openAddStrategy, onDeviceChange, saveStrategy, delStrategy, beforeToggleStatus, onStatusChange,
       stAddProductFilter, stAddGroupFilter, stAddPoleSearch, stAddSelectedIds, filteredAddPoles, toggleAddPole,
       strategyEditDialog, stEditForm, stEditProductFilter, stEditGroupFilter, stEditPoleSearch, stEditSelectedIds, filteredEditPoles, toggleEditPole, onEditDeviceChange, openEditStrategy, saveStrategyEdit,
-      actionTemplates, addActionCard, applyTemplate, sceneColor, formatLightStart, formatLightEnd, sortLightActions, tableHeaderStyle,
-      mapPickerVisible, mapContainer, mapDetectedTz, toggleMapPicker, onMapDialogOpened, applyDetectedTz,
+      addActionCard, sceneColor, formatLightStart, formatLightEnd, summarizeAction, sunLabel, sortLightActions, tableHeaderStyle,
+      mapPickerVisible, mapContainer, mapDetectedTz, mapPickerMode, mapInputLng, mapInputLat, toggleMapPicker, openCoordPicker, onManualCoordChange, onMapDialogOpened, applyDetectedTz, applyCoordPick, recommendOffset, fmtCoord, hasCoord, TZ_UTC_OFFSET,
       Plus: ElementPlusIconsVue?.Plus, Edit: ElementPlusIconsVue?.Edit, Delete: ElementPlusIconsVue?.Delete, CirclePlus: ElementPlusIconsVue?.CirclePlus, MapLocation: ElementPlusIconsVue?.MapLocation,
     };
   }

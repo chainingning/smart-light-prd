@@ -389,12 +389,13 @@
     .placeholder .pl-s { font-size: var(--fs-sm); }
 
     /* ============ Home ============ */
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 16px; margin-bottom: 16px; }
-    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 20px; display: flex; align-items: center; gap: 16px; box-shadow: var(--sh-sm); transition: all .18s; }
-    .stat:hover { transform: translateY(-2px); box-shadow: var(--sh-md); }
-    .stat .st-ic { width: 52px; height: 52px; border-radius: var(--r-md); display: grid; place-items: center; font-size: 24px; color: #fff; flex: 0 0 auto; }
-    .stat .st-v { font-size: var(--fs-xl); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.1; }
-    .stat .st-k { font-size: var(--fs-sm); color: var(--ink-3); margin-top: 4px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap: 12px; margin-bottom: 14px; }
+    .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-md); padding: 9px 14px; display: flex; align-items: center; gap: 12px; min-height: 46px; box-shadow: var(--sh-sm); transition: box-shadow .18s, border-color .18s; }
+    .stat:hover { box-shadow: var(--sh-md); border-color: var(--brand); }
+    .stat .st-ic { width: 30px; height: 30px; border-radius: var(--r-sm); display: grid; place-items: center; font-size: 16px; color: #fff; flex: 0 0 auto; }
+    .stat .st-txt { display: flex; align-items: baseline; gap: 7px; min-width: 0; }
+    .stat .st-v { font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1; }
+    .stat .st-k { font-size: var(--fs-cap); color: var(--ink-3); white-space: nowrap; }
     .quick { padding: 20px; }
     .quick-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px,1fr)); gap: 12px; margin-top: 14px; }
     .quick-item { border: 1px solid var(--line); border-radius: var(--r-md); padding: 16px; cursor: pointer; display: flex; align-items: center; gap: 12px; transition: all .15s; }
@@ -522,7 +523,7 @@
           <div class="stat-grid">
             <div class="stat" v-for="s in poleStats" :key="s.k">
               <div class="st-ic" :style="{ background: s.c }"><el-icon><component :is="s.icon"></component></el-icon></div>
-              <div><div class="st-v">{{ s.v }}</div><div class="st-k">{{ s.k }}</div></div>
+              <div class="st-txt"><span class="st-v">{{ s.v }}</span><span class="st-k">{{ s.k }}</span></div>
             </div>
           </div>
           <div class="panel">
@@ -634,12 +635,15 @@
                 <el-table-column v-if="colVis['设备状态']" label="设备状态" width="124" align="center">
                   <template #default="{ row }">
                     <div class="status-cell">
-                      <span class="wifi" :title="'信号强度: ' + (row.signal || 0) + '/3'">
+                      <span class="wifi" :title="row.status === 'online' ? ('信号强度: ' + (row.signal || 0) + '/3') : poleStatusLabel(row.status)">
                         <svg viewBox="0 0 24 24" width="18" height="18">
-                          <circle cx="12" cy="12" r="1.3" :fill="row.signal > 0 ? '#67C23A' : '#C0C4CC'"></circle>
-                          <path d="M8.54 10.00 A4 4 0 0 1 15.46 10.00" :stroke="row.signal >= 1 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
-                          <path d="M5.07 8.00 A8 8 0 0 1 18.93 8.00" :stroke="row.signal >= 2 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
-                          <path d="M1.61 6.00 A12 12 0 0 1 22.39 6.00" :stroke="row.signal >= 3 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <circle cx="12" cy="12" r="1.3" :fill="row.status === 'online' ? '#67C23A' : '#C0C4CC'"></circle>
+                          <path d="M8.54 10.00 A4 4 0 0 1 15.46 10.00" :stroke="row.status === 'online' && row.signal >= 1 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M5.07 8.00 A8 8 0 0 1 18.93 8.00" :stroke="row.status === 'online' && row.signal >= 2 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <path d="M1.61 6.00 A12 12 0 0 1 22.39 6.00" :stroke="row.status === 'online' && row.signal >= 3 ? '#67C23A' : '#C0C4CC'" stroke-width="1.6" fill="none" stroke-linecap="round"></path>
+                          <template v-if="row.status !== 'online'">
+                            <line x1="4" y1="20" x2="20" y2="4" stroke="#C0C4CC" stroke-width="1.8" stroke-linecap="round"></line>
+                          </template>
                         </svg>
                       </span>
                       <el-tag :type="poleStatusType(row.status)" size="small" effect="plain" round>{{ poleStatusLabel(row.status) }}</el-tag>
@@ -659,12 +663,12 @@
                     </el-button>
                   </template>
                 </el-table-column>
-                <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="112" align="right"></el-table-column>
+                <el-table-column v-if="colVis['电压(V)']" prop="voltage" label="电压(V)" width="82" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
+                <el-table-column v-if="colVis['电流(A)']" prop="current" label="电流(A)" width="82" align="right" :formatter="(r,c,v)=>num(v,2)"></el-table-column>
+                <el-table-column v-if="colVis['功率(W)']" prop="power" label="功率(W)" width="82" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
+                <el-table-column v-if="colVis['功率因素(%)']" prop="powerFactor" label="功率因素(%)" width="112" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
                 <el-table-column v-if="colVis['亮度(%)']" prop="brightness" label="亮度(%)" width="82" align="right"></el-table-column>
-                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="82" align="right"></el-table-column>
+                <el-table-column v-if="colVis['温度(℃)']" prop="temperature" label="温度(℃)" width="82" align="right" :formatter="(r,c,v)=>num(v,1)"></el-table-column>
                 <el-table-column v-if="colVis['运行时间(H)']" prop="runHours" label="运行时间(H)" width="96" align="right"></el-table-column>
                 <el-table-column v-if="colVis['光控状态']" label="光控控制" width="76" align="center">
                   <template #default="{ row }">
@@ -702,13 +706,19 @@
                 <el-table-column v-if="colVis['所属产品']" prop="product" label="所属产品" min-width="100" show-overflow-tooltip></el-table-column>
                 <el-table-column v-if="colVis['项目名称']" prop="projectName" label="项目名称" min-width="110" show-overflow-tooltip></el-table-column>
                 <el-table-column v-if="colVis['分组']" prop="groupName" label="分组" min-width="80" show-overflow-tooltip></el-table-column>
-                <el-table-column label="操作" min-width="360" align="center" fixed="right">
+                <el-table-column label="操作" min-width="160" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
                       <el-button size="small" type="primary" :icon="View" @click="openPoleDetail(row)">详情</el-button>
-                      <el-button size="small" type="primary" :icon="Document" @click="poleStrategyReadback(row)">策略回读</el-button>
-                      <el-button size="small" type="warning" :icon="Edit" @click="openEditPole(row)">编辑</el-button>
-                      <el-button size="small" type="danger" :icon="Delete" @click="poleHandleDelete(row)">删除</el-button>
+                      <el-dropdown size="small" @command="(c) => onRowCmd(c, row)">
+                        <el-button size="small">更多<i class="el-icon-arrow-down el-icon--right"></i></el-button>
+                        <template #dropdown>
+                          <el-dropdown-menu>
+                            <el-dropdown-item :icon="Document" command="readback">策略回读</el-dropdown-item>
+                            <el-dropdown-item :icon="Edit" command="edit">编辑</el-dropdown-item>
+                          </el-dropdown-menu>
+                        </template>
+                      </el-dropdown>
                     </div>
                   </template>
                 </el-table-column>
@@ -883,7 +893,7 @@
         <el-descriptions title="设备信息" :column="2" border size="small" style="margin-bottom:16px;">
           <el-descriptions-item label="设备名称">{{ poleDetailData.name }}</el-descriptions-item>
           <el-descriptions-item label="所属产品">{{ poleDetailData.product || '—' }}</el-descriptions-item>
-          <el-descriptions-item label="灯杆类型">{{ poleDetailData.lampType || '—' }}</el-descriptions-item>
+          <el-descriptions-item label="第一次上线时间">{{ poleDetailData.firstOnline || '—' }}</el-descriptions-item>
           <el-descriptions-item label="最后上线">{{ poleDetailData.lastOnline || '—' }}</el-descriptions-item>
           <el-descriptions-item label="灯杆序列号">{{ poleDetailData.sn }}</el-descriptions-item>
           <el-descriptions-item label="网关序列号">{{ poleDetailData.gatewaySn || '—' }}</el-descriptions-item>
@@ -897,20 +907,20 @@
           <span style="font-size:var(--fs-cap);color:var(--ink-3);">（更新时间：{{ poleDetailData.lastOnline || '—' }}）</span>
         </div>
         <el-descriptions :column="2" border size="small" style="margin-bottom:16px;">
-          <el-descriptions-item label="电压">{{ poleDetailData.voltage ?? '—' }}V</el-descriptions-item>
-          <el-descriptions-item label="电流">{{ poleDetailData.current ?? '—' }}A</el-descriptions-item>
-          <el-descriptions-item label="功率">{{ poleDetailData.power ?? '—' }}W</el-descriptions-item>
-          <el-descriptions-item label="过载功率">{{ poleDetailData.overloadPower != null ? poleDetailData.overloadPower + 'W' : '—' }}</el-descriptions-item>
-          <el-descriptions-item label="累计电量">{{ poleDetailData.totalEnergy ?? '—' }}kWh</el-descriptions-item>
+          <el-descriptions-item label="电压">{{ numVolt(poleDetailData.voltage) }}</el-descriptions-item>
+          <el-descriptions-item label="电流">{{ numCurrent(poleDetailData.current) }}</el-descriptions-item>
+          <el-descriptions-item label="功率">{{ numPower(poleDetailData.power) }}</el-descriptions-item>
+          <el-descriptions-item label="过载功率">{{ numPower(poleDetailData.overloadPower) }}</el-descriptions-item>
+          <el-descriptions-item label="累计电量">{{ numEnergy(poleDetailData.totalEnergy) }}</el-descriptions-item>
           <el-descriptions-item label="开关">
             <el-tag :type="poleDetailData.switchOn ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.switchOn ? '开灯' : '关灯' }}</el-tag>
           </el-descriptions-item>
           <el-descriptions-item label="亮度">{{ poleDetailData.brightness ?? '—' }}%</el-descriptions-item>
-          <el-descriptions-item label="温度">{{ poleDetailData.temperature ?? '—' }}℃</el-descriptions-item>
+          <el-descriptions-item label="温度">{{ num(poleDetailData.temperature, 1, '℃') }}</el-descriptions-item>
           <el-descriptions-item label="运行时间">{{ poleDetailData.runHours ?? '—' }}H</el-descriptions-item>
-          <el-descriptions-item label="x轴倾斜">{{ poleDetailData.tiltX != null ? poleDetailData.tiltX + '度' : '—' }}</el-descriptions-item>
-          <el-descriptions-item label="y轴倾斜">{{ poleDetailData.tiltY != null ? poleDetailData.tiltY + '度' : '—' }}</el-descriptions-item>
-          <el-descriptions-item label="z轴倾斜">{{ poleDetailData.tiltZ != null ? poleDetailData.tiltZ + '度' : '—' }}</el-descriptions-item>
+          <el-descriptions-item label="x轴倾斜">{{ numDeg(poleDetailData.tiltX) }}</el-descriptions-item>
+          <el-descriptions-item label="y轴倾斜">{{ numDeg(poleDetailData.tiltY) }}</el-descriptions-item>
+          <el-descriptions-item label="z轴倾斜">{{ numDeg(poleDetailData.tiltZ) }}</el-descriptions-item>
           <el-descriptions-item label="人体感应">
             <el-tag :type="poleDetailData.bodySense ? 'success' : 'info'" size="small" effect="plain">{{ poleDetailData.bodySense ? '有人' : '没人' }}</el-tag>
           </el-descriptions-item>
@@ -1181,6 +1191,7 @@ for (let i = 1; i <= 42; i++) {
     simCard: '898611232130' + String(4551000 + i),
     softwareVer: 'V3.' + (10 + i % 10),
     lastOnline: '2026-07-27 0' + (i % 9) + ':' + String(10 + i % 49).padStart(2,'0') + ':' + String(20 + i % 39).padStart(2,'0'),
+    firstOnline: '2026-01-' + String(1 + (i % 27)).padStart(2,'0') + ' 1' + (i % 9) + ':' + String(10 + i % 49).padStart(2,'0') + ':' + String(20 + i % 39).padStart(2,'0'),
     overloadPower: i % 4 === 0 ? +(150 + i * 2).toFixed(1) : null,
     totalEnergy: +(15 + i * 0.85).toFixed(2),
     tiltX: (i % 3 === 0) ? null : +((i % 5) * 0.5).toFixed(2),
@@ -1369,10 +1380,6 @@ const app = createApp({
       }
       poleDialogVisible.value = false;
     };
-    const poleHandleDelete = (row) => {
-      ElementPlus.ElMessageBox.confirm(`确认删除灯杆「${row.name}」？`, '提示', { type: 'warning', confirmButtonText: '确定', cancelButtonText: '取消' })
-        .then(() => { const i = poles.findIndex(p => p.id === row.id); if (i > -1) poles.splice(i, 1); ElementPlus.ElMessage.success('删除成功'); }).catch(() => {});
-    };
     // 策略回读：查询该灯杆当前绑定的策略
     const poleStrategyReadback = (row) => {
       const bound = lightStrategies.value.filter(s => (s.boundPoleIds || []).includes(row.id));
@@ -1381,6 +1388,10 @@ const app = createApp({
       } else {
         ElementPlus.ElMessage.info(`灯杆「${row.name}」未绑定任何策略`);
       }
+    };
+    const onRowCmd = (cmd, row) => {
+      if (cmd === 'readback') poleStrategyReadback(row);
+      else if (cmd === 'edit') openEditPole(row);
     };
     const poleDetailVisible = ref(false);
     const poleDetailData = ref(null);
@@ -1519,6 +1530,18 @@ const app = createApp({
         return aMin - bMin;
       });
     };
+    // 数值格式化：电流保留2位小数，其余数值类保留1位小数
+    const num = (v, d, unit = '') => {
+      if (v == null || !isFinite(Number(v))) return '—';
+      return Number(v).toFixed(d) + unit;
+    };
+    const numCurrent = (v) => num(v, 2, 'A');
+    const numVolt = (v) => num(v, 1, 'V');
+    const numPower = (v) => num(v, 1, 'W');
+    const numPf = (v) => num(v, 1, '%');
+    const numEnergy = (v) => num(v, 1, 'kWh');
+    const numDeg = (v) => num(v, 1, '度');
+
     return { ...shared,
       poleProjectOptions, poleProductOptions, poles, poleSearchForm, poleShowMore, polePage, polePageSize,
       filteredPoles, pagedPoles, poleDoSearch, poleResetSearch, poleSetLightControl, poleSetBodySense, openBigScreen, poleStats, dimValue, cctValue, applyDim, applyCCT,
@@ -1526,12 +1549,13 @@ const app = createApp({
       poleStatusType, poleStatusLabel, poleTiltType, poleTiltLabel,
       poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete, poleToggleSwitch, poleToggleLightControl, poleToggleBodySense,
       poleExport, poleDownloadTemplate, poleBatchExport,
-      poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleHandleDelete, poleStrategyReadback,
+      poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleStrategyReadback, onRowCmd,
       poleDetailVisible, poleDetailData, openPoleDetail, polePowerChart,
       poleDetailCtrl, poleDetailCtrlOn, poleDetailCtrlOff, poleDetailCtrlApplyDim, poleDetailCtrlApplyCCT,
       poleImportVisible, poleTsVisible, poleTsSn, poleTsData, poleHandleTimeStrategy,
       poleStrategyDialogVisible, poleStrategyPickId, lightStrategies, poleStrategyPickDetail, openPoleStrategyPick, confirmPoleStrategyPick,
       pad2, formatPoleActionTime, sortPoleActions, allGroupNames, tableHeaderStyle,
+      num, numCurrent, numVolt, numPower, numPf, numEnergy, numDeg,
       colSettingOptions, colVis,
       /* 策略/指令弹窗 */
       deviceTypes, strategyTypes, loops, cmd, cmdDialog, openCmd, editAction, saveCmd,
