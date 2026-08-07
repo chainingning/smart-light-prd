@@ -389,6 +389,8 @@
 
     .pick-hint { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 12px; padding: 10px 14px; background: var(--brand-soft); border-radius: var(--r-md); font-size: var(--fs-sm); color: var(--brand-deep); }
     .pick-hint .ph-link { font-weight: 600; white-space: nowrap; }
+    .pick-summary { font-size: var(--fs-sm); color: var(--ink-2); line-height: 1.6; }
+    .pick-summary b { color: var(--brand-deep); }
 
     /* ============ Placeholder ============ */
     .placeholder { min-height: 460px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; color: var(--ink-3); text-align: center; }
@@ -549,6 +551,7 @@
               <template v-if="poleShowMore">
                 <span class="lbl">分组名称</span>
                 <el-select v-model="poleSearchForm.groupName" placeholder="请选择" style="width: 160px" clearable filterable>
+                  <el-option :label="UNGROUPED_POLE_LABEL" :value="UNGROUPED_FILTER_VALUE"></el-option>
                   <el-option v-for="g in allGroupNames" :key="g" :label="g" :value="g"></el-option>
                 </el-select>
                 <span class="lbl">项目名称</span>
@@ -574,8 +577,8 @@
               <el-button size="small" :icon="Upload" @click="poleImportVisible = true">导入</el-button>
               <el-button size="small" :icon="Download" @click="poleExport">导出</el-button>
               <el-button size="small" :disabled="true">迁移</el-button>
-              <el-button size="small" type="success" :disabled="true">分组</el-button>
-              <el-button size="small" type="success" :disabled="true">解组</el-button>
+              <el-button size="small" type="success" :disabled="!selectedPoles.length" @click="openPoleBatchAssignGroup">分组</el-button>
+              <el-button size="small" type="success" :disabled="!selectedPoles.length" @click="poleBatchUngroup">解组</el-button>
               <el-divider direction="vertical"></el-divider>
               <el-button size="small" type="warning" :disabled="!selectedPoles.length" @click="poleLightOn">
                 <el-icon class="bulb-ico is-on"><svg viewBox="0 0 24 24" width="14" height="14"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7z"></path></svg></el-icon>全开
@@ -726,7 +729,12 @@
                 <el-table-column v-if="colVis['灯具类型']" prop="lampType" label="灯具类型" min-width="80" show-overflow-tooltip class-name="col-text"></el-table-column>
                 <el-table-column v-if="colVis['所属产品']" prop="product" label="所属产品" min-width="92" show-overflow-tooltip class-name="col-text"></el-table-column>
                 <el-table-column v-if="colVis['项目名称']" prop="projectName" label="项目名称" min-width="100" show-overflow-tooltip class-name="col-text"></el-table-column>
-                <el-table-column v-if="colVis['分组']" prop="groupName" label="分组" min-width="76" show-overflow-tooltip class-name="col-text"></el-table-column>
+                <el-table-column v-if="colVis['分组']" label="分组" min-width="88" show-overflow-tooltip class-name="col-text">
+                  <template #default="{ row }">
+                    <el-tag v-if="isPoleUngrouped(row)" size="small" type="warning" effect="plain">{{ UNGROUPED_POLE_LABEL }}</el-tag>
+                    <span v-else>{{ row.groupName }}</span>
+                  </template>
+                </el-table-column>
                 <el-table-column label="操作" min-width="120" align="center" fixed="right">
                   <template #default="{ row }">
                     <div class="row-actions">
@@ -764,6 +772,37 @@
     <template #footer>
       <el-button @click="groupDialog = false">取 消</el-button>
       <el-button type="primary" @click="saveGroup">确 定</el-button>
+    </template>
+  </el-dialog>
+
+  <!-- ============ 批量归入分组 ============ -->
+  <el-dialog v-model="poleGroupAssignDialogVisible" title="批量归入分组" width="520px" align-center>
+    <div class="pick-summary">
+      已选择 <b>{{ poleBatchAssignSummary.total }}</b> 台灯杆
+      <span v-if="poleBatchAssignSummary.ungrouped">（其中 {{ poleBatchAssignSummary.ungrouped }} 台未分组）</span>
+      <span v-if="poleBatchAssignSummary.grouped">（{{ poleBatchAssignSummary.grouped }} 台将从原分组移出并归入新分组）</span>
+    </div>
+    <el-form label-width="72px" style="margin-top:12px">
+      <el-form-item label="目标分组" required>
+        <el-select v-model="poleGroupAssignPickId" placeholder="请选择分组" clearable filterable style="width:100%">
+          <el-option v-for="g in groups" :key="g.id" :label="g.name" :value="g.id"></el-option>
+        </el-select>
+      </el-form-item>
+    </el-form>
+    <div class="pick-detail" v-if="poleGroupAssignPickDetail">
+      <div class="pd-top"><span class="pd-name">{{ poleGroupAssignPickDetail.name }}</span><span class="seq-badge">排序 {{ poleGroupAssignPickDetail.seq }}</span></div>
+      <div class="pd-row"><span class="k">创建时间</span><span>{{ poleGroupAssignPickDetail.created }}</span></div>
+      <div class="pd-row"><span class="k">所属用户</span><span>{{ poleGroupAssignPickDetail.owner }}</span></div>
+      <div class="pd-row"><span class="k">备注</span><span>{{ poleGroupAssignPickDetail.remark || '—' }}</span></div>
+      <div class="pd-row"><span class="k">该分组下设备</span><span>{{ poleGroupAssignGroupCount }} 台（归入后 {{ poleGroupAssignGroupCount + poleBatchAssignSummary.total }} 台）</span></div>
+    </div>
+    <div class="pick-hint">
+      <span>没有合适的分组？</span>
+      <el-link type="primary" class="ph-link" :underline="false" @click="poleGroupAssignDialogVisible = false; jumpMenu('设备分组')">去分组管理新建 →</el-link>
+    </div>
+    <template #footer>
+      <el-button @click="poleGroupAssignDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="confirmPoleBatchAssignGroup">确定归入</el-button>
     </template>
   </el-dialog>
 
@@ -1129,6 +1168,8 @@
 <script>
 /* ====================== 数据 ====================== */
 const GROUP_POOL = ['燧煌二组','燧煌一组','金牛座','东风','UFO'];
+const UNGROUPED_POLE_LABEL = '未分组';
+const UNGROUPED_FILTER_VALUE = '__ungrouped__';
 const groupsSeed = [
   { id: 1, name: '燧煌二组', seq: 118, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
   { id: 2, name: '燧煌一组', seq: 117, created: '2026-06-22', owner: 'GZSH0422', remark: '' },
@@ -1205,7 +1246,8 @@ for (let i = 1; i <= 42; i++) {
     lampType: poleLampTypesSeed[i % poleLampTypesSeed.length],
     product: poleProductOptionsSeed[i % poleProductOptionsSeed.length],
     projectName: poleProjectOptionsSeed[i % poleProjectOptionsSeed.length],
-    groupName: GROUP_POOL[i % GROUP_POOL.length],
+    groupName: i % 7 === 0 ? '' : GROUP_POOL[i % GROUP_POOL.length],
+    groupId: i % 7 === 0 ? null : (groupsSeed.find(g => g.name === GROUP_POOL[i % GROUP_POOL.length])?.id ?? null),
     lng: '120.' + String(510000 + i * 137),
     lat: '31.' + String(300000 + i * 89),
     gatewaySn: 'GW2026' + String(200000 + i),
@@ -1252,6 +1294,7 @@ const app = createApp({
     const poles = reactive(polesSeed);
     const groups = reactive(groupsSeed);
     const allGroupNames = computed(() => groups.map(g => g.name));
+    const isPoleUngrouped = (p) => !p.groupName;
     const poleSearchForm = reactive({ name: '', sn: '', status: '', projectName: '', simCard: '', gatewaySn: '', product: '', groupName: '' });
 
     // 列显示/隐藏：始终显示 选择/灯杆名称/操作，其余字段可隐藏
@@ -1271,7 +1314,10 @@ const app = createApp({
       (!poleApplied.status || p.status === poleApplied.status) &&
       (!poleApplied.projectName || p.projectName === poleApplied.projectName) &&
       (!poleApplied.product || p.product === poleApplied.product) &&
-      (!poleApplied.groupName || p.groupName === poleApplied.groupName)));
+      (!poleApplied.groupName ||
+        (poleApplied.groupName === UNGROUPED_FILTER_VALUE
+          ? isPoleUngrouped(p)
+          : p.groupName === poleApplied.groupName)));
     const pagedPoles = computed(() => { const s = (polePage.value - 1) * polePageSize.value; return filteredPoles.value.slice(s, s + polePageSize.value); });
     const poleStats = computed(() => {
       const total = poles.length;
@@ -1344,6 +1390,58 @@ const app = createApp({
       selectedPoles.value = [];
       ElementPlus.ElMessage.success('批量删除成功');
     }, 'error');
+
+    /* ====== 批量归入分组 / 解组 ====== */
+    const poleGroupAssignDialogVisible = ref(false);
+    const poleGroupAssignPickId = ref(null);
+    const poleGroupAssignPickDetail = computed(() => groups.find(g => g.id === poleGroupAssignPickId.value) || null);
+    const poleGroupAssignGroupCount = computed(() =>
+      poleGroupAssignPickDetail.value
+        ? poles.filter(p => p.groupName === poleGroupAssignPickDetail.value.name).length
+        : 0,
+    );
+    const poleBatchAssignSummary = computed(() => {
+      const sel = selectedPoles.value;
+      return {
+        total: sel.length,
+        ungrouped: sel.filter(isPoleUngrouped).length,
+        grouped: sel.filter(p => !isPoleUngrouped(p)).length,
+      };
+    });
+    const openPoleBatchAssignGroup = () => {
+      if (!selectedPoles.value.length) {
+        ElementPlus.ElMessage.warning('请先选择灯杆');
+        return;
+      }
+      poleGroupAssignPickId.value = null;
+      poleGroupAssignDialogVisible.value = true;
+    };
+    const confirmPoleBatchAssignGroup = () => {
+      if (!poleGroupAssignPickId.value) {
+        ElementPlus.ElMessage.warning('请选择目标分组');
+        return;
+      }
+      const group = groups.find(g => g.id === poleGroupAssignPickId.value);
+      if (!group) return;
+      const count = selectedPoles.value.length;
+      selectedPoles.value.forEach(p => {
+        p.groupId = group.id;
+        p.groupName = group.name;
+      });
+      poleGroupAssignDialogVisible.value = false;
+      ElementPlus.ElMessage.success(`已将 ${count} 台灯杆归入分组「${group.name}」`);
+    };
+    const poleBatchUngroup = () => poleConfirmAndExec(
+      `确定要将选中的 ${selectedPoles.value.length} 台灯杆移出分组吗？移出后将显示为「${UNGROUPED_POLE_LABEL}」，大屏地图会归入未分组聚合点。`,
+      () => {
+        const count = selectedPoles.value.length;
+        selectedPoles.value.forEach(p => {
+          p.groupId = null;
+          p.groupName = '';
+        });
+        ElementPlus.ElMessage.success(`已将 ${count} 台灯杆移出分组`);
+      },
+    );
     const poleExport = () => ElementPlus.ElMessage.success('导出成功（示例）');
     const poleBatchExport = () => {
       if (!selectedPoles.value.length) { ElementPlus.ElMessage.warning('请先选择要导出的灯杆'); return; }
@@ -1587,6 +1685,9 @@ const app = createApp({
       poleStatusType, poleStatusLabel, signalBars, signalTier, poleTiltType, poleTiltLabel,
       poleLightOn, poleLightOff, poleLightAllOn, poleLightAllOff, poleCancelStrategy, poleBatchDelete, poleToggleSwitch, poleToggleLightControl, poleToggleBodySense,
       poleExport, poleDownloadTemplate, poleBatchExport,
+      UNGROUPED_POLE_LABEL, isPoleUngrouped,
+      poleGroupAssignDialogVisible, poleGroupAssignPickId, poleGroupAssignPickDetail, poleGroupAssignGroupCount,
+      poleBatchAssignSummary, openPoleBatchAssignGroup, confirmPoleBatchAssignGroup, poleBatchUngroup,
       poleDialogVisible, poleDialogTitle, poleForm, openAddPole, openEditPole, savePole, poleStrategyReadback, onRowCmd,
       poleDetailVisible, poleDetailData, openPoleDetail, polePowerChart,
       poleDetailCtrl, poleDetailCtrlOn, poleDetailCtrlOff, poleDetailCtrlApplyDim, poleDetailCtrlApplyCCT,

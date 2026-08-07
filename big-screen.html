@@ -4,6 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>智慧灯杆运营大屏 · 云创智慧平台</title>
+    <!--
+      PRD 原型 · 与 Vue 实现同步（2026-08-08）
+      Vue 路径: smart-pole/yudao-ui/yudao-ui-admin-vue3/src/views/smart-pole/big-screen/
+      访问路由: /big-screen
+      接口清单: smart-light-prd/big-screen-api.md
+      生产目标: GET /iot/big-screen/overview?groupId=
+    -->
     <link
       rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/element-plus@2.8.8/dist/index.css"
@@ -795,7 +802,9 @@
         };
       }
 
-      /* ---------------- 静态示例数据（对应原 Vue 页面的接口返回结构） ---------------- */
+      /* ---------------- 静态示例数据（结构对齐 Vue GroupStats / BigScreenMarker） ----------------
+       * 生产接口: GET /iot/big-screen/overview?groupId=0
+       */
 
       const GROUPS = [
         { id: 1, name: "中心城区" },
@@ -1107,8 +1116,8 @@
           markers.push({
             id: i + 1,
             deviceId: 10000 + i,
+            poleId: i + 1,
             name: `${group.name}-${String(i + 1).padStart(3, "0")}号灯杆`,
-            /* 设备通信在线状态，用于 KPI/筛选摘要统计，与地图图标的开关灯状态是两回事 */
             online: rand() > 0.08,
             groupIds: [group.id],
             groupName: group.name,
@@ -1320,7 +1329,6 @@
           };
 
           /* ---- 分组切换：驱动除地图外几乎所有面板 ---- */
-          /* el-select 的 v-model 已在 change 事件触发前更新 activeGroupId，这里只需重新拟合地图视野 */
           const setActiveGroup = () => {
             nextTick(() => syncAmapMarkers(true));
           };
@@ -1377,7 +1385,7 @@
             };
           });
 
-          /* ---- 地图筛选摘要（分组 + 设备类型，保留作为地图交互）---- */
+          /* ---- 地图筛选摘要（分组 + 设备类型） ---- */
           const filteredMarkers = computed(() =>
             groupMarkers.value.filter(
               (m) =>
@@ -1444,7 +1452,7 @@
             );
           });
 
-          /* ---- 高德地图 ---- */
+          /* ---- 高德地图：分组聚合 ↔ 灯杆散点 ---- */
           const mapRef = ref(null);
           let amap = null;
           let amapMarkers = [];
@@ -1514,10 +1522,8 @@
             if (amapMarkers.length) {
               amap.add(amapMarkers);
               if (fit) {
-                /* 切换分组/筛选重新拟合视野时，先收回可能残留的 3D 聚焦俯仰角，避免叠加出奇怪的倾斜视角 */
                 amap.setPitch(MAP_OVERVIEW_PITCH, true);
                 infoWindow && infoWindow.close();
-                /* 预留左右侧栏与底部面板空间 */
                 amap.setFitView(amapMarkers, false, [120, 80, 400, 400]);
               }
             }
@@ -1601,6 +1607,10 @@
             nextTick(renderCharts);
           });
 
+          watch(filteredMarkers, () => {
+            syncAmapMarkers(false);
+          });
+
           const applyFilter = async () => {
             if (!filteredMarkers.value.length) {
               ElementPlus.ElMessage.warning(
@@ -1622,10 +1632,6 @@
             });
             ElementPlus.ElMessage.info("已重置设备类型筛选");
           };
-
-          watch(filteredMarkers, () => {
-            syncAmapMarkers(false);
-          });
 
           const onResize = () => {
             updateScale();
