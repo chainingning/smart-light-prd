@@ -163,10 +163,12 @@
         min-width: 220px;
       }
       .bs-action-btn {
+        flex-shrink: 0;
         height: 32px;
         padding: 0 14px;
         font-size: 13px;
         color: var(--bs-text);
+        white-space: nowrap;
         cursor: pointer;
         background: rgba(0, 120, 180, 0.25);
         border: 1px solid var(--bs-border);
@@ -178,38 +180,125 @@
         background: rgba(0, 180, 230, 0.35);
         box-shadow: 0 0 12px rgba(0, 212, 255, 0.25);
       }
+      .bs-action-btn--sm {
+        height: 28px;
+        padding: 0 14px;
+        font-size: 12px;
+      }
 
-      /* ---------- 图例 ---------- */
-      .bs-legend {
+      /* ---------- 控制条（分组切换 + 设备类型筛选 + 图例）---------- */
+      .bs-controlbar {
         position: absolute;
         top: 84px;
-        left: 50%;
+        right: 392px;
+        left: 392px;
         z-index: 16;
         display: flex;
+        flex-wrap: nowrap;
         gap: 16px;
-        padding: 6px 14px;
-        font-size: 12px;
-        color: var(--bs-muted);
+        align-items: center;
+        justify-content: center;
+        padding: 6px 16px;
+        overflow: hidden;
         background: rgba(6, 28, 52, 0.72);
         border: 1px solid var(--bs-border-soft);
         border-radius: 20px;
-        transform: translateX(-50%);
         backdrop-filter: blur(4px);
+      }
+      .bs-controlbar__group {
+        display: flex;
+        flex-shrink: 0;
+        gap: 8px;
+        align-items: center;
+      }
+      .bs-controlbar__label {
+        flex-shrink: 0;
+        font-size: 12px;
+        white-space: nowrap;
+        color: var(--bs-muted);
+      }
+      .bs-controlbar__select {
+        flex-shrink: 0;
+        width: 200px;
+      }
+      .bs-controlbar__select--sm {
+        width: 150px;
+      }
+      .bs-controlbar__legend {
+        display: flex;
+        flex-shrink: 0;
+        gap: 14px;
+        padding-left: 16px;
+        border-left: 1px solid var(--bs-border-soft);
       }
       .bs-legend__item {
         display: flex;
         gap: 6px;
         align-items: center;
+        font-size: 12px;
+        color: var(--bs-muted);
       }
       .bs-legend__lamp {
         width: 12px;
         height: 17px;
       }
 
+      /* ---------- 顶部 KPI 条 ---------- */
+      .bs-kpibar {
+        position: absolute;
+        top: 134px;
+        right: 392px;
+        left: 392px;
+        z-index: 15;
+        display: flex;
+        gap: 12px;
+      }
+      .bs-kpibar__item {
+        flex: 1;
+        padding: 10px 8px;
+        text-align: center;
+        background: var(--bs-panel);
+        border: 1px solid var(--bs-border-soft);
+        border-radius: 4px;
+        backdrop-filter: blur(6px);
+      }
+      .bs-kpibar__value {
+        font-size: 24px;
+        font-weight: 700;
+        color: #e8f7ff;
+      }
+      .bs-kpibar__value.is-green {
+        color: var(--bs-green);
+      }
+      .bs-kpibar__value.is-orange {
+        color: var(--bs-orange);
+      }
+      .bs-kpibar__value.is-red {
+        color: var(--bs-red);
+      }
+      .bs-kpibar__value.is-cyan {
+        color: var(--bs-cyan);
+      }
+      .bs-kpibar__label {
+        margin-top: 4px;
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+      .bs-kpibar__trend {
+        margin-top: 2px;
+        font-size: 11px;
+      }
+      .bs-kpibar__trend.is-trend-good {
+        color: var(--bs-green);
+      }
+      .bs-kpibar__trend.is-trend-bad {
+        color: var(--bs-red);
+      }
+
       /* ---------- 侧栏 & 底部 ---------- */
       .bs-side {
         position: absolute;
-        top: 84px;
+        top: 226px;
         bottom: 240px;
         z-index: 15;
         display: flex;
@@ -245,6 +334,14 @@
       .bs-side--right > *:nth-child(3) {
         flex: 1;
         min-height: 120px;
+      }
+
+      .bs-mapinfo {
+        position: absolute;
+        top: 226px;
+        right: 408px;
+        z-index: 15;
+        width: 220px;
       }
 
       .bs-bottom {
@@ -358,6 +455,17 @@
           left: 100%;
         }
       }
+      .legend-dot {
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 2px;
+        border-radius: 50%;
+        vertical-align: middle;
+      }
+      .legend-dot--ytd {
+        background: var(--bs-orange);
+      }
       .bs-panel__header .hint {
         font-size: 11px;
         font-weight: 400;
@@ -370,7 +478,7 @@
         overflow: auto;
       }
 
-      /* ---------- KPI ---------- */
+      /* ---------- KPI / 资产网格 ---------- */
       .kpi-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
@@ -389,7 +497,7 @@
         color: var(--bs-muted);
       }
       .kpi-value {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         color: #e8f7ff;
         letter-spacing: 0.5px;
@@ -413,7 +521,7 @@
         align-items: center;
         justify-content: center;
         height: 100%;
-        min-height: 80px;
+        min-height: 60px;
         font-size: 13px;
         color: var(--bs-muted);
       }
@@ -464,29 +572,7 @@
         color: var(--bs-muted);
       }
 
-      /* ---------- 筛选 ---------- */
-      .filter-form {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .filter-row {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
-      }
-      .filter-row label {
-        font-size: 12px;
-        color: var(--bs-muted);
-      }
-      .filter-select {
-        width: 100%;
-      }
-      .filter-actions {
-        display: flex;
-        gap: 8px;
-        margin-top: 4px;
-      }
+      /* ---------- 表单控件 ---------- */
       .el-select__wrapper {
         background: rgba(0, 40, 70, 0.55) !important;
         box-shadow: 0 0 0 1px rgba(0, 160, 220, 0.3) inset !important;
@@ -497,12 +583,12 @@
         color: #d8eefc !important;
       }
 
-      /* ---------- 分组统计 ---------- */
+      /* ---------- 分组统计 / 小节标题 ---------- */
       .summary-row {
         display: flex;
         gap: 8px;
         margin-bottom: 8px;
-        font-size: 13px;
+        font-size: 12px;
       }
       .summary-row .label {
         flex-shrink: 0;
@@ -518,7 +604,7 @@
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         gap: 8px;
-        margin-top: 12px;
+        margin-top: 8px;
       }
       .metric {
         padding: 8px 4px;
@@ -528,7 +614,7 @@
         border-radius: 4px;
       }
       .metric-val {
-        font-size: 18px;
+        font-size: 16px;
         font-weight: 700;
         color: #e8f7ff;
       }
@@ -541,13 +627,23 @@
       .metric-val.is-orange {
         color: var(--bs-orange);
       }
+      .metric-val.is-red {
+        color: var(--bs-red);
+      }
       .metric-label {
         margin-top: 4px;
         font-size: 11px;
         color: var(--bs-muted);
       }
+      .subsection-title {
+        margin: 4px 0 6px;
+        padding-left: 8px;
+        font-size: 12px;
+        color: var(--bs-title);
+        border-left: 3px solid var(--bs-cyan);
+      }
 
-      /* ---------- 能耗类数值网格（节能数据统计 / 用电计划）---------- */
+      /* ---------- 能耗类数值网格 ---------- */
       .elec-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
@@ -565,7 +661,7 @@
         color: var(--bs-muted);
       }
       .elec-value {
-        font-size: 22px;
+        font-size: 20px;
         font-weight: 700;
         color: var(--bs-cyan);
       }
@@ -576,16 +672,11 @@
         color: var(--bs-muted);
       }
 
-      /* ---------- 用电计划 ---------- */
+      /* ---------- 控灯策略 ---------- */
       .plan-policy {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        padding: 10px;
-        margin-bottom: 12px;
-        background: rgba(0, 100, 160, 0.12);
-        border: 1px solid rgba(0, 160, 220, 0.15);
-        border-radius: 4px;
       }
       .plan-row {
         display: flex;
@@ -594,7 +685,7 @@
       }
       .plan-row .label {
         flex-shrink: 0;
-        width: 64px;
+        width: 56px;
         color: var(--bs-muted);
       }
       .plan-row .value {
@@ -604,6 +695,56 @@
       .plan-row .value.is-status {
         color: var(--bs-green);
         font-weight: 600;
+      }
+
+      /* ---------- TOP 榜单 ---------- */
+      .top-list__title {
+        margin: 10px 0 6px;
+        font-size: 12px;
+        color: var(--bs-muted);
+      }
+      .top-list__title:first-child {
+        margin-top: 0;
+      }
+      .top-list__item {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 12px;
+      }
+      .top-list__rank {
+        flex-shrink: 0;
+        width: 18px;
+        height: 18px;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 18px;
+        color: #04202f;
+        text-align: center;
+        background: var(--bs-offline);
+        border-radius: 50%;
+      }
+      .top-list__rank.rk-1 {
+        background: #ffd666;
+      }
+      .top-list__rank.rk-2 {
+        background: #c7d6e3;
+      }
+      .top-list__rank.rk-3 {
+        background: #e0a97a;
+      }
+      .top-list__name {
+        flex: 1;
+        overflow: hidden;
+        color: #e8f7ff;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .top-list__value {
+        flex-shrink: 0;
+        font-weight: 600;
+        color: var(--bs-orange);
       }
 
       .echart {
@@ -646,6 +787,14 @@
         });
       }
 
+      function seededRand(seed) {
+        let s = seed;
+        return () => {
+          s = (s * 9301 + 49297) % 233280;
+          return s / 233280;
+        };
+      }
+
       /* ---------------- 静态示例数据（对应原 Vue 页面的接口返回结构） ---------------- */
 
       const GROUPS = [
@@ -654,6 +803,8 @@
         { id: 3, name: "滨江路" },
         { id: 4, name: "高新园区" },
       ];
+      /* 分组切换 Tab：0 表示「全部」聚合视图 */
+      const GROUP_TABS = [{ id: 0, name: "全部" }, ...GROUPS];
 
       const PRODUCTS = [
         { id: 1, name: "智慧路灯" },
@@ -662,96 +813,276 @@
         { id: 4, name: "环境传感器" },
       ];
 
+      /* 设备故障报警：补充 groupId 以支持按分组筛选 */
       const ALARMS = [
-        {
-          id: 1,
-          name: "灯杆离线超阈值",
-          level: 3,
-          deviceId: 10231,
-          processStatus: false,
-        },
-        {
-          id: 2,
-          name: "电压异常波动",
-          level: 2,
-          deviceId: 10087,
-          processStatus: false,
-        },
-        {
-          id: 3,
-          name: "亮灯率低于阈值",
-          level: 1,
-          deviceId: 10456,
-          processStatus: true,
-        },
-        {
-          id: 4,
-          name: "通信超时",
-          level: 2,
-          deviceId: 10192,
-          processStatus: false,
-        },
-        {
-          id: 5,
-          name: "功率突增告警",
-          level: 3,
-          deviceId: 10078,
-          processStatus: true,
-        },
+        { id: 1, name: "灯杆离线超阈值", level: 3, deviceId: 10231, processStatus: false, groupId: 1 },
+        { id: 2, name: "电压异常波动", level: 2, deviceId: 10087, processStatus: false, groupId: 3 },
+        { id: 3, name: "亮灯率低于阈值", level: 1, deviceId: 10456, processStatus: true, groupId: 2 },
+        { id: 4, name: "通信超时", level: 2, deviceId: 10192, processStatus: false, groupId: 4 },
+        { id: 5, name: "功率突增告警", level: 3, deviceId: 10078, processStatus: true, groupId: 1 },
+        { id: 6, name: "太阳能板电压过低", level: 1, deviceId: 10321, processStatus: false, groupId: 2 },
+        { id: 7, name: "控制器离线", level: 2, deviceId: 10555, processStatus: true, groupId: 3 },
+        { id: 8, name: "灯具亮度异常", level: 1, deviceId: 10678, processStatus: false, groupId: 4 },
       ];
 
-      const KPI = {
-        total: 854,
-        online: 812,
-        offline: 42,
-        lightOn: 536,
-        onlineRate: 95.1,
-        lightRate: 62.8,
-        mappedTotal: 854,
-      };
+      /* ---- 按分组生成运营统计（节能/资产/工单/设备健康/用电安全等），"全部"为聚合视图 ---- */
+      function buildGroupStats(idx, name) {
+        const r = seededRand(1000 + idx * 37);
+        const base = 1 + idx * 0.4;
+        const round = (n) => Math.round(n);
+        const round1 = (n) => Math.round(n * 10) / 10;
+        const hasEnv = idx !== 1; /* 「开发区」模拟环境传感器暂无数据，用于验证空值兜底 */
 
-      /* 节能数据统计 */
-      const ENERGY_STATS = {
-        monthSaving: 1862,
-        savingRate: 18.6,
-        totalSaving: 21540,
-        co2Reduction: 12500,
-      };
+        const planKwh = round(2200 * base);
+        const actualKwh = round(2000 * base + r() * 80);
+        const processing = round(3 + idx);
+        const overtime = idx === 2 ? 2 : round(idx * 0.6);
+        const total = round(24 * base);
 
-      /* 用电计划：当前生效策略 + 计划/实际用电量对比 */
-      const POWER_PLAN = {
-        strategyName: "冬季经济模式",
-        timeRange: "18:30 - 06:00（分时调光）",
-        status: "执行中",
-        planKwh: 9600,
-        actualKwh: 8720,
-        completionRate: 90.8,
-      };
+        return {
+          /* 顶部 KPI 环比（较昨日/上周期）：正负号即代表升降方向，用于 KPI 条箭头展示 */
+          trend: {
+            onlineRate: round1((r() - 0.35) * 3.2),
+            lightRate: round1((r() - 0.45) * 4),
+            faultCount: idx % 2 === 0 ? -1 : 1,
+            savingRate: round1((r() - 0.3) * 2.2),
+          },
+          environment: hasEnv
+            ? {
+                online: round(6 + idx * 2),
+                offline: round(1 + idx),
+                fault: idx === 3 ? 1 : 0,
+                temp: round1(18 + idx * 1.6 + r() * 2),
+                humidity: round(48 + idx * 3 + r() * 8),
+                windSpeed: round1(1.2 + idx * 0.3 + r()),
+                pressure: round(1005 + idx * 2 + r() * 3),
+                pm25: round(18 + idx * 4 + r() * 6),
+                pm10: round(32 + idx * 5 + r() * 8),
+              }
+            : null,
+          assets: {
+            pole: round(3200 * base),
+            gateway: round(28 * base),
+            solarPanel: round(40 * base),
+            singleCtrl: round(3200 * base),
+            led: round(2 + idx),
+            envMonitor: round(2 + idx),
+            manhole: round(idx),
+            camera: round(1 + idx * 2),
+            base5g: idx === 3 ? 1 : 0,
+            chargePile: idx === 2 ? 2 : 0,
+          },
+          solar: {
+            total: round(40 * base),
+            discharge: round(1 + (idx % 2)),
+            online: round(40 * base) - (idx === 2 ? 1 : 0),
+            fault: idx === 2 ? 1 : 0,
+          },
+          energy: {
+            monthSaving: round(1400 * base),
+            savingRate: round1(16 + idx * 2.4),
+            totalSaving: round(16000 * base),
+            co2Reduction: round(9600 * base),
+          },
+          costSaving: {
+            yearSaving: round(38000 * base),
+            totalSaving: round(210000 * base),
+          },
+          powerPlan: {
+            strategyName: ["冬季经济模式", "分时调光模式", "夜间半功率模式", "节假日模式"][idx],
+            timeRange: [
+              "18:30 - 06:00（分时调光）",
+              "19:00-23:00 全亮 / 23:00-05:30 半亮",
+              "20:00 - 05:00 半功率运行",
+              "18:00 - 06:00 全时段调光",
+            ][idx],
+            status: "执行中",
+            planKwh,
+            actualKwh,
+            completionRate: planKwh ? round1((actualKwh / planKwh) * 100) : 0,
+          },
+          workOrders: {
+            total,
+            processing,
+            completed: Math.max(total - processing - overtime, 0),
+            overtime,
+            avgResponseMin: round(18 + idx * 3),
+            avgHandleMin: round(90 + idx * 12),
+            slaRate: round1(96 - idx * 1.2),
+          },
+          deviceHealth: {
+            needMaintenance: round(6 + idx * 3),
+            nearEndOfLife: round(4 + idx * 2),
+            avgRunHours: round(8600 + idx * 400),
+          },
+          safety: {
+            leakageTrips: idx === 2 ? 2 : round(idx * 0.5),
+            voltageAnomalies: round(1 + idx),
+            currentAnomalies: round(idx % 2),
+          },
+          topOffline: Array.from({ length: 3 }, (_, i) => ({
+            name: `${name}-${String(i + 1).padStart(3, "0")}号灯杆`,
+            hours: round(48 - i * 9 + idx * 6),
+          })),
+          topPower: Array.from({ length: 3 }, (_, i) => ({
+            name: `${name}-${String(i + 10).padStart(3, "0")}号灯杆`,
+            kwh: round(86 - i * 12 + idx * 8),
+          })),
+          monthlyCompare: {
+            thisMonth: round(5200 * base),
+            lastMonth: round(5600 * base),
+            lastYear: round(4800 * base),
+          },
+          yearlyEnergy: [
+            { year: "2024", kwh: round(58000 * base) },
+            { year: "2025", kwh: round(61000 * base) },
+            { year: "2026", kwh: round(38000 * base), isYtd: true },
+          ],
+          revenueMonthly: Array.from({ length: 8 }, (_, i) => ({
+            month: `${i + 1}月`,
+            val: round1(3.2 + Math.sin(i / 2) * 0.6 + idx * 0.4),
+          })),
+          investedPoles: round(3200 * base),
+          totalRevenueWan: round1(26 + idx * 8),
+        };
+      }
 
-      /* 年度能耗趋势（近 12 个月，单位 kWh） */
-      const YEARLY_ENERGY = [
-        "1月",
-        "2月",
-        "3月",
-        "4月",
-        "5月",
-        "6月",
-        "7月",
-        "8月",
-        "9月",
-        "10月",
-        "11月",
-        "12月",
-      ].map((month, i) => ({
-        month,
-        kwh: Math.round(7200 + Math.sin(i / 2) * 1400 + (i % 4) * 200),
-      }));
+      function aggregateGroupStats(list) {
+        const sum = (sel) => list.reduce((a, s) => a + sel(s), 0);
+        const round1 = (n) => Math.round(n * 10) / 10;
+        const envs = list.map((s) => s.environment).filter(Boolean);
+        const avgEnv = (sel) =>
+          envs.length
+            ? round1(envs.reduce((a, e) => a + Number(sel(e)), 0) / envs.length)
+            : null;
+        const mergeTop = (key, valueKey) =>
+          list
+            .flatMap((s) => s[key])
+            .sort((a, b) => b[valueKey] - a[valueKey])
+            .slice(0, 3);
+        const planKwh = sum((s) => s.powerPlan.planKwh);
+        const actualKwh = sum((s) => s.powerPlan.actualKwh);
 
-      /* 月度能耗趋势（本月每日，单位 kWh） */
-      const MONTHLY_ENERGY = Array.from({ length: 30 }, (_, i) => ({
-        day: `${i + 1}日`,
-        kwh: Math.round(260 + Math.sin(i / 3) * 60 + (i % 5 === 0 ? 30 : 0)),
-      }));
+        return {
+          trend: {
+            onlineRate: round1(
+              list.reduce((a, s) => a + s.trend.onlineRate, 0) / list.length,
+            ),
+            lightRate: round1(
+              list.reduce((a, s) => a + s.trend.lightRate, 0) / list.length,
+            ),
+            faultCount: sum((s) => s.trend.faultCount),
+            savingRate: round1(
+              list.reduce((a, s) => a + s.trend.savingRate, 0) / list.length,
+            ),
+          },
+          environment: envs.length
+            ? {
+                online: sum((s) => (s.environment ? s.environment.online : 0)),
+                offline: sum((s) => (s.environment ? s.environment.offline : 0)),
+                fault: sum((s) => (s.environment ? s.environment.fault : 0)),
+                temp: avgEnv((e) => e.temp),
+                humidity: avgEnv((e) => e.humidity),
+                windSpeed: avgEnv((e) => e.windSpeed),
+                pressure: avgEnv((e) => e.pressure),
+                pm25: avgEnv((e) => e.pm25),
+                pm10: avgEnv((e) => e.pm10),
+              }
+            : null,
+          assets: {
+            pole: sum((s) => s.assets.pole),
+            gateway: sum((s) => s.assets.gateway),
+            solarPanel: sum((s) => s.assets.solarPanel),
+            singleCtrl: sum((s) => s.assets.singleCtrl),
+            led: sum((s) => s.assets.led),
+            envMonitor: sum((s) => s.assets.envMonitor),
+            manhole: sum((s) => s.assets.manhole),
+            camera: sum((s) => s.assets.camera),
+            base5g: sum((s) => s.assets.base5g),
+            chargePile: sum((s) => s.assets.chargePile),
+          },
+          solar: {
+            total: sum((s) => s.solar.total),
+            discharge: sum((s) => s.solar.discharge),
+            online: sum((s) => s.solar.online),
+            fault: sum((s) => s.solar.fault),
+          },
+          energy: {
+            monthSaving: sum((s) => s.energy.monthSaving),
+            savingRate: round1(
+              list.reduce((a, s) => a + s.energy.savingRate, 0) / list.length,
+            ),
+            totalSaving: sum((s) => s.energy.totalSaving),
+            co2Reduction: sum((s) => s.energy.co2Reduction),
+          },
+          costSaving: {
+            yearSaving: sum((s) => s.costSaving.yearSaving),
+            totalSaving: sum((s) => s.costSaving.totalSaving),
+          },
+          powerPlan: {
+            strategyName: "多策略并行",
+            timeRange: "按分组分时段独立调光",
+            status: "执行中",
+            planKwh,
+            actualKwh,
+            completionRate: planKwh ? round1((actualKwh / planKwh) * 100) : 0,
+          },
+          workOrders: {
+            total: sum((s) => s.workOrders.total),
+            processing: sum((s) => s.workOrders.processing),
+            completed: sum((s) => s.workOrders.completed),
+            overtime: sum((s) => s.workOrders.overtime),
+            avgResponseMin: Math.round(
+              list.reduce((a, s) => a + s.workOrders.avgResponseMin, 0) /
+                list.length,
+            ),
+            avgHandleMin: Math.round(
+              list.reduce((a, s) => a + s.workOrders.avgHandleMin, 0) /
+                list.length,
+            ),
+            slaRate: round1(
+              list.reduce((a, s) => a + s.workOrders.slaRate, 0) / list.length,
+            ),
+          },
+          deviceHealth: {
+            needMaintenance: sum((s) => s.deviceHealth.needMaintenance),
+            nearEndOfLife: sum((s) => s.deviceHealth.nearEndOfLife),
+            avgRunHours: Math.round(
+              list.reduce((a, s) => a + s.deviceHealth.avgRunHours, 0) /
+                list.length,
+            ),
+          },
+          safety: {
+            leakageTrips: sum((s) => s.safety.leakageTrips),
+            voltageAnomalies: sum((s) => s.safety.voltageAnomalies),
+            currentAnomalies: sum((s) => s.safety.currentAnomalies),
+          },
+          topOffline: mergeTop("topOffline", "hours"),
+          topPower: mergeTop("topPower", "kwh"),
+          monthlyCompare: {
+            thisMonth: sum((s) => s.monthlyCompare.thisMonth),
+            lastMonth: sum((s) => s.monthlyCompare.lastMonth),
+            lastYear: sum((s) => s.monthlyCompare.lastYear),
+          },
+          yearlyEnergy: list[0].yearlyEnergy.map((_, i) => ({
+            year: list[0].yearlyEnergy[i].year,
+            kwh: sum((s) => s.yearlyEnergy[i].kwh),
+            isYtd: list[0].yearlyEnergy[i].isYtd,
+          })),
+          revenueMonthly: list[0].revenueMonthly.map((_, i) => ({
+            month: list[0].revenueMonthly[i].month,
+            val: round1(sum((s) => s.revenueMonthly[i].val)),
+          })),
+          investedPoles: sum((s) => s.investedPoles),
+          totalRevenueWan: round1(sum((s) => s.totalRevenueWan)),
+        };
+      }
+
+      const groupStatsList = GROUPS.map((g, idx) => buildGroupStats(idx, g.name));
+      const GROUP_STATS = { 0: aggregateGroupStats(groupStatsList) };
+      GROUPS.forEach((g, idx) => {
+        GROUP_STATS[g.id] = groupStatsList[idx];
+      });
 
       /* 地图点位：由画布相对坐标映射为高德经纬度（示例数据） */
       function genMarkers() {
@@ -770,6 +1101,9 @@
             MAP_CENTER[0] - MAP_SPAN_LNG / 2 + ((left - 8) / 78) * MAP_SPAN_LNG;
           const lat =
             MAP_CENTER[1] + MAP_SPAN_LAT / 2 - ((top - 14) / 68) * MAP_SPAN_LAT;
+          const lv = rand();
+          const level =
+            lv < 0.12 ? "off" : lv < 0.24 ? "low" : lv < 0.4 ? "mid" : lv < 0.62 ? "high" : "full";
           markers.push({
             id: i + 1,
             deviceId: 10000 + i,
@@ -782,7 +1116,8 @@
             productName: product.name,
             lng: Math.round(lng * 1e6) / 1e6,
             lat: Math.round(lat * 1e6) / 1e6,
-            switchOn: rand() > 0.35,
+            level,
+            switchOn: level !== "off",
           });
         }
         return markers;
@@ -792,25 +1127,35 @@
       function buildLampMarkerHtml(m) {
         const color = m.switchOn ? "#ffd666" : "#8a95a1";
         const bulbClass = m.switchOn ? "bs-lamp-bulb--on" : "bs-lamp-bulb--off";
+        /* 开灯时在灯头下方加几道细光线，强化"路灯照明"的识别度 */
+        const rays = m.switchOn
+          ? `<path d="M2.4 11.6 L1.3 15 M5 12.2 L5 16.2 M7.6 11.6 L8.7 15" stroke="#ffd666" stroke-width="0.9" stroke-linecap="round" opacity="0.55" />`
+          : "";
         return (
           `<div class="bs-lamp-marker" title="${m.name}">` +
           `<svg viewBox="0 0 20 28">` +
           `<rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" />` +
           `<ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />` +
           `<path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />` +
-          `<circle cx="5" cy="6" r="4" fill="${color}" class="${bulbClass}" />` +
+          `<path d="M5 2 C7.4 2 9 3.7 9 6.1 C9 8.2 7.3 9.7 5 11 C2.7 9.7 1 8.2 1 6.1 C1 3.7 2.6 2 5 2 Z" fill="${color}" class="${bulbClass}" />` +
+          rays +
           `</svg></div>`
         );
       }
 
       /* ---------------- 数字滚动动效（对应 useNumberTicker） ---------------- */
       function useNumberTicker(getValue, decimals = 0) {
-        const display = ref(0);
+        /* 初始值直接赋值展示，不依赖 requestAnimationFrame 首帧（页面初始不可见/失焦时 rAF 会被浏览器挂起，
+           若仅靠动画渲染首值，会导致数字停留在 0）；仅后续数值变化时才走滚动动画。 */
+        const display = ref(getValue());
         let raf = null;
         const animate = (from, to) => {
           const duration = 600;
           const start = performance.now();
           if (raf) cancelAnimationFrame(raf);
+          /* 兜底：页面不可见/失焦时 rAF 会被浏览器挂起而不再触发，先直接赋终值，
+             保证数据始终正确；rAF 一旦恢复执行会继续覆盖为平滑过渡效果。 */
+          display.value = decimals ? Math.round(to * 10 ** decimals) / 10 ** decimals : Math.round(to);
           const step = (now) => {
             const p = Math.min(1, (now - start) / duration);
             const eased = 1 - Math.pow(1 - p, 3);
@@ -822,8 +1167,112 @@
           };
           raf = requestAnimationFrame(step);
         };
-        animate(0, getValue());
         return { display, animate };
+      }
+
+      /* ---------------- ECharts 图表配置 ---------------- */
+      function barChartOption(categories, values, color, ytdFlags) {
+        return {
+          tooltip: {
+            trigger: "axis",
+            backgroundColor: "rgba(8, 28, 48, 0.92)",
+            borderColor: "rgba(0, 200, 255, 0.35)",
+            textStyle: { color: "#d6eefc", fontSize: 12 },
+            formatter: (params) => {
+              const p = params[0];
+              const ytd = ytdFlags && ytdFlags[p.dataIndex] ? "（至今）" : "";
+              return `${p.axisValue}${ytd}<br/>${p.marker}${p.value} kWh`;
+            },
+          },
+          grid: { left: 48, right: 16, top: 16, bottom: 28 },
+          xAxis: {
+            type: "category",
+            data: categories,
+            axisLabel: { fontSize: 11, color: "rgba(160, 200, 230, 0.65)" },
+            axisLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
+          },
+          yAxis: {
+            type: "value",
+            axisLabel: { fontSize: 11, color: "rgba(160, 200, 230, 0.65)" },
+            splitLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
+          },
+          series: [
+            {
+              type: "bar",
+              barWidth: "46%",
+              itemStyle: { color },
+              data: values.map((v, i) =>
+                ytdFlags && ytdFlags[i]
+                  ? { value: v, itemStyle: { color: "#faad14" } }
+                  : v,
+              ),
+            },
+          ],
+        };
+      }
+
+      function hBarChartOption(categories, values, colors) {
+        return {
+          tooltip: {
+            trigger: "axis",
+            axisPointer: { type: "shadow" },
+            backgroundColor: "rgba(8, 28, 48, 0.92)",
+            borderColor: "rgba(0, 200, 255, 0.35)",
+            textStyle: { color: "#d6eefc", fontSize: 12 },
+            valueFormatter: (v) => `${v} kWh`,
+          },
+          grid: { left: 70, right: 24, top: 10, bottom: 10 },
+          xAxis: {
+            type: "value",
+            axisLabel: { fontSize: 11, color: "rgba(160, 200, 230, 0.65)" },
+            splitLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
+          },
+          yAxis: {
+            type: "category",
+            data: categories,
+            axisLabel: { fontSize: 12, color: "#d8eefc" },
+            axisLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
+          },
+          series: [
+            {
+              type: "bar",
+              barWidth: "50%",
+              itemStyle: { color: (p) => colors[p.dataIndex] },
+              label: { show: true, position: "right", color: "#d8eefc", fontSize: 11 },
+              data: values,
+            },
+          ],
+        };
+      }
+
+      function gaugeOption(rate) {
+        return {
+          series: [
+            {
+              type: "gauge",
+              startAngle: 210,
+              endAngle: -30,
+              min: 0,
+              max: 100,
+              radius: "100%",
+              progress: { show: true, width: 8, itemStyle: { color: "#00d4ff" } },
+              axisLine: { lineStyle: { width: 8, color: [[1, "rgba(0,160,220,0.18)"]] } },
+              pointer: { show: false },
+              axisTick: { show: false },
+              splitLine: { show: false },
+              axisLabel: { show: false },
+              detail: {
+                valueAnimation: true,
+                fontSize: 18,
+                fontWeight: 700,
+                color: "#e8f7ff",
+                offsetCenter: [0, 0],
+                formatter: "{value}%",
+              },
+              data: [{ value: rate }],
+            },
+          ],
+        };
       }
 
       const App = {
@@ -831,7 +1280,7 @@
           const scale = ref(1);
           const nowText = ref("");
           const isFullscreen = ref(false);
-          const selectedGroupIds = ref([]);
+          const activeGroupId = ref(0);
           const selectedProductIds = ref([]);
           let clockTimer = null;
 
@@ -870,67 +1319,120 @@
             window.location.href = "index.html";
           };
 
-          /* ---- 筛选后的点位 / KPI / 摘要 ---- */
-          const filteredMarkers = computed(() => {
-            return MARKERS.filter((m) => {
-              const groupOk =
-                !selectedGroupIds.value.length ||
-                m.groupIds.some((g) => selectedGroupIds.value.includes(g));
-              const productOk =
-                !selectedProductIds.value.length ||
-                selectedProductIds.value.includes(m.productId);
-              return groupOk && productOk;
-            });
-          });
+          /* ---- 分组切换：驱动除地图外几乎所有面板 ---- */
+          /* el-select 的 v-model 已在 change 事件触发前更新 activeGroupId，这里只需重新拟合地图视野 */
+          const setActiveGroup = () => {
+            nextTick(() => syncAmapMarkers(true));
+          };
+          const groupStats = computed(() => GROUP_STATS[activeGroupId.value]);
+          const groupAlarms = computed(() =>
+            activeGroupId.value === 0
+              ? ALARMS
+              : ALARMS.filter((a) => a.groupId === activeGroupId.value),
+          );
+          const activeGroupLabel = computed(
+            () => GROUP_TABS.find((g) => g.id === activeGroupId.value)?.name ?? "全部",
+          );
 
-          const filterSummary = computed(() => {
-            const list = filteredMarkers.value;
-            const online = list.filter((m) => m.online).length;
-            const lightOn = list.filter((m) => m.switchOn).length;
+          /* ---- 分组下的点位 / 照明分级 / 顶部 KPI（不含设备类型筛选） ---- */
+          const groupMarkers = computed(() =>
+            activeGroupId.value === 0
+              ? MARKERS
+              : MARKERS.filter((m) => m.groupIds.includes(activeGroupId.value)),
+          );
+          const lightingSummary = computed(() => {
+            const list = groupMarkers.value;
+            const count = (lvl) => list.filter((m) => m.level === lvl).length;
             return {
-              deviceCount: list.length,
-              onlineCount: online,
-              onlineRate: list.length
-                ? Math.round((online / list.length) * 1000) / 10
-                : 0,
-              lightOnCount: lightOn,
-              groupLabel: selectedGroupIds.value.length
-                ? GROUPS.filter((g) => selectedGroupIds.value.includes(g.id))
-                    .map((g) => g.name)
-                    .join("、")
-                : "全部分组",
-              typeLabel: selectedProductIds.value.length
-                ? PRODUCTS.filter((p) =>
-                    selectedProductIds.value.includes(p.id),
-                  )
-                    .map((p) => p.name)
-                    .join("、")
-                : "全部类型",
+              total: list.length,
+              off: count("off"),
+              low: count("low"),
+              mid: count("mid"),
+              high: count("high"),
+              full: count("full"),
+            };
+          });
+          const topKpi = computed(() => {
+            const list = groupMarkers.value;
+            const online = list.filter((m) => m.online).length;
+            const lightOn = list.length - lightingSummary.value.off;
+            return {
+              total: list.length,
+              onlineRate: list.length ? Math.round((online / list.length) * 1000) / 10 : 0,
+              lightRate: list.length ? Math.round((lightOn / list.length) * 1000) / 10 : 0,
+              faultCount: groupAlarms.value.filter((a) => !a.processStatus).length,
             };
           });
 
-          /* ---- KPI 数字滚动 ---- */
-          const kpiTickers = {
-            total: useNumberTicker(() => KPI.total),
-            online: useNumberTicker(() => KPI.online),
-            offline: useNumberTicker(() => KPI.offline),
-            lightOn: useNumberTicker(() => KPI.lightOn),
-            onlineRate: useNumberTicker(() => KPI.onlineRate, 1),
-            lightRate: useNumberTicker(() => KPI.lightRate, 1),
-          };
-
-          const summaryTickers = reactive({
-            deviceCount: useNumberTicker(() => filterSummary.value.deviceCount),
-            onlineCount: useNumberTicker(() => filterSummary.value.onlineCount),
-            onlineRate: useNumberTicker(
-              () => filterSummary.value.onlineRate,
-              1,
-            ),
-            lightOnCount: useNumberTicker(
-              () => filterSummary.value.lightOnCount,
-            ),
+          /* ---- 顶部 KPI 环比趋势（较上一周期）：箭头方向 + 好坏配色 ---- */
+          const kpiTrends = computed(() => {
+            const t = groupStats.value.trend;
+            const arrow = (v) => (v > 0 ? "▲" : v < 0 ? "▼" : "—");
+            const fmt = (v, unit) => `${arrow(v)} ${Math.abs(v)}${unit}`;
+            return {
+              onlineRate: { text: fmt(t.onlineRate, "%"), good: t.onlineRate >= 0 },
+              lightRate: { text: fmt(t.lightRate, "%"), good: t.lightRate >= 0 },
+              faultCount: { text: fmt(t.faultCount, ""), good: t.faultCount <= 0 },
+              savingRate: { text: fmt(t.savingRate, "%"), good: t.savingRate >= 0 },
+            };
           });
 
+          /* ---- 地图筛选摘要（分组 + 设备类型，保留作为地图交互）---- */
+          const filteredMarkers = computed(() =>
+            groupMarkers.value.filter(
+              (m) =>
+                !selectedProductIds.value.length ||
+                selectedProductIds.value.includes(m.productId),
+            ),
+          );
+          const typeLabel = computed(() =>
+            selectedProductIds.value.length
+              ? PRODUCTS.filter((p) => selectedProductIds.value.includes(p.id))
+                  .map((p) => p.name)
+                  .join("、")
+              : "全部类型",
+          );
+          const filterSummary = computed(() => {
+            const list = filteredMarkers.value;
+            const online = list.filter((m) => m.online).length;
+            return {
+              deviceCount: list.length,
+              onlineCount: online,
+            };
+          });
+
+          /* ---- 数字滚动 ---- */
+          const topKpiTickers = {
+            total: useNumberTicker(() => topKpi.value.total),
+            onlineRate: useNumberTicker(() => topKpi.value.onlineRate, 1),
+            lightRate: useNumberTicker(() => topKpi.value.lightRate, 1),
+            faultCount: useNumberTicker(() => topKpi.value.faultCount),
+            savingRate: useNumberTicker(() => groupStats.value.energy.savingRate, 1),
+          };
+          watch([topKpi, groupStats], () => {
+            topKpiTickers.total.animate(topKpiTickers.total.display.value, topKpi.value.total);
+            topKpiTickers.onlineRate.animate(
+              topKpiTickers.onlineRate.display.value,
+              topKpi.value.onlineRate,
+            );
+            topKpiTickers.lightRate.animate(
+              topKpiTickers.lightRate.display.value,
+              topKpi.value.lightRate,
+            );
+            topKpiTickers.faultCount.animate(
+              topKpiTickers.faultCount.display.value,
+              topKpi.value.faultCount,
+            );
+            topKpiTickers.savingRate.animate(
+              topKpiTickers.savingRate.display.value,
+              groupStats.value.energy.savingRate,
+            );
+          });
+
+          const summaryTickers = {
+            deviceCount: useNumberTicker(() => filterSummary.value.deviceCount),
+            onlineCount: useNumberTicker(() => filterSummary.value.onlineCount),
+          };
           watch(filterSummary, (val) => {
             summaryTickers.deviceCount.animate(
               summaryTickers.deviceCount.display.value,
@@ -940,14 +1442,6 @@
               summaryTickers.onlineCount.display.value,
               val.onlineCount,
             );
-            summaryTickers.onlineRate.animate(
-              summaryTickers.onlineRate.display.value,
-              val.onlineRate,
-            );
-            summaryTickers.lightOnCount.animate(
-              summaryTickers.lightOnCount.display.value,
-              val.lightOnCount,
-            );
           });
 
           /* ---- 高德地图 ---- */
@@ -955,6 +1449,7 @@
           let amap = null;
           let amapMarkers = [];
           let AMapRef = null;
+          let infoWindow = null;
 
           const clearAmapMarkers = () => {
             if (amap && amapMarkers.length) {
@@ -963,22 +1458,65 @@
             amapMarkers = [];
           };
 
+          /* ---- 点击点位：3D 视角聚焦 + 详情卡片 ---- */
+          const MAP_FOCUS_ZOOM = 18;
+          const MAP_FOCUS_PITCH = 55;
+          const MAP_OVERVIEW_PITCH = 0;
+
+          const buildMarkerInfoHtml = (m) => `
+            <div style="min-width:180px;padding:4px 2px;font-size:12px;line-height:1.9;color:#0f2a3d;">
+              <div style="font-size:13px;font-weight:700;margin-bottom:4px;">${m.name}</div>
+              <div>灯态：${m.switchOn ? "开灯" : "关灯"} · 通信：${m.online ? "在线" : "离线"}</div>
+              <div>所属分组：${m.groupName}</div>
+              <div>设备类型：${m.productName}</div>
+              <div>设备编号：#${m.deviceId}</div>
+            </div>
+          `;
+          /* 放大到某一路灯并转为 3D 俯视角，模拟"下钻查看单灯"的效果 */
+          const focusOnMarker = (m) => {
+            if (!amap) return;
+            amap.setZoomAndCenter(MAP_FOCUS_ZOOM, [m.lng, m.lat], false, 700);
+            amap.setPitch(MAP_FOCUS_PITCH, false, 700);
+          };
+          /* 关闭详情卡片时，视角平滑收回到俯视全览 */
+          const resetMapView = () => {
+            if (!amap) return;
+            amap.setPitch(MAP_OVERVIEW_PITCH, false, 600);
+          };
+          const showMarkerInfo = (m, marker) => {
+            if (!AMapRef || !amap) return;
+            if (!infoWindow) {
+              infoWindow = new AMapRef.InfoWindow({
+                offset: new AMapRef.Pixel(0, -28),
+                closeWhenClickMap: true,
+              });
+              infoWindow.on("close", resetMapView);
+            }
+            infoWindow.setContent(buildMarkerInfoHtml(m));
+            infoWindow.open(amap, marker.getPosition());
+            focusOnMarker(m);
+          };
+
           const syncAmapMarkers = (fit = false) => {
             if (!amap || !AMapRef) return;
             clearAmapMarkers();
-            amapMarkers = filteredMarkers.value.map(
-              (m) =>
-                new AMapRef.Marker({
-                  position: [m.lng, m.lat],
-                  content: buildLampMarkerHtml(m),
-                  offset: new AMapRef.Pixel(-10, -30),
-                  title: m.name,
-                  extData: m,
-                }),
-            );
+            amapMarkers = filteredMarkers.value.map((m) => {
+              const marker = new AMapRef.Marker({
+                position: [m.lng, m.lat],
+                content: buildLampMarkerHtml(m),
+                offset: new AMapRef.Pixel(-10, -30),
+                title: m.name,
+                extData: m,
+              });
+              marker.on("click", () => showMarkerInfo(m, marker));
+              return marker;
+            });
             if (amapMarkers.length) {
               amap.add(amapMarkers);
               if (fit) {
+                /* 切换分组/筛选重新拟合视野时，先收回可能残留的 3D 聚焦俯仰角，避免叠加出奇怪的倾斜视角 */
+                amap.setPitch(MAP_OVERVIEW_PITCH, true);
+                infoWindow && infoWindow.close();
                 /* 预留左右侧栏与底部面板空间 */
                 amap.setFitView(amapMarkers, false, [120, 80, 400, 400]);
               }
@@ -993,12 +1531,15 @@
                 zoom: 13,
                 center: MAP_CENTER,
                 mapStyle: "amap://styles/darkblue",
-                viewMode: "2D",
+                /* 3D 视图模式：配合 setPitch 才能在点击灯杆时做出俯仰角变化的 3D 缩放效果 */
+                viewMode: "3D",
                 resizeEnable: true,
                 pitch: 0,
               });
+              /* 灯杆图标是前端自绘的 DOM 覆盖物，不依赖底图瓦片；地图实例一创建好就先画出来，
+                 避免瓦片因域名白名单/网络问题迟迟加载不完（甚至永不 complete）导致图标一并空白。 */
+              syncAmapMarkers(true);
               amap.on("complete", () => {
-                syncAmapMarkers(true);
                 amap.resize();
               });
             } catch (e) {
@@ -1009,58 +1550,24 @@
             }
           };
 
-          /* ---- ECharts：年度 / 月度能耗趋势 ---- */
+          /* ---- ECharts：年度能耗 / 当月能耗对比 / 控灯策略完成率仪表 ---- */
           let yearlyChart = null;
           let monthlyChart = null;
+          let gaugeChart = null;
           const yearlyRef = ref(null);
           const monthlyRef = ref(null);
-
-          const energyChartOption = (categories, values, color, areaColor) => ({
-            tooltip: {
-              trigger: "axis",
-              backgroundColor: "rgba(8, 28, 48, 0.92)",
-              borderColor: "rgba(0, 200, 255, 0.35)",
-              textStyle: { color: "#d6eefc", fontSize: 12 },
-              valueFormatter: (v) => `${v} kWh`,
-            },
-            grid: { left: 48, right: 16, top: 16, bottom: 28 },
-            xAxis: {
-              type: "category",
-              boundaryGap: false,
-              data: categories,
-              axisLabel: {
-                fontSize: 11,
-                color: "rgba(160, 200, 230, 0.65)",
-                interval: Math.ceil(categories.length / 10) - 1,
-              },
-              axisLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
-            },
-            yAxis: {
-              type: "value",
-              axisLabel: { fontSize: 11, color: "rgba(160, 200, 230, 0.65)" },
-              splitLine: { lineStyle: { color: "rgba(64, 120, 160, 0.25)" } },
-            },
-            series: [
-              {
-                type: "line",
-                smooth: true,
-                symbol: "none",
-                data: values,
-                lineStyle: { width: 2, color },
-                areaStyle: { color: areaColor },
-              },
-            ],
-          });
+          const gaugeRef = ref(null);
 
           const renderYearlyChart = () => {
             if (!yearlyRef.value) return;
             yearlyChart = yearlyChart || echarts.init(yearlyRef.value);
+            const data = groupStats.value.yearlyEnergy;
             yearlyChart.setOption(
-              energyChartOption(
-                YEARLY_ENERGY.map((p) => p.month),
-                YEARLY_ENERGY.map((p) => p.kwh),
+              barChartOption(
+                data.map((p) => p.year),
+                data.map((p) => p.kwh),
                 "#00d4ff",
-                "rgba(0, 212, 255, 0.18)",
+                data.map((p) => !!p.isYtd),
               ),
             );
           };
@@ -1068,15 +1575,31 @@
           const renderMonthlyChart = () => {
             if (!monthlyRef.value) return;
             monthlyChart = monthlyChart || echarts.init(monthlyRef.value);
+            const mc = groupStats.value.monthlyCompare;
             monthlyChart.setOption(
-              energyChartOption(
-                MONTHLY_ENERGY.map((p) => p.day),
-                MONTHLY_ENERGY.map((p) => p.kwh),
-                "#faad14",
-                "rgba(250, 173, 20, 0.16)",
+              hBarChartOption(
+                ["本月", "上月", "去年同期"],
+                [mc.thisMonth, mc.lastMonth, mc.lastYear],
+                ["#faad14", "#3dd68c", "#5a6a7a"],
               ),
             );
           };
+
+          const renderGaugeChart = () => {
+            if (!gaugeRef.value) return;
+            gaugeChart = gaugeChart || echarts.init(gaugeRef.value);
+            gaugeChart.setOption(gaugeOption(groupStats.value.powerPlan.completionRate));
+          };
+
+          const renderCharts = () => {
+            renderYearlyChart();
+            renderMonthlyChart();
+            renderGaugeChart();
+          };
+
+          watch(groupStats, () => {
+            nextTick(renderCharts);
+          });
 
           const applyFilter = async () => {
             if (!filteredMarkers.value.length) {
@@ -1093,12 +1616,11 @@
           };
 
           const resetFilter = () => {
-            selectedGroupIds.value = [];
             selectedProductIds.value = [];
             nextTick(() => {
               syncAmapMarkers(true);
             });
-            ElementPlus.ElMessage.info("已重置筛选条件");
+            ElementPlus.ElMessage.info("已重置设备类型筛选");
           };
 
           watch(filteredMarkers, () => {
@@ -1109,6 +1631,7 @@
             updateScale();
             yearlyChart && yearlyChart.resize();
             monthlyChart && monthlyChart.resize();
+            gaugeChart && gaugeChart.resize();
             nextTick(() => {
               amap && amap.resize();
             });
@@ -1121,8 +1644,7 @@
             window.addEventListener("resize", onResize);
             document.addEventListener("fullscreenchange", onFullscreenChange);
             await nextTick();
-            renderYearlyChart();
-            renderMonthlyChart();
+            renderCharts();
             await initAmap();
           });
 
@@ -1135,6 +1657,7 @@
             );
             yearlyChart && yearlyChart.dispose();
             monthlyChart && monthlyChart.dispose();
+            gaugeChart && gaugeChart.dispose();
             clearAmapMarkers();
             if (amap) {
               amap.destroy();
@@ -1148,23 +1671,27 @@
             isFullscreen,
             toggleFullscreen,
             goAdmin,
-            GROUPS,
+            GROUP_TABS,
             PRODUCTS,
-            ALARMS,
-            ENERGY_STATS,
-            POWER_PLAN,
-            selectedGroupIds,
+            activeGroupId,
+            activeGroupLabel,
+            setActiveGroup,
+            groupStats,
+            groupAlarms,
+            lightingSummary,
+            topKpi,
+            topKpiTickers,
+            kpiTrends,
             selectedProductIds,
-            filteredMarkers,
+            typeLabel,
             filterSummary,
-            kpiTickers,
             summaryTickers,
             applyFilter,
             resetFilter,
             mapRef,
             yearlyRef,
             monthlyRef,
-            KPI,
+            gaugeRef,
           };
         },
         template: `
@@ -1186,24 +1713,66 @@
         </div>
       </header>
 
-      <!-- 图例 -->
-      <div class="bs-legend">
-        <span class="bs-legend__item">
-          <svg class="bs-legend__lamp" viewBox="0 0 20 28">
-            <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" /><ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
-            <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
-            <circle cx="5" cy="6" r="4" fill="#ffd666" class="bs-lamp-bulb--on" />
-          </svg>
-          开灯
-        </span>
-        <span class="bs-legend__item">
-          <svg class="bs-legend__lamp" viewBox="0 0 20 28">
-            <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" /><ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
-            <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
-            <circle cx="5" cy="6" r="4" fill="#8a95a1" />
-          </svg>
-          关灯
-        </span>
+      <!-- 控制条：分组切换 + 设备类型筛选 + 图例 -->
+      <div class="bs-controlbar">
+        <div class="bs-controlbar__group">
+          <span class="bs-controlbar__label">分组</span>
+          <el-select v-model="activeGroupId" class="bs-controlbar__select bs-controlbar__select--sm" @change="setActiveGroup">
+            <el-option v-for="g in GROUP_TABS" :key="g.id" :label="g.name" :value="g.id" />
+          </el-select>
+        </div>
+        <div class="bs-controlbar__group">
+          <span class="bs-controlbar__label">设备类型</span>
+          <el-select v-model="selectedProductIds" multiple collapse-tags collapse-tags-tooltip clearable filterable placeholder="全部类型" class="bs-controlbar__select">
+            <el-option v-for="p in PRODUCTS" :key="p.id" :label="p.name" :value="p.id" />
+          </el-select>
+          <button type="button" class="bs-action-btn bs-action-btn--sm" @click="applyFilter">应用</button>
+          <button type="button" class="bs-action-btn bs-action-btn--sm" @click="resetFilter">重置</button>
+        </div>
+        <div class="bs-controlbar__legend">
+          <span class="bs-legend__item">
+            <svg class="bs-legend__lamp" viewBox="0 0 20 28">
+              <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" /><ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
+              <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
+              <path d="M5 2 C7.4 2 9 3.7 9 6.1 C9 8.2 7.3 9.7 5 11 C2.7 9.7 1 8.2 1 6.1 C1 3.7 2.6 2 5 2 Z" fill="#ffd666" class="bs-lamp-bulb--on" />
+              <path d="M2.4 11.6 L1.3 15 M5 12.2 L5 16.2 M7.6 11.6 L8.7 15" stroke="#ffd666" stroke-width="0.9" stroke-linecap="round" opacity="0.55" />
+            </svg>
+            开灯
+          </span>
+          <span class="bs-legend__item">
+            <svg class="bs-legend__lamp" viewBox="0 0 20 28">
+              <rect x="9" y="13" width="2" height="14" rx="1" fill="#41586d" /><ellipse cx="10" cy="27.5" rx="5" ry="1.3" fill="#1c2e40" />
+              <path d="M10 13 C10 9 5 9 5 6" stroke="#41586d" stroke-width="2" fill="none" stroke-linecap="round" />
+              <path d="M5 2 C7.4 2 9 3.7 9 6.1 C9 8.2 7.3 9.7 5 11 C2.7 9.7 1 8.2 1 6.1 C1 3.7 2.6 2 5 2 Z" fill="#8a95a1" />
+            </svg>
+            关灯
+          </span>
+        </div>
+      </div>
+
+      <!-- 顶部 KPI 条：随分组切换 -->
+      <div class="bs-kpibar">
+        <div class="bs-kpibar__item"><div class="bs-kpibar__value">{{ topKpiTickers.total.display.value }}</div><div class="bs-kpibar__label">灯杆总数</div></div>
+        <div class="bs-kpibar__item">
+          <div class="bs-kpibar__value is-green">{{ topKpiTickers.onlineRate.display.value }}%</div>
+          <div class="bs-kpibar__label">在线率</div>
+          <div class="bs-kpibar__trend" :class="kpiTrends.onlineRate.good ? 'is-trend-good' : 'is-trend-bad'">{{ kpiTrends.onlineRate.text }}</div>
+        </div>
+        <div class="bs-kpibar__item">
+          <div class="bs-kpibar__value is-orange">{{ topKpiTickers.lightRate.display.value }}%</div>
+          <div class="bs-kpibar__label">亮灯率</div>
+          <div class="bs-kpibar__trend" :class="kpiTrends.lightRate.good ? 'is-trend-good' : 'is-trend-bad'">{{ kpiTrends.lightRate.text }}</div>
+        </div>
+        <div class="bs-kpibar__item">
+          <div class="bs-kpibar__value is-red">{{ topKpiTickers.faultCount.display.value }}</div>
+          <div class="bs-kpibar__label">故障数</div>
+          <div class="bs-kpibar__trend" :class="kpiTrends.faultCount.good ? 'is-trend-good' : 'is-trend-bad'">{{ kpiTrends.faultCount.text }}</div>
+        </div>
+        <div class="bs-kpibar__item">
+          <div class="bs-kpibar__value is-cyan">{{ topKpiTickers.savingRate.display.value }}%</div>
+          <div class="bs-kpibar__label">节能率</div>
+          <div class="bs-kpibar__trend" :class="kpiTrends.savingRate.good ? 'is-trend-good' : 'is-trend-bad'">{{ kpiTrends.savingRate.text }}</div>
+        </div>
       </div>
 
       <!-- 左侧面板 -->
@@ -1211,15 +1780,13 @@
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>灯杆运行总览</span></div>
-          <div class="bs-panel__body">
-            <div class="kpi-grid">
-              <div class="kpi-item"><div class="kpi-label">灯杆总数（含坐标 {{ KPI.mappedTotal }}）</div><div class="kpi-value">{{ kpiTickers.total.display.value }}</div></div>
-              <div class="kpi-item"><div class="kpi-label">在线</div><div class="kpi-value is-green">{{ kpiTickers.online.display.value }}</div></div>
-              <div class="kpi-item"><div class="kpi-label">离线</div><div class="kpi-value is-muted">{{ kpiTickers.offline.display.value }}</div></div>
-              <div class="kpi-item"><div class="kpi-label">亮灯数</div><div class="kpi-value is-orange">{{ kpiTickers.lightOn.display.value }}</div></div>
-              <div class="kpi-item"><div class="kpi-label">在线率</div><div class="kpi-value is-cyan">{{ kpiTickers.onlineRate.display.value }}%</div></div>
-              <div class="kpi-item"><div class="kpi-label">亮灯率</div><div class="kpi-value is-orange">{{ kpiTickers.lightRate.display.value }}%</div></div>
+          <div class="bs-panel__header"><span>控灯策略执行状态</span></div>
+          <div class="bs-panel__body" style="display:flex;gap:12px;align-items:center;">
+            <div ref="gaugeRef" class="echart" style="width:110px;height:110px;flex-shrink:0;"></div>
+            <div class="plan-policy" style="flex:1;">
+              <div class="plan-row"><span class="label">当前策略</span><span class="value">{{ groupStats.powerPlan.strategyName }}</span></div>
+              <div class="plan-row"><span class="label">执行时段</span><span class="value">{{ groupStats.powerPlan.timeRange }}</span></div>
+              <div class="plan-row"><span class="label">执行状态</span><span class="value is-status">{{ groupStats.powerPlan.status }}</span></div>
             </div>
           </div>
         </div>
@@ -1227,11 +1794,11 @@
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>设备故障报警</span></div>
+          <div class="bs-panel__header"><span>实时告警</span><span class="hint">{{ activeGroupLabel }}</span></div>
           <div class="bs-panel__body">
-            <div v-if="!ALARMS.length" class="empty">暂无告警</div>
+            <div v-if="!groupAlarms.length" class="empty">暂无告警</div>
             <ul v-else class="alarm-list">
-              <li v-for="item in ALARMS" :key="item.id" class="alarm-item">
+              <li v-for="item in groupAlarms" :key="item.id" class="alarm-item">
                 <span class="alarm-level" :class="'lv-'+item.level">L{{ item.level }}</span>
                 <div class="alarm-main">
                   <div class="alarm-name">{{ item.name }}</div>
@@ -1248,42 +1815,64 @@
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>节能数据统计</span></div>
+          <div class="bs-panel__header"><span>环境监测</span></div>
           <div class="bs-panel__body">
-            <div class="elec-grid">
-              <div class="elec-item"><div class="elec-label">本月节电量</div><div class="elec-value">{{ ENERGY_STATS.monthSaving }}<span class="unit">kWh</span></div></div>
-              <div class="elec-item"><div class="elec-label">节能率</div><div class="elec-value">{{ ENERGY_STATS.savingRate }}<span class="unit">%</span></div></div>
-              <div class="elec-item"><div class="elec-label">累计节电量</div><div class="elec-value">{{ ENERGY_STATS.totalSaving }}<span class="unit">kWh</span></div></div>
-              <div class="elec-item"><div class="elec-label">CO₂ 减排</div><div class="elec-value">{{ ENERGY_STATS.co2Reduction }}<span class="unit">kg</span></div></div>
+            <div class="summary-row"><span class="label">照明</span><span class="value">关{{ lightingSummary.off }}·低{{ lightingSummary.low }}·中{{ lightingSummary.mid }}·高{{ lightingSummary.high }}·全{{ lightingSummary.full }}</span></div>
+            <div class="summary-row">
+              <span class="label">设备</span>
+              <span class="value" v-if="groupStats.environment">在线 {{ groupStats.environment.online }} · 离线 {{ groupStats.environment.offline }} · 故障 {{ groupStats.environment.fault }}</span>
+              <span class="value" v-else>--</span>
+            </div>
+            <div v-if="!groupStats.environment" class="empty">暂无环境监测数据</div>
+            <div v-else class="elec-grid">
+              <div class="elec-item"><div class="elec-label">温度</div><div class="elec-value">{{ groupStats.environment.temp }}<span class="unit">℃</span></div></div>
+              <div class="elec-item"><div class="elec-label">湿度</div><div class="elec-value">{{ groupStats.environment.humidity }}<span class="unit">%Rh</span></div></div>
+              <div class="elec-item"><div class="elec-label">风速</div><div class="elec-value">{{ groupStats.environment.windSpeed }}<span class="unit">m/s</span></div></div>
+              <div class="elec-item"><div class="elec-label">大气压</div><div class="elec-value">{{ groupStats.environment.pressure }}<span class="unit">KPa</span></div></div>
+              <div class="elec-item"><div class="elec-label">PM2.5</div><div class="elec-value">{{ groupStats.environment.pm25 }}<span class="unit">ug/m³</span></div></div>
+              <div class="elec-item"><div class="elec-label">PM10</div><div class="elec-value">{{ groupStats.environment.pm10 }}<span class="unit">ug/m³</span></div></div>
             </div>
           </div>
         </div>
       </aside>
+
+      <!-- 地图筛选摘要（浮层，地图交互结果展示） -->
+      <div class="bs-mapinfo bs-panel">
+        <div class="bs-panel__header"><span>当前视图摘要</span></div>
+        <div class="bs-panel__body">
+          <div class="summary-row"><span class="label">分组</span><span class="value">{{ activeGroupLabel }}</span></div>
+          <div class="summary-row"><span class="label">类型</span><span class="value">{{ typeLabel }}</span></div>
+          <div class="summary-metrics" style="grid-template-columns:repeat(2,1fr);">
+            <div class="metric"><div class="metric-val">{{ summaryTickers.deviceCount.display.value }}</div><div class="metric-label">设备数</div></div>
+            <div class="metric"><div class="metric-val is-green">{{ summaryTickers.onlineCount.display.value }}</div><div class="metric-label">在线</div></div>
+          </div>
+        </div>
+      </div>
 
       <!-- 右侧面板 -->
       <aside class="bs-side bs-side--right">
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>筛选条件</span></div>
+          <div class="bs-panel__header"><span>资产总览</span></div>
           <div class="bs-panel__body">
-            <div class="filter-form">
-              <div class="filter-row">
-                <label>设备分组</label>
-                <el-select v-model="selectedGroupIds" multiple collapse-tags collapse-tags-tooltip clearable filterable placeholder="全部分组" class="filter-select">
-                  <el-option v-for="g in GROUPS" :key="g.id" :label="g.name" :value="g.id" />
-                </el-select>
-              </div>
-              <div class="filter-row">
-                <label>设备类型</label>
-                <el-select v-model="selectedProductIds" multiple collapse-tags collapse-tags-tooltip clearable filterable placeholder="全部类型" class="filter-select">
-                  <el-option v-for="p in PRODUCTS" :key="p.id" :label="p.name" :value="p.id" />
-                </el-select>
-              </div>
-              <div class="filter-actions">
-                <button type="button" class="bs-action-btn" @click="applyFilter">应用筛选</button>
-                <button type="button" class="bs-action-btn" @click="resetFilter">重置</button>
-              </div>
+            <div class="kpi-grid">
+              <div class="kpi-item"><div class="kpi-label">智慧灯杆</div><div class="kpi-value">{{ groupStats.assets.pole }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">边缘网关</div><div class="kpi-value">{{ groupStats.assets.gateway }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">太阳能板</div><div class="kpi-value is-orange">{{ groupStats.solar.total }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">单灯控制器</div><div class="kpi-value">{{ groupStats.assets.singleCtrl }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">LED显示屏</div><div class="kpi-value">{{ groupStats.assets.led }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">环境监测</div><div class="kpi-value">{{ groupStats.assets.envMonitor }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">井盖监控</div><div class="kpi-value">{{ groupStats.assets.manhole }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">监控摄像头</div><div class="kpi-value">{{ groupStats.assets.camera }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">5G基站</div><div class="kpi-value">{{ groupStats.assets.base5g }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">充电桩</div><div class="kpi-value">{{ groupStats.assets.chargePile }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">太阳能故障</div><div class="kpi-value" :class="groupStats.solar.fault>0?'is-orange':'is-green'">{{ groupStats.solar.fault }}</div></div>
+              <div class="kpi-item"><div class="kpi-label">CO₂减排(kg)</div><div class="kpi-value is-cyan">{{ groupStats.energy.co2Reduction }}</div></div>
+            </div>
+            <div class="summary-row" style="margin-top:10px;">
+              <span class="label">运营</span>
+              <span class="value">投入运营 {{ groupStats.investedPoles }} 杆 · 年收入 {{ groupStats.totalRevenueWan }} 万元</span>
             </div>
           </div>
         </div>
@@ -1291,17 +1880,19 @@
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>用电计划</span></div>
+          <div class="bs-panel__header"><span>TOP 榜单</span></div>
           <div class="bs-panel__body">
-            <div class="plan-policy">
-              <div class="plan-row"><span class="label">当前策略</span><span class="value">{{ POWER_PLAN.strategyName }}</span></div>
-              <div class="plan-row"><span class="label">计划时段</span><span class="value">{{ POWER_PLAN.timeRange }}</span></div>
-              <div class="plan-row"><span class="label">执行状态</span><span class="value is-status">{{ POWER_PLAN.status }}</span></div>
+            <div class="top-list__title">离线时长 TOP3（小时）</div>
+            <div v-for="(item, i) in groupStats.topOffline" :key="'off'+i" class="top-list__item">
+              <span class="top-list__rank" :class="'rk-'+(i+1)">{{ i+1 }}</span>
+              <span class="top-list__name">{{ item.name }}</span>
+              <span class="top-list__value">{{ item.hours }}h</span>
             </div>
-            <div class="elec-grid">
-              <div class="elec-item"><div class="elec-label">计划用电量</div><div class="elec-value">{{ POWER_PLAN.planKwh }}<span class="unit">kWh</span></div></div>
-              <div class="elec-item"><div class="elec-label">实际用电量</div><div class="elec-value">{{ POWER_PLAN.actualKwh }}<span class="unit">kWh</span></div></div>
-              <div class="elec-item" style="grid-column: span 2;"><div class="elec-label">完成率</div><div class="elec-value">{{ POWER_PLAN.completionRate }}<span class="unit">%</span></div></div>
+            <div class="top-list__title">高耗电 TOP3（kWh/日）</div>
+            <div v-for="(item, i) in groupStats.topPower" :key="'pw'+i" class="top-list__item">
+              <span class="top-list__rank" :class="'rk-'+(i+1)">{{ i+1 }}</span>
+              <span class="top-list__name">{{ item.name }}</span>
+              <span class="top-list__value">{{ item.kwh }}</span>
             </div>
           </div>
         </div>
@@ -1309,28 +1900,34 @@
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>当前筛选摘要</span></div>
+          <div class="bs-panel__header"><span>运维健康度</span></div>
           <div class="bs-panel__body">
-            <div class="summary">
-              <div class="summary-row"><span class="label">分组</span><span class="value">{{ filterSummary.groupLabel }}</span></div>
-              <div class="summary-row"><span class="label">类型</span><span class="value">{{ filterSummary.typeLabel }}</span></div>
-              <div class="summary-metrics">
-                <div class="metric"><div class="metric-val">{{ summaryTickers.deviceCount.display.value }}</div><div class="metric-label">设备数</div></div>
-                <div class="metric"><div class="metric-val is-green">{{ summaryTickers.onlineCount.display.value }}</div><div class="metric-label">在线</div></div>
-                <div class="metric"><div class="metric-val is-cyan">{{ summaryTickers.onlineRate.display.value }}%</div><div class="metric-label">在线率</div></div>
-                <div class="metric"><div class="metric-val is-orange">{{ summaryTickers.lightOnCount.display.value }}</div><div class="metric-label">亮灯</div></div>
-              </div>
+            <div class="subsection-title">工单闭环</div>
+            <div class="summary-metrics">
+              <div class="metric"><div class="metric-val">{{ groupStats.workOrders.total }}</div><div class="metric-label">工单总数</div></div>
+              <div class="metric"><div class="metric-val is-orange">{{ groupStats.workOrders.processing }}</div><div class="metric-label">处理中</div></div>
+              <div class="metric"><div class="metric-val is-green">{{ groupStats.workOrders.completed }}</div><div class="metric-label">已完成</div></div>
+              <div class="metric"><div class="metric-val" :class="groupStats.workOrders.overtime>0?'is-red':'is-green'">{{ groupStats.workOrders.overtime }}</div><div class="metric-label">超时</div></div>
+            </div>
+            <div class="summary-row" style="margin-top:8px;">
+              <span class="label">SLA</span>
+              <span class="value">达成率 {{ groupStats.workOrders.slaRate }}% · 平均响应 {{ groupStats.workOrders.avgResponseMin }}min · 平均处理 {{ groupStats.workOrders.avgHandleMin }}min</span>
+            </div>
+            <div class="subsection-title" style="margin-top:12px;">设备健康度</div>
+            <div class="summary-metrics" style="grid-template-columns:repeat(2,1fr);">
+              <div class="metric"><div class="metric-val is-orange">{{ groupStats.deviceHealth.needMaintenance }}</div><div class="metric-label">待维保</div></div>
+              <div class="metric"><div class="metric-val is-red">{{ groupStats.deviceHealth.nearEndOfLife }}</div><div class="metric-label">临近寿命</div></div>
             </div>
           </div>
         </div>
       </aside>
 
-      <!-- 底部能耗趋势 -->
+      <!-- 底部：能耗趋势 / 当月对比 / 节费与安全指标 -->
       <div class="bs-bottom">
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>年度能耗趋势</span></div>
+          <div class="bs-panel__header"><span>年度能耗趋势</span><span class="hint">kWh · <i class="legend-dot legend-dot--ytd"></i>本年至今</span></div>
           <div class="bs-panel__body" style="display:flex;flex-direction:column;padding-top:8px;">
             <div ref="yearlyRef" class="echart" style="height:150px;"></div>
           </div>
@@ -1338,9 +1935,22 @@
         <div class="bs-panel">
           <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
           <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
-          <div class="bs-panel__header"><span>月度能耗趋势</span></div>
+          <div class="bs-panel__header"><span>当月能耗对比</span><span class="hint">kWh</span></div>
           <div class="bs-panel__body" style="display:flex;flex-direction:column;padding-top:8px;">
             <div ref="monthlyRef" class="echart" style="height:150px;"></div>
+          </div>
+        </div>
+        <div class="bs-panel">
+          <i class="bs-panel__corner bs-panel__corner--tl"></i><i class="bs-panel__corner bs-panel__corner--tr"></i>
+          <i class="bs-panel__corner bs-panel__corner--bl"></i><i class="bs-panel__corner bs-panel__corner--br"></i>
+          <div class="bs-panel__header"><span>节费与安全指标</span></div>
+          <div class="bs-panel__body">
+            <div class="elec-grid">
+              <div class="elec-item"><div class="elec-label">本年节费</div><div class="elec-value">{{ groupStats.costSaving.yearSaving.toLocaleString() }}<span class="unit">元</span></div></div>
+              <div class="elec-item"><div class="elec-label">累计节费</div><div class="elec-value">{{ groupStats.costSaving.totalSaving.toLocaleString() }}<span class="unit">元</span></div></div>
+              <div class="elec-item"><div class="elec-label">漏电触发</div><div class="elec-value">{{ groupStats.safety.leakageTrips }}<span class="unit">次</span></div></div>
+              <div class="elec-item"><div class="elec-label">电压异常</div><div class="elec-value">{{ groupStats.safety.voltageAnomalies }}<span class="unit">次</span></div></div>
+            </div>
           </div>
         </div>
       </div>
