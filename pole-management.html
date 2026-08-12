@@ -1317,7 +1317,7 @@ const app = createApp({
       (!poleApplied.groupName ||
         (poleApplied.groupName === UNGROUPED_FILTER_VALUE
           ? isPoleUngrouped(p)
-          : p.groupName === poleApplied.groupName)));
+          : p.groupName === poleApplied.groupName))));
     const pagedPoles = computed(() => { const s = (polePage.value - 1) * polePageSize.value; return filteredPoles.value.slice(s, s + polePageSize.value); });
     const poleStats = computed(() => {
       const total = poles.length;
